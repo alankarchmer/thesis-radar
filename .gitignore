@@ -1,0 +1,16 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+# Research data never belongs in this repository.
+inbox/
+archive/
+thesis/
+radar.db
+radar.lock
+dashboard.html
+dashboard.html.tmp
+config.yaml
+policy.yaml
