@@ -39,16 +39,30 @@ class FakeSec:
         return self.pages[url]
 
 
+def index_headers(documents):
+    """An EDGAR -index-headers.html page: each document's SGML header, HTML-escaped inside <pre>."""
+    blocks = "".join(
+        f"&lt;DOCUMENT&gt;\n&lt;TYPE&gt;{kind}\n&lt;SEQUENCE&gt;{n}\n&lt;FILENAME&gt;{name}\n"
+        f"&lt;DESCRIPTION&gt;{kind}\n&lt;TEXT&gt;\n<a href=\"{name}\">Document {n} - file: {name}</a><br>\n&lt;/DOCUMENT&gt;\n"
+        for n, (kind, name) in enumerate(documents, start=1)
+    )
+    return f"<html><body><pre>{blocks}</pre></body></html>".encode()
+
+
 def sec_pages():
     base = "https://www.sec.gov/Archives/edgar/data/1"
-    index = {"directory": {"item": [{"name": "acme-8k.htm"}, {"name": "ex99-1.htm"}, {"name": "R1.htm"}]}}
+    headers = index_headers(
+        [("8-K", "acme-8k.htm"), ("EX-99.1", "acme-q3-results.htm"), ("EX-10.1", "acme-credit-agreement.htm"),
+         ("EX-101.SCH", "acme-20260910.xsd")]
+    )
     return {
         "https://www.sec.gov/files/company_tickers.json": json.dumps({"0": {"cik_str": 1, "ticker": "ACME", "title": "ACME"}}).encode(),
         "https://data.sec.gov/submissions/CIK0000000001.json": json.dumps(submissions(ROWS)).encode(),
         f"{base}/000000126000002/acme-10q.htm": b"<p>ACME 10-Q. Inventory rose.</p>",
         f"{base}/000000126000004/acme-8k.htm": b"<p>ACME 8-K cover page.</p>",
-        f"{base}/000000126000004/index.json": json.dumps(index).encode(),
-        f"{base}/000000126000004/ex99-1.htm": b"<p>ACME third quarter results. Revenue grew.</p>",
+        f"{base}/000000126000004/0000001-26-000004-index-headers.html": headers,
+        f"{base}/000000126000004/acme-q3-results.htm": b"<p>ACME third quarter results. Revenue grew.</p>",
+        f"{base}/000000126000004/acme-credit-agreement.htm": b"<p>Credit agreement.</p>",
     }
 
 
@@ -70,7 +84,7 @@ def test_fetch_all_stores_filings_and_exhibits_once(tmp_path):
     assert sorted(d["title"] for d in store.documents()) == [
         "ACME 10-Q 2026-08-01 acme-10q.htm",
         "ACME 8-K 2026-09-10 acme-8k.htm",
-        "ACME 8-K 2026-09-10 ex99-1.htm",
+        "ACME 8-K 2026-09-10 acme-q3-results.htm",
     ]
     assert store.fetch_state("ACME")["last_accession"] == "0000001-26-000004"
     assert fetch_all(ws, store, ["ACME"], FakeSec(sec_pages()), today=TODAY).stored == 0

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import html
 import json
+import re
 import time
 import urllib.request
 from collections.abc import Callable, Sequence
@@ -17,7 +19,7 @@ from .store import Store
 TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 FILING_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/{name}"
-INDEX_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/index.json"
+INDEX_HEADERS_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/{accession}-index-headers.html"
 FORMS = frozenset({"10-K", "10-Q", "8-K"})
 FIRST_FETCH_DAYS = 365
 MIN_INTERVAL_SECONDS = 0.11
@@ -79,6 +81,21 @@ def new_filings(
     return picked
 
 
+_DOCUMENT = re.compile(r"<DOCUMENT>(.*?)</DOCUMENT>", re.S)
+_TYPE = re.compile(r"<TYPE>([^\s<]+)")
+_FILENAME = re.compile(r"<FILENAME>([^\s<]+)")
+
+
+def exhibit_99_names(index_headers: str) -> list[str]:
+    """HTML files filed as exhibit 99 (where earnings releases live), by their declared type, not their name."""
+    names = []
+    for block in _DOCUMENT.findall(html.unescape(index_headers)):
+        kind, name = _TYPE.search(block), _FILENAME.search(block)
+        if kind and name and kind.group(1).upper().startswith("EX-99") and name.group(1).lower().endswith((".htm", ".html")):
+            names.append(name.group(1))
+    return names
+
+
 @dataclass
 class FetchReport:
     stored: int = 0
@@ -103,14 +120,8 @@ def fetch_all(ws: Workspace, store: Store, tickers: Sequence[str], http_get: Htt
             folder = accession.replace("-", "")
             names = [primary]
             if form == "8-K":
-                index = json.loads(http_get(INDEX_URL.format(cik=cik, folder=folder)))
-                names += [
-                    item["name"]
-                    for item in index["directory"]["item"]
-                    if "ex99" in item["name"].lower()
-                    and item["name"].lower().endswith((".htm", ".html"))
-                    and item["name"] != primary
-                ]
+                headers = http_get(INDEX_HEADERS_URL.format(cik=cik, folder=folder, accession=accession))
+                names += [name for name in exhibit_99_names(headers.decode("utf-8", errors="replace")) if name != primary]
             for name in names:
                 content = http_get(FILING_URL.format(cik=cik, folder=folder, name=name))
                 outcome = store_filing(ws, store, ticker=ticker, form=form, filing_date=filed, name=name, content=content)
