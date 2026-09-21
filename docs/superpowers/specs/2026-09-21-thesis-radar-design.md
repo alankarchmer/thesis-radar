@@ -91,14 +91,16 @@ EDGAR fetcher ───┴─▶ ingest ─▶ split ─▶ judge (Jev) ─▶ S
 
 ```python
 class Judge(Protocol):
-    def judge_document(self, probe: DocumentProbe) -> DocumentJudgment: ...
-    def judge_passage(self, request: PassageRequest) -> PassageJudgment: ...
+    async def __aenter__(self) -> "Judge": ...
+    async def __aexit__(self, *exc_info: object) -> None: ...
+    async def judge(self, request: JudgeRequest) -> JudgeResult: ...
 ```
 
-Both return the full probability distribution of every answer plus the versioned
-model ID reported by the API. v1 ships `JevJudge` (live API) and `FakeJudge`
-(replays recorded answers from JSON fixtures). A Claude-based or local-model judge
-can be added later without touching other units.
+One method serves both request kinds: the rubric builds the request, the judge
+returns every answer's full probability distribution plus the versioned model ID
+reported by the API. v1 ships `JevJudge` (live API) and `FakeJudge` (answers from a
+Python function, for tests). A Claude-based or local-model judge can be added later
+without touching other units.
 
 ## Thesis file
 
@@ -147,8 +149,9 @@ an unsorted document has no thesis to judge against.
 `title` comes from PDF metadata when present, otherwise the first non-empty line
 of text; it is never produced by Jev.
 
-**Cache key:** `sha256(passage text, canonical thesis JSON for the ticker,
-RUBRIC_VERSION, model)`. Any thesis edit re-judges every passage for that ticker.
+**Cache key:** the SHA-256 of the complete request (state, questions, model). The
+state carries the passage, the canonical thesis, and the document metadata; the
+questions carry the rubric wording; `RUBRIC_VERSION` is recorded alongside. Any thesis edit re-judges every passage for that ticker.
 This is intended: "new" always means new relative to the current `known_facts`.
 
 ## Jev requests
@@ -307,7 +310,11 @@ All mutating commands take an exclusive lock on `radar.lock` and refuse if it is
 | Estimated cost above `max_cost_per_run` (default $2) | `judge` stops before sending unless `--yes` |
 | Lock held | Command refuses and names the lock file |
 
-Concurrency defaults to 8 requests in flight behind a 1,200 requests/minute limiter.
+Concurrency defaults to 16 requests in flight behind a 1,200 requests/minute limiter.
+One independent study measured client-side Jev latency at a 12-20 second median,
+far above the 70-500 ms TypeSafe reports, so throughput comes from concurrency.
+Every judgment is committed to SQLite as its response arrives; an interrupted run
+loses only the requests in flight.
 Cost is estimated from token counts at $0.042 per million input tokens.
 
 ## Testing
@@ -325,9 +332,10 @@ Cost is estimated from token counts at $0.042 per million input tokens.
 
 - `radar label` presents sampled passages and records `new_info`, `material`, and
   per-assumption `contradicts` labels.
-- `radar calibrate` reports, per question: accuracy by probability bucket,
-  precision and recall at current thresholds, and the threshold that reaches a
-  requested precision.
+- `radar calibrate` splits labels into two halves by a hash of the passage id. It
+  selects thresholds on one half and reports, on the other half only: accuracy by
+  probability bucket, precision and recall at the current thresholds, and the
+  selected threshold for a requested precision.
 - First-week protocol: label about 200 passages for one company. If no `new_info`
   threshold reaches about 70% precision, revise the rubric wording before relying
   on the feed.
@@ -342,8 +350,29 @@ Cost is estimated from token counts at $0.042 per million input tokens.
 
 ## Future work
 
+- `radar tune`: GEPA-style optimization of rubric wording from labels. A generative
+  model proposes revised instructions and criteria from misjudged examples; Jev is
+  re-scored on a held-out split; Brier score is the objective. An independent study
+  of this approach on a medical screening task improved F1 from 69% to 80% and
+  roughly halved calibration error, at the cost of slightly lower recall.
 - A `decide`-style SM workflow for recording thesis changes with a run log.
 - Numeric extraction into metric time series (code finds candidates, Jev selects).
 - OCR for scanned PDFs.
 - Alerts when a contradiction appears.
 - Alternative `Judge` implementations if Jev underperforms on this domain.
+
+## Amendments (2026-09-21, during planning)
+
+- Concurrency default 16, incremental commits, split-half calibration, and the
+  single `judge` method, as edited above.
+- Assumption question ids are `assumption__<id>` (the prefix is a safe key).
+- When no date string is found in a document, its date falls back to the file's
+  modification date and the document is not marked unsorted for that reason.
+- The first EDGAR fetch per ticker covers the last 365 days; `last_accession`
+  records the newest filing of any form. Tickers with `.` are also looked up with
+  `-` (SEC lists `BRK-B`).
+- `judgments` also stores `input_tokens` for cost reporting.
+- Passages shown under Contradictions are not repeated in What's new or Maybe.
+- `radar label` draws half its sample from passages the policy flags and half from
+  the rest, so precision can be estimated with few labels; the report says recall
+  estimates from this sample are rough.
