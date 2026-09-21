@@ -10,7 +10,7 @@ from typing import Any
 from .judge import JudgeRequest
 from .thesis import Thesis
 
-RUBRIC_VERSION = "2026-09-21.1"
+RUBRIC_VERSION = "2026-09-22.1"
 OFF_THESIS = "off_thesis"
 NONE = "none"
 ASSUMPTION_PREFIX = "assumption__"
@@ -145,13 +145,26 @@ def passage_questions(thesis: Thesis) -> dict[str, dict[str, Any]]:
             "instructions": "Is `passage` boilerplate rather than substantive content?",
             "criteria": {
                 "true": {
-                    "what": "A legal disclaimer, safe-harbor or forward-looking-statement warning, generic risk language that could apply to any company, a table of contents, or page headers and footers.",
+                    "what": (
+                        "A legal disclaimer, safe-harbor or forward-looking-statement warning, a risk-factor or "
+                        "market-risk disclosure that describes what could happen rather than what has happened (even "
+                        "when it names the company's own products, materials, or markets), a standard description of "
+                        "accounting policies such as how revenue is recognized, generic risk language that could apply "
+                        "to any company, a table of contents, or page headers and footers."
+                    ),
                     "examples": [
                         "This presentation contains forward-looking statements that involve risks and uncertainties.",
+                        "We are subject to market risk from fluctuating prices of the commodities and raw materials used in our products.",
+                        "The Company recognizes revenue when control of the product transfers to the customer.",
                         "Table of Contents",
                     ],
                 },
-                "false": {"what": "Specific information about the company, its markets, its results, its plans, or opinions about them."},
+                "false": {
+                    "what": (
+                        "Specific information about the company, its markets, its results, its plans, or opinions "
+                        "about them, including reported figures and developments that have actually happened."
+                    )
+                },
             },
         },
         "new_info": {
@@ -206,11 +219,17 @@ def passage_questions(thesis: Thesis) -> dict[str, dict[str, Any]]:
             "criteria": {
                 "supports": {
                     "what": "The passage states evidence that makes the assumption, as worded, more likely to hold.",
-                    "not_for": "Evidence about the opposite outcome, or a mention of the same topic that gives no evidence either way.",
+                    "not_for": (
+                        "Evidence about the opposite outcome, a mention of the same topic that gives no evidence "
+                        "either way, or a risk disclosure that describes what could happen rather than what is happening."
+                    ),
                 },
                 "contradicts": {
                     "what": "The passage states evidence that makes the assumption, as worded, less likely to hold.",
-                    "not_for": "A mention of the same topic that gives no evidence either way.",
+                    "not_for": (
+                        "A mention of the same topic that gives no evidence either way, or a risk disclosure that "
+                        "describes what could happen rather than what is happening."
+                    ),
                 },
                 "neither": "The passage is unrelated to the assumption or gives no evidence about whether it holds.",
             },

@@ -87,3 +87,14 @@ def test_contradictions_ignore_the_novelty_filter():
 
 def test_supports_are_reported():
     assert classify(answers(supports=0.9), Policy()).supports == ("inv_normalizes",)
+
+
+def test_boilerplate_is_not_pinned_as_a_contradiction():
+    assert not classify(answers(contradicts=0.9, boilerplate=0.8), Policy()).in_contradictions
+    assert classify(answers(contradicts=0.9, boilerplate=0.4), Policy()).in_contradictions
+
+
+def test_contradiction_boilerplate_limit_is_configurable(tmp_path):
+    path = tmp_path / "policy.yaml"
+    path.write_text("contradictions:\n  boilerplate: {max: 0.2}\n", encoding="utf-8")
+    assert load_policy(path).contradiction_boilerplate_max == 0.2

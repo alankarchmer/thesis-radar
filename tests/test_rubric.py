@@ -98,3 +98,11 @@ def test_every_passage_question_points_at_the_evidence_rules(thesis):
 
 def test_rubric_version_is_set():
     assert RUBRIC_VERSION
+
+
+def test_boilerplate_covers_hypothetical_risks_and_accounting_policies(thesis):
+    questions = passage_questions(thesis)
+    boilerplate = questions["boilerplate"]["criteria"]["true"]["what"]
+    assert "could happen" in boilerplate and "accounting polic" in boilerplate
+    assumption = questions[f"{ASSUMPTION_PREFIX}inv_normalizes"]["criteria"]
+    assert all("could happen" in assumption[option]["not_for"] for option in ("supports", "contradicts"))

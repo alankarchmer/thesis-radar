@@ -25,6 +25,7 @@ class Policy:
     materiality_min: float = 1.5
     contradicts_min: float = 0.7
     contradiction_materiality_min: float = 1.0
+    contradiction_boilerplate_max: float = 0.5
     maybe_new_info_low: float = 0.4
     maybe_new_info_high: float = 0.6
 
@@ -37,6 +38,7 @@ _SETTINGS: dict[tuple[str, ...], str] = {
     ("whats_new", "materiality", "min"): "materiality_min",
     ("contradictions", "contradicts", "min"): "contradicts_min",
     ("contradictions", "materiality", "min"): "contradiction_materiality_min",
+    ("contradictions", "boilerplate", "max"): "contradiction_boilerplate_max",
 }
 _MAYBE_BAND = ("maybe", "new_info", "between")
 
@@ -116,7 +118,11 @@ def classify(answers: Mapping[str, Mapping[str, Any]], policy: Policy) -> Classi
         elif probabilities.get("supports", 0.0) >= policy.contradicts_min:
             supports.append(assumption_id)
 
-    in_contradictions = bool(contradicts) and materiality >= policy.contradiction_materiality_min
+    in_contradictions = (
+        bool(contradicts)
+        and materiality >= policy.contradiction_materiality_min
+        and boilerplate <= policy.contradiction_boilerplate_max
+    )
     on_pillar = pillar != OFF_THESIS and pillar_confidence >= policy.pillar_confidence_min
     eligible = (
         on_pillar
