@@ -1,10 +1,11 @@
 import json
+import urllib.error
 from datetime import date
 
 import pytest
 
 from thesis_radar.config import Workspace
-from thesis_radar.edgar import fetch_all, find_cik, load_cik_map, make_http_get, new_filings
+from thesis_radar.edgar import EdgarError, fetch_all, find_cik, load_cik_map, make_http_get, new_filings
 from thesis_radar.store import Store
 
 TODAY = date(2026, 9, 21)
@@ -36,7 +37,20 @@ class FakeSec:
 
     def __call__(self, url):
         self.urls.append(url)
+        if url not in self.pages:
+            raise EdgarError(f"GET {url} failed: The read operation timed out")
         return self.pages[url]
+
+
+class OkResponse:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        return False
+
+    def read(self):
+        return b"ok"
 
 
 def index_headers(documents):
@@ -108,22 +122,75 @@ def test_class_share_tickers_are_found_with_dashes():
 def test_http_get_sends_the_contact_email_and_spaces_requests(monkeypatch):
     seen, sleeps = [], []
 
-    class Response:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *exc_info):
-            return False
-
-        def read(self):
-            return b"ok"
-
     def fake_urlopen(request, timeout):
         seen.append(request.get_header("User-agent"))
-        return Response()
+        return OkResponse()
 
     monkeypatch.setattr("thesis_radar.edgar.urllib.request.urlopen", fake_urlopen)
     get = make_http_get("me@example.com", clock=lambda: 5.0, sleep=sleeps.append)
     assert get("https://example.test/a") == b"ok" and get("https://example.test/b") == b"ok"
     assert seen == ["thesis-radar me@example.com"] * 2
     assert sleeps == [pytest.approx(0.11)]
+
+
+def test_http_get_retries_a_timed_out_request(monkeypatch):
+    replies = [TimeoutError("The read operation timed out"), OkResponse()]
+    calls, sleeps = [], []
+
+    def fake_urlopen(request, timeout):
+        calls.append(request.full_url)
+        reply = replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+
+    monkeypatch.setattr("thesis_radar.edgar.urllib.request.urlopen", fake_urlopen)
+    get = make_http_get("me@example.com", clock=lambda: 5.0, sleep=sleeps.append)
+    assert get("https://example.test/slow") == b"ok"
+    assert len(calls) == 2
+    assert any(seconds >= 1 for seconds in sleeps)
+
+
+def test_http_get_gives_up_after_three_attempts(monkeypatch):
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append(request.full_url)
+        raise TimeoutError("The read operation timed out")
+
+    monkeypatch.setattr("thesis_radar.edgar.urllib.request.urlopen", fake_urlopen)
+    get = make_http_get("me@example.com", clock=lambda: 5.0, sleep=lambda seconds: None)
+    with pytest.raises(EdgarError, match="timed out"):
+        get("https://example.test/dead")
+    assert len(calls) == 3
+
+
+def test_http_get_does_not_retry_a_missing_file(monkeypatch):
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append(request.full_url)
+        raise urllib.error.HTTPError(request.full_url, 404, "Not Found", {}, None)
+
+    monkeypatch.setattr("thesis_radar.edgar.urllib.request.urlopen", fake_urlopen)
+    get = make_http_get("me@example.com", clock=lambda: 5.0, sleep=lambda seconds: None)
+    with pytest.raises(EdgarError, match="404"):
+        get("https://example.test/missing")
+    assert len(calls) == 1
+
+
+def test_a_failed_download_skips_that_ticker_until_the_next_fetch(tmp_path):
+    ws = Workspace(tmp_path)
+    ws.ensure_layout()
+    store = Store(ws.db_path)
+    pages = sec_pages()
+    broken = {url: body for url, body in pages.items() if not url.endswith("acme-q3-results.htm")}
+    report = fetch_all(ws, store, ["ACME", "ZZZZ"], FakeSec(broken), today=TODAY)
+    assert report.stored == 2
+    assert report.messages[0].startswith("ACME: ") and "next fetch" in report.messages[0]
+    assert report.messages[1] == "ZZZZ: not found in the SEC ticker list"
+    assert store.fetch_state("ACME") is None
+    again = fetch_all(ws, store, ["ACME"], FakeSec(pages), today=TODAY)
+    assert (again.stored, again.duplicates) == (1, 2)
+    assert store.fetch_state("ACME")["last_accession"] == "0000001-26-000004"
+    store.close()
