@@ -6,7 +6,7 @@ import pytest
 from helpers import ACME_THESIS, noul, write_thesis
 from thesis_radar.judge import FakeJudge, JudgeError, JudgeRequest, JudgeResult
 from thesis_radar.models import NewDocument, PassageDraft
-from thesis_radar.runner import RateLimiter, cache_key, plan_judging, run_judging
+from thesis_radar.runner import RateLimiter, cache_key, find_repeats, plan_judging, run_judging
 from thesis_radar.store import Store
 from thesis_radar.thesis import load_thesis
 
@@ -132,3 +132,35 @@ def test_rate_limiter_spaces_request_starts():
 
     asyncio.run(go())
     assert sleeps == [pytest.approx(0.05), pytest.approx(0.10)]
+
+
+RISK = (
+    "We are subject to market risk from fluctuating market prices of certain purchased commodities and raw materials, "
+    "including steel, aluminum, copper, petroleum-based resins, certain rare earth metals and diesel fuel. In addition, "
+    "we are a purchaser of components and parts containing various commodities, including steel, aluminum, rubber and "
+    "others, which are integrated into our products. While these materials are generally available from several "
+    "suppliers, their prices can move sharply, and we try to limit the effect with supply agreements and hedging "
+    "contracts. Higher commodity costs that we cannot offset through pricing or productivity would reduce our margins."
+)
+Q2 = "Second quarter sales totaled $2,022.8 million, an increase of nine percent from last year's second quarter sales of $1,852.7 million."
+Q3 = "Third quarter sales totaled $1,950.1 million, an increase of four percent from last year's third quarter sales of $1,875.2 million."
+
+
+def test_near_copies_are_repeats_but_new_numbers_are_not():
+    edited = RISK.replace("and diesel fuel.", "and diesel fuel, and nickel.")
+    assert find_repeats([RISK, Q2, edited, Q3, "Table of Contents", "Table of Contents"]) == [
+        False, False, True, False, False, True,
+    ]
+
+
+def test_repeated_passages_are_neither_judged_nor_shown(setup):
+    store, theses, _ = setup
+    with store.transaction():
+        later = store.insert_document(
+            NewDocument(text_sha256="c" * 64, path="archive/ACME/c.txt", title="Q4 call", origin="inbox",
+                        status="sorted", ticker="ACME", source_type="earnings_transcript", doc_date="2026-12-01")
+        )
+        store.insert_passages(later, [PassageDraft(0, 1, 0, 10, "Inventory rose."), PassageDraft(1, 1, 11, 40, Q3)])
+    plan = plan_judging(store, theses, MODEL)
+    assert [item.request.state["passage"] for item in plan.pending] == ["Inventory rose.", "Pricing held.", Q3]
+    assert plan.repeats == 1

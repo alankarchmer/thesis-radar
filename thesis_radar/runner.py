@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import re
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -23,6 +24,32 @@ def cache_key(request: JudgeRequest) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
+REPEAT_OVERLAP = 0.9
+_SHINGLE_WORDS = 5
+
+
+def _shingles(text: str) -> set[str]:
+    words = re.findall(r"\w+", text.lower())
+    if len(words) < _SHINGLE_WORDS:
+        return {" ".join(words)}
+    return {" ".join(words[i : i + _SHINGLE_WORDS]) for i in range(len(words) - _SHINGLE_WORDS + 1)}
+
+
+def find_repeats(texts: Sequence[str], *, overlap: float = REPEAT_OVERLAP) -> list[bool]:
+    """Flag each text whose five-word runs mostly appeared in earlier texts.
+
+    Filings repeat risk language and policy notes with small edits, so exact matching misses them. The bar is
+    high because a paragraph reusing last quarter's template with new numbers or words is new information.
+    """
+    seen: set[str] = set()
+    flags = []
+    for text in texts:
+        shingles = _shingles(text)
+        flags.append(len(shingles & seen) >= overlap * len(shingles))
+        seen |= shingles
+    return flags
+
+
 @dataclass(frozen=True)
 class PendingItem:
     passage_id: int
@@ -38,6 +65,7 @@ class JudgePlan:
     judged: dict[int, dict[str, Any]]
     failed: dict[int, str]
     estimated_tokens: int
+    repeats: int = 0  # passages skipped because an earlier passage of the same company said the same thing
 
     @property
     def estimated_cost(self) -> float:
@@ -48,10 +76,15 @@ def plan_judging(store: Store, theses: Mapping[str, Thesis], model: str) -> Judg
     pending: list[PendingItem] = []
     judged: dict[int, dict[str, Any]] = {}
     failed: dict[int, str] = {}
+    repeats = 0
     for ticker, thesis in sorted(theses.items()):
         questions = passage_questions(thesis)
         version = thesis.version
-        for row in store.passages_for_ticker(ticker):
+        rows = store.passages_for_ticker(ticker)
+        for row, repeated in zip(rows, find_repeats([row["text"] for row in rows])):
+            if repeated:
+                repeats += 1
+                continue
             state = passage_state(
                 thesis, passage_text=row["text"], speaker=row["speaker"], source_type=row["source_type"],
                 doc_date=row["doc_date"], title=row["title"],
@@ -66,7 +99,7 @@ def plan_judging(store: Store, theses: Mapping[str, Thesis], model: str) -> Judg
                 failed[row["passage_id"]] = existing["error"] or "failed"
             pending.append(PendingItem(row["passage_id"], ticker, version, key, request))
     estimated = sum(estimate_tokens_for(item.request) for item in pending)
-    return JudgePlan(pending=pending, judged=judged, failed=failed, estimated_tokens=estimated)
+    return JudgePlan(pending=pending, judged=judged, failed=failed, estimated_tokens=estimated, repeats=repeats)
 
 
 class RateLimiter:

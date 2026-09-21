@@ -89,7 +89,10 @@ def cmd_ingest(ctx: Context, args: argparse.Namespace) -> None:
 
 def cmd_judge(ctx: Context, args: argparse.Namespace) -> None:
     plan = plan_judging(ctx.store, ctx.theses, ctx.config.model)
-    ctx.say(f"judge: {len(plan.pending)} passages to judge, about {plan.estimated_tokens:,} tokens (${plan.estimated_cost:.2f})")
+    ctx.say(
+        f"judge: {len(plan.pending)} passages to judge, about {plan.estimated_tokens:,} tokens "
+        f"(${plan.estimated_cost:.2f}); {plan.repeats} repeated passages skipped"
+    )
     if args.dry_run or not plan.pending:
         return
     if plan.estimated_cost > ctx.config.max_cost_per_run and not args.yes:

@@ -151,3 +151,9 @@ def test_calibrate_without_labels(ws):
 
 def test_usage_errors_exit_1(ws):
     assert radar(ws, "frobnicate")[0] == 1
+
+
+def test_judge_reports_skipped_repeats(ws):
+    radar(ws, "ingest")
+    code, out, _ = radar(ws, "judge", "--dry-run")
+    assert code == 0 and "judge: 6 passages to judge" in out and "0 repeated passages skipped" in out
