@@ -3,235 +3,806 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>thesis-radar</title>
+<title>Thesis radar</title>
 <style>
-:root { --bg: #fbfaf7; --panel: #ffffff; --ink: #1c1b19; --muted: #6b6862; --line: #e4e1da;
-        --red: #b3261e; --green: #2e7d32; --amber: #b26a00; --accent: #3b5bdb; }
+:root {
+  color-scheme: light dark;
+  --ground: #f3f5f8; --surface: #ffffff; --ink: #1a2433; --muted: #5a6577; --faint: #8a94a3; --rule: #d9dfe7;
+  --accent: #2b5c9e; --against: #b3261e; --against-soft: #fbe9e7; --for: #1f7a4d; --for-soft: #e3f3ea;
+  --note: #8a6100; --note-soft: #fbf3dc; --bar: #1a2433; --bar-ink: #ffffff;
+  --sans: Seravek, "Gill Sans Nova", Ubuntu, Calibri, "DejaVu Sans", source-sans-pro, sans-serif;
+  --serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #161513; --panel: #1f1e1b; --ink: #ecebe7; --muted: #a09d96; --line: #34322e;
-          --red: #ef6b61; --green: #6fbf73; --amber: #e0a040; --accent: #8ea2ff; }
+  :root {
+    --ground: #0e141c; --surface: #151d28; --ink: #e4e9f0; --muted: #98a3b3; --faint: #6d7888; --rule: #263244;
+    --accent: #8db4f0; --against: #f2877f; --against-soft: #3a1f1f; --for: #5cc98e; --for-soft: #15301f;
+    --note: #e0b54d; --note-soft: #332a10; --bar: #e4e9f0; --bar-ink: #0e141c;
+  }
 }
 * { box-sizing: border-box; }
-body { margin: 0; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
-header { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-header h1 { font-size: 16px; margin: 0 12px 0 0; }
-.tab { border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-right: 4px; }
-.tab.active { border-color: var(--accent); color: var(--accent); }
-main { padding: 16px 20px; max-width: 1100px; }
-.banner { border: 1px solid var(--amber); color: var(--amber); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
-section { margin-bottom: 24px; }
-h2 { font-size: 15px; margin: 0 0 8px; }
-h3, h4 { font-size: 13px; margin: 12px 0 4px; color: var(--muted); }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
-.card.contra { border-left: 4px solid var(--red); }
-.quote { white-space: pre-wrap; margin: 0 0 6px; }
-.meta { color: var(--muted); font-size: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-.badge { border: 1px solid var(--line); border-radius: 10px; padding: 0 6px; }
-.badge.contra { color: var(--red); border-color: var(--red); }
-.badge.supp { color: var(--green); border-color: var(--green); }
-.filters { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-details summary { cursor: pointer; }
-.timeline { position: relative; height: 34px; border-bottom: 1px solid var(--line); margin: 4px 0 14px; }
-.mark { position: absolute; top: 50%; transform: translate(-50%, -50%); cursor: pointer; opacity: 0.85; }
-.mark.circle { border-radius: 50%; }
-.mark.square { border-radius: 2px; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 15px/1.5 var(--sans); }
+a { color: var(--accent); }
+input, select, button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 12px 32px;
+          background: var(--surface); border-bottom: 1px solid var(--rule); }
+.wordmark { font-weight: 700; font-size: 16px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 2px; }
+.tab { padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; }
+.tab:hover { color: var(--ink); background: var(--ground); }
+.tab[aria-current="page"] { color: var(--ink); background: var(--ground); box-shadow: inset 0 -2px 0 var(--accent); }
+.tab .count { color: var(--faint); font-weight: 400; }
+.generated { margin-left: auto; color: var(--faint); font-size: 13px; }
+
+main { max-width: 1120px; margin: 0 auto; padding: 28px 32px 140px; }
+h1 { font-size: 27px; line-height: 1.2; margin: 0; font-weight: 700; }
+h2 { font-size: 20px; line-height: 1.3; margin: 40px 0 4px; font-weight: 700; }
+h3 { font-size: 16px; margin: 24px 0 2px; font-weight: 600; }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 68ch; }
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; max-width: 72ch; }
+.empty { color: var(--muted); padding: 16px 0; margin: 0; }
+.banner { border: 1px solid var(--note); background: var(--note-soft); color: var(--ink); border-radius: 8px;
+          padding: 10px 14px; margin-bottom: 20px; }
+button.link { background: none; border: 0; padding: 4px 0; color: var(--accent); cursor: pointer; font-size: 14px; }
+button.link:hover { text-decoration: underline; }
+
+/* Tide chart: supporting evidence rises above the line, contradicting evidence falls below it. */
+.ledger { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; height: 48px; }
+.ledger.large { gap: 4px; height: 84px; }
+.ledger .col { display: grid; grid-template-rows: 1fr 1px 1fr; min-width: 0; }
+.ledger .up { align-self: end; background: var(--for); border-radius: 2px 2px 0 0; }
+.ledger .down { align-self: start; background: var(--against); border-radius: 0 0 2px 2px; }
+.ledger .axis { background: var(--faint); opacity: .5; }
+.month-axis { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 4px;
+              font-size: 12px; color: var(--faint); }
+.verdict { font-weight: 700; font-size: 14px; margin: 0; }
+.verdict::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+                   background: currentColor; margin-right: 6px; vertical-align: 1px; }
+.v-against { color: var(--against); } .v-for { color: var(--for); }
+.v-mixed { color: var(--note); } .v-quiet { color: var(--faint); }
+.thin { font-weight: 400; color: var(--muted); }
+
+/* Portfolio board */
+.how { margin: 18px 0 8px; color: var(--muted); max-width: 72ch; }
+.how summary { cursor: pointer; color: var(--accent); }
+.how ul { margin: 8px 0 0; padding-left: 20px; }
+.board { margin-top: 20px; }
+.board-head { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; font-size: 13px; color: var(--faint); padding-bottom: 6px; }
+.board-head .a-row { padding: 0; }
+.board-row { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; padding: 22px 0;
+             border-top: 1px solid var(--rule); }
+.board-id .ticker { font-size: 28px; font-weight: 700; letter-spacing: .02em; color: var(--ink); text-decoration: none; }
+.board-id .ticker:hover { color: var(--accent); }
+.board-id p { margin: 2px 0 0; color: var(--muted); }
+.counts { list-style: none; padding: 0; margin: 10px 0 0; font-size: 14px; color: var(--muted); }
+.counts strong { color: var(--ink); } .counts .hot strong { color: var(--against); } .counts .fresh strong { color: var(--accent); }
+.a-row { display: grid; grid-template-columns: minmax(0, 1fr) 216px 128px; gap: 18px; align-items: center; padding: 7px 0; }
+.a-row + .a-row { border-top: 1px dashed var(--rule); }
+.a-statement { margin: 2px 0 0; }
+.a-counts { color: var(--muted); font-size: 13px; text-align: right; }
+.board-note { margin-top: 24px; color: var(--muted); }
+
+/* Company page */
+.co-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.co-head .ticker { font-size: 15px; font-weight: 700; color: var(--muted); letter-spacing: .02em; }
+.pillars { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+.chip { border: 1px solid var(--rule); background: var(--surface); border-radius: 999px; padding: 4px 12px;
+        cursor: pointer; font-size: 14px; color: var(--muted); }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); box-shadow: inset 0 0 0 1px var(--accent); }
+.toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+           padding: 10px 0; margin-top: 14px; background: var(--ground); border-bottom: 1px solid var(--rule); }
+.toolbar input[type="search"] { flex: 1 1 240px; min-width: 0; }
+.toolbar input[type="search"], .toolbar select, .toolbar input[type="date"] {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 9px; min-height: 36px; }
+.toolbar label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+.score-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 340px); gap: 12px 28px;
+             padding: 16px 0; border-top: 1px solid var(--rule); }
+.statement { margin: 4px 0; font-size: 16px; }
+.score-counts { margin: 0; color: var(--muted); font-size: 13px; }
+.drawer { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+.drawer h3 { margin-top: 4px; }
+.group { margin: 18px 0 26px; }
+.group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.group-head .src { font-size: 15px; }
+.group-against { color: var(--against); font-size: 14px; }
+.pillar-desc { color: var(--muted); font-size: 13px; margin: 0 0 4px; }
+details.maybe { margin-top: 40px; }
+details.maybe summary { cursor: pointer; font-size: 20px; font-weight: 700; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--rule);
+        border-radius: 6px; padding: 12px 16px; margin: 10px 0; }
+.card.rel-against { border-left-color: var(--against); }
+.card.rel-for { border-left-color: var(--for); }
+.card.opinion { border-left-style: dashed; border-left-color: var(--note); }
+.card-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; font-size: 13px; color: var(--muted); }
+.src { font-weight: 700; color: var(--ink); }
+.fresh-tag { color: var(--accent); font-weight: 600; }
+.flag { margin: 6px 0 0; font-size: 13px; color: var(--note); }
+.quote { font-family: var(--serif); font-size: 16px; line-height: 1.6; margin: 8px 0 4px; max-width: 74ch;
+         white-space: pre-wrap; overflow-wrap: anywhere; }
+.quote.table { font-size: 14px; color: var(--muted); }
+.quote.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+.quote.table.clamp { -webkit-line-clamp: 3; }
+.card-facts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 6px;
+              font-size: 13px; color: var(--muted); }
+.rel { font-weight: 600; padding: 1px 9px; border-radius: 999px; }
+.rel.against { color: var(--against); background: var(--against-soft); }
+.rel.for { color: var(--for); background: var(--for-soft); }
+.stance-neg { color: var(--against); } .stance-pos { color: var(--for); }
+.dots { display: inline-flex; gap: 3px; align-items: center; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--rule); }
+.dots i.on { background: var(--ink); }
+.absorb { margin-left: auto; display: inline-flex; font-size: 13px; gap: 6px; align-items: center; cursor: pointer; color: var(--ink); }
+
+/* Stance timeline */
+.strip-label { font-size: 13px; color: var(--muted); margin-top: 10px; }
+.strip { position: relative; height: 30px; border-bottom: 1px solid var(--rule); }
+.mark { position: absolute; top: 50%; transform: translate(-50%, -50%); border: 0; padding: 0; cursor: pointer; opacity: .85; }
+.mark.circle { border-radius: 50%; } .mark.square { border-radius: 2px; }
 .mark.diamond { transform: translate(-50%, -50%) rotate(45deg); }
-code { background: var(--line); padding: 1px 4px; border-radius: 4px; }
-button.copy { margin-left: 8px; }
+.ticks { position: relative; height: 18px; font-size: 12px; color: var(--faint); }
+.ticks span { position: absolute; transform: translateX(-50%); }
+
+/* Unsorted */
+.command { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+code { font-family: var(--mono); font-size: 13px; background: var(--ground); border: 1px solid var(--rule);
+       border-radius: 4px; padding: 2px 6px; overflow-wrap: anywhere; }
+.copy { border: 1px solid var(--rule); background: var(--surface); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+
+.keys { max-width: 1120px; margin: 0 auto; padding: 0 32px 24px; color: var(--faint); font-size: 13px; }
+.absorb-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 10;
+              display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; max-width: calc(100% - 32px);
+              background: var(--bar); color: var(--bar-ink); border-radius: 10px; padding: 10px 14px;
+              box-shadow: 0 8px 28px rgba(10, 20, 35, .28); }
+.absorb-bar code { background: transparent; border-color: color-mix(in srgb, var(--bar-ink) 30%, transparent);
+                   color: var(--bar-ink); white-space: nowrap; overflow-x: auto; max-width: 52vw; }
+.absorb-bar button { background: transparent; color: var(--bar-ink); border: 1px solid color-mix(in srgb, var(--bar-ink) 40%, transparent);
+                     border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+
+@media (max-width: 760px) {
+  .topbar { padding: 10px 16px; }
+  .generated { margin-left: 0; width: 100%; }
+  main { padding: 20px 16px 160px; }
+  .keys { padding: 0 16px 24px; }
+  h1 { font-size: 24px; }
+  .board-head { display: none; }
+  .board-row { grid-template-columns: 1fr; gap: 10px; }
+  .counts { display: flex; flex-wrap: wrap; gap: 0 14px; }
+  .a-row { grid-template-columns: 1fr; gap: 6px; }
+  .a-counts { text-align: left; }
+  .score-row { grid-template-columns: 1fr; }
+  .toolbar { position: static; }
+  .drawer { grid-template-columns: 1fr; }
+  .absorb-bar code { max-width: 100%; }
+}
 </style>
 </head>
 <body>
-<header><h1>thesis-radar</h1><nav id="tabs"></nav><span id="generated" class="meta"></span></header>
+<header class="topbar">
+  <span class="wordmark">Thesis radar</span>
+  <nav id="tabs" class="tabs" aria-label="Views"></nav>
+  <span id="generated" class="generated"></span>
+</header>
 <main id="app"></main>
+<footer class="keys">Keys: / searches, j and k move between passages, x ticks absorb on the current passage.</footer>
+<div id="absorb-bar" class="absorb-bar" hidden></div>
 <script id="radar-data" type="application/json">__RADAR_DATA__</script>
 <script>
 "use strict";
 const data = JSON.parse(document.getElementById("radar-data").textContent);
 const app = document.getElementById("app");
-const absorbIds = new Set();
-const filters = { source: "", evidence: "", from: "", to: "" };
+const DAY = 86400000;
+const WINDOW_DAYS = 182;
+const GENERATED = Date.parse(data.generated_at);
+const SOURCE_NAMES = {
+  filing: "Filing", earnings_transcript: "Earnings call", sell_side: "Sell-side", expert_call: "Expert call",
+  ai_research: "AI research", own_note: "Your note", news: "News", other: "Other",
+};
+const EVIDENCE_NAMES = {
+  reported_result: "Reported result", guidance: "Guidance", management_commentary: "Management commentary",
+  channel_or_customer_data: "Channel data", expert_opinion: "Expert opinion", analyst_opinion: "Analyst opinion",
+  speculation: "Speculation",
+};
 const SHAPES = { filing: "square", earnings_transcript: "circle", sell_side: "diamond", expert_call: "circle",
                  ai_research: "square", own_note: "diamond", news: "square", other: "circle" };
-let active = data.companies.length ? data.companies[0].ticker : "__unsorted__";
+const dateFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const monthFormat = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" });
+const monthYearFormat = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+const builtFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+const filters = { q: "", source: "", evidence: "", from: "", to: "", sinceLast: false, pillar: "" };
+const expanded = new Set();
+const absorbIds = new Set();
+let view = viewFromHash();
+let selectedMark = null;
 
 function el(tag, attrs, ...children) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(attrs || {})) {
+    if (value === null || value === undefined || value === false) continue;
     if (key === "class") node.className = value;
     else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
-    else node.setAttribute(key, value);
+    else node.setAttribute(key, value === true ? "" : value);
   }
   for (const child of children) {
-    if (child === null || child === undefined) continue;
+    if (child === null || child === undefined || child === false) continue;
     node.append(child instanceof Node ? child : document.createTextNode(String(child)));
   }
   return node;
 }
 
-function fmt(value) { return typeof value === "number" ? value.toFixed(2) : "-"; }
-function stanceArrow(stance) { return stance < 1.5 ? "↓" : stance > 2.5 ? "↑" : "→"; }
-function materialityBar(value) {
-  const full = Math.max(0, Math.min(3, Math.round(value)));
-  return "▮".repeat(full) + "▯".repeat(3 - full);
-}
+function fmtDate(iso) { return iso ? dateFormat.format(Date.parse(iso)) : "Undated"; }
+function humanize(id) { const text = id.replace(/_/g, " "); return text.charAt(0).toUpperCase() + text.slice(1); }
+function plural(n, one, many) { return n + " " + (n === 1 ? one : (many || one + "s")); }
+function sourceLabel(p) { return p.form || SOURCE_NAMES[p.source_type] || "Document"; }
+const SEC_WRAPPER = /^EX-\d+(\.\d+)?\s+\d+\s+\S+\.html?\s+EX-\d+(\.\d+)?\s*/;
+function displayText(p) { return p.text.replace(SEC_WRAPPER, ""); }
+function isTable(p) { const text = displayText(p); return (text.match(/\d/g) || []).length > text.length * 0.165; }
+function isOpinion(p) { return p.source_type === "own_note" || p.evidence === "speculation"; }
 function byNewest(a, b) { return (b.date || "").localeCompare(a.date || "") || b.id - a.id; }
-function passesFilters(p) {
-  if (filters.source && p.source_type !== filters.source) return false;
+function companyByTicker(ticker) { return data.companies.find((c) => c.ticker === ticker); }
+function statementOf(company, id) { const a = company.assumptions.find((x) => x.id === id); return a ? a.statement : id; }
+
+function viewFromHash() {
+  const key = decodeURIComponent(location.hash.slice(1));
+  if (key === "unsorted") return "unsorted";
+  return companyByTicker(key) ? key : "portfolio";
+}
+
+function matches(p) {
+  if (filters.sinceLast && !p.arrived_new) return false;
+  if (filters.source && sourceLabel(p) !== filters.source) return false;
   if (filters.evidence && p.evidence !== filters.evidence) return false;
   if (filters.from && (!p.date || p.date < filters.from)) return false;
   if (filters.to && (!p.date || p.date > filters.to)) return false;
+  if (filters.q) {
+    const haystack = (p.text + " " + p.title + " " + (p.speaker || "")).toLowerCase();
+    if (!haystack.includes(filters.q)) return false;
+  }
   return true;
 }
+function filtersActive() {
+  return Boolean(filters.q || filters.source || filters.evidence || filters.from || filters.to || filters.sinceLast);
+}
+
+function toggle(key) {
+  if (expanded.has(key)) expanded.delete(key); else expanded.add(key);
+  refresh();
+}
+
+/* Evidence per assumption, by month and by window */
+
+function lastMonths(count) {
+  const now = new Date(GENERATED);
+  const months = [];
+  for (let back = count - 1; back >= 0; back--) {
+    const time = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1);
+    const d = new Date(time);
+    months.push({ key: d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0"), time });
+  }
+  return months;
+}
+const MONTHS = lastMonths(12);
+
+function assumptionStats(company, id) {
+  const cutoff = GENERATED - WINDOW_DAYS * DAY;
+  const floor = GENERATED - 2 * WINDOW_DAYS * DAY;
+  const stats = { recentFor: 0, recentAgainst: 0, earlierFor: 0, earlierAgainst: 0, totalFor: 0, totalAgainst: 0,
+                  byMonth: new Map() };
+  for (const p of company.passages) {
+    const isFor = p.supports.includes(id);
+    const isAgainst = p.contradicts.includes(id);
+    if (!isFor && !isAgainst) continue;
+    if (isFor) stats.totalFor++; else stats.totalAgainst++;
+    if (!p.date) continue;
+    const time = Date.parse(p.date);
+    if (time >= cutoff) { if (isFor) stats.recentFor++; else stats.recentAgainst++; }
+    else if (time >= floor) { if (isFor) stats.earlierFor++; else stats.earlierAgainst++; }
+    const key = p.date.slice(0, 7);
+    const bucket = stats.byMonth.get(key) || { for: 0, against: 0 };
+    if (isFor) bucket.for++; else bucket.against++;
+    stats.byMonth.set(key, bucket);
+  }
+  stats.verdict = verdict(stats);
+  return stats;
+}
+
+function verdict(s) {
+  const recent = s.recentFor + s.recentAgainst;
+  const earlier = s.earlierFor + s.earlierAgainst;
+  if (!recent) return { key: "quiet", text: earlier ? "No evidence in the last six months" : "No evidence yet" };
+  const share = s.recentFor / recent;
+  const before = earlier ? s.earlierFor / earlier : null;
+  if (before !== null && before <= 0.35 && share >= 0.6) return { key: "for", text: "Turning toward support" };
+  if (before !== null && before >= 0.65 && share <= 0.4) return { key: "against", text: "Turning against" };
+  if (share >= 0.65) return { key: "for", text: "Supported" };
+  if (share <= 0.35) return { key: "against", text: "Contradicted" };
+  return { key: "mixed", text: "Mixed" };
+}
+
+function verdictLine(s) {
+  const recent = s.recentFor + s.recentAgainst;
+  return el("p", { class: "verdict v-" + s.verdict.key }, s.verdict.text,
+    recent > 0 && recent < 4 ? el("span", { class: "thin" }, ", based on " + plural(recent, "passage")) : null);
+}
+
+function monthlyMax(statsList) {
+  let max = 1;
+  for (const stats of statsList) {
+    for (const month of MONTHS) {
+      const bucket = stats.byMonth.get(month.key);
+      if (bucket) max = Math.max(max, bucket.for, bucket.against);
+    }
+  }
+  return max;
+}
+
+function ledger(stats, max, large) {
+  const box = el("div", { class: large ? "ledger large" : "ledger", role: "img",
+    "aria-label": "Evidence by month over the last year: " + stats.totalFor + " for, " + stats.totalAgainst + " against" });
+  for (const month of MONTHS) {
+    const bucket = stats.byMonth.get(month.key) || { for: 0, against: 0 };
+    const up = el("span", { class: "up" });
+    const down = el("span", { class: "down" });
+    up.style.height = (bucket.for / max) * 100 + "%";
+    down.style.height = (bucket.against / max) * 100 + "%";
+    box.append(el("span", { class: "col",
+      title: monthYearFormat.format(month.time) + ": " + bucket.for + " for, " + bucket.against + " against" },
+      up, el("span", { class: "axis" }), down));
+  }
+  return box;
+}
+
+function monthAxis() {
+  return el("div", { class: "month-axis", "aria-hidden": "true" },
+    ...MONTHS.map((month, index) => el("span", {}, index % 3 === 0 ? monthFormat.format(month.time) : "")));
+}
+
+/* Cards */
+
+function sourceLink(p) {
+  if (typeof p.link !== "string" || !p.link.startsWith("file:")) return null;
+  const label = p.link.includes("#page=") ? "Page " + p.page : "Open file";
+  return el("a", { href: p.link, target: "_blank", rel: "noopener" }, label);
+}
+
+function stanceTag(p) {
+  const word = p.stance < 1.5 ? "Negative" : p.stance > 2.5 ? "Positive" : "Neutral";
+  const cls = p.stance < 1.5 ? "stance-neg" : p.stance > 2.5 ? "stance-pos" : "";
+  return el("span", { class: cls, title: "Good or bad for the company, on a 0 to 4 scale: " + p.stance.toFixed(1) },
+    word + " for the company");
+}
+
+function materialityDots(p) {
+  const filled = Math.max(0, Math.min(3, Math.round(p.materiality)));
+  const dots = el("span", { class: "dots", role: "img",
+    "aria-label": "Materiality " + p.materiality.toFixed(1) + " of 3",
+    title: "How much this matters for the thesis, 0 to 3: " + p.materiality.toFixed(1) });
+  for (let i = 0; i < 3; i++) dots.append(el("i", { class: i < filled ? "on" : "" }));
+  return el("span", { class: "dots-wrap" }, "Materiality ", dots);
+}
+
+function absorbToggle(p) {
+  const box = el("input", { type: "checkbox", onchange: (event) => {
+    if (event.target.checked) absorbIds.add(p.id); else absorbIds.delete(p.id);
+    updateAbsorbBar();
+  } });
+  box.checked = absorbIds.has(p.id);
+  return el("label", { class: "absorb", title: "Collect this passage for radar absorb" }, box, "Absorb");
+}
+
+function card(p, company, options = {}) {
+  const grouped = Boolean(options.grouped);
+  const focus = options.focus;
+  const key = "card:" + p.id;
+  const open = expanded.has(key);
+  const table = isTable(p);
+  const long = displayText(p).length > 420;
+  // Inside an assumption's drawer the edge colour answers "for or against this assumption"; elsewhere, "against any".
+  const relation = focus
+    ? (p.contradicts.includes(focus) ? "against" : p.supports.includes(focus) ? "for" : "none")
+    : (p.contradicts.length ? "against" : p.supports.length ? "for" : "none");
+  const classes = ["card", "rel-" + relation];
+  if (isOpinion(p)) classes.push("opinion");
+  let flag = null;
+  if (p.source_type === "own_note") flag = "Your own note. Read it as opinion, not evidence.";
+  else if (p.evidence === "speculation") flag = "Rated as speculation, not a reported fact.";
+  else if (table) flag = "Mostly figures. Tables lose their columns when extracted, so open the page to check the numbers.";
+  return el("article", { class: classes.join(" "), tabindex: "0", "data-key": key },
+    el("div", { class: "card-meta" },
+      grouped ? null : el("span", { class: "src", title: p.title }, sourceLabel(p)),
+      grouped ? null : el("time", { datetime: p.date || "" }, fmtDate(p.date)),
+      grouped || p.origin === "edgar" ? null : el("span", {}, p.title),
+      sourceLink(p),
+      p.arrived_new ? el("span", { class: "fresh-tag" }, "New since your last view") : null,
+      absorbToggle(p)),
+    flag ? el("p", { class: "flag" }, flag) : null,
+    el("blockquote", { class: "quote" + (table ? " table" : "") + ((long || table) && !open ? " clamp" : "") },
+      p.speaker ? p.speaker + ": " + displayText(p) : displayText(p)),
+    long || table ? el("button", { class: "link", "aria-expanded": String(open), "data-key": key + ":more",
+      onclick: () => toggle(key) }, open ? "Show less" : "Show the whole passage") : null,
+    el("div", { class: "card-facts" },
+      ...p.contradicts.map((id) => el("span", { class: "rel against", title: statementOf(company, id) }, "Against: " + humanize(id))),
+      ...p.supports.map((id) => el("span", { class: "rel for", title: statementOf(company, id) }, "Supports: " + humanize(id))),
+      stanceTag(p),
+      materialityDots(p),
+      el("span", { title: "The model's probability that this is not already in your known facts" },
+        "New to you " + Math.round(p.new_info * 100) + "%"),
+      el("span", {}, EVIDENCE_NAMES[p.evidence] || p.evidence)));
+}
+
+function cardList(items, company, key, limit, options = {}) {
+  const open = expanded.has(key);
+  const shown = open ? items : items.slice(0, limit);
+  const nodes = shown.map((p) => card(p, company, options));
+  if (items.length > limit) {
+    nodes.push(el("button", { class: "link", "aria-expanded": String(open), "data-key": key, onclick: () => toggle(key) },
+      open ? "Show fewer" : "Show " + (items.length - limit) + " more"));
+  }
+  return nodes;
+}
+
+/* Portfolio board */
+
+function howToRead() {
+  return el("details", { class: "how" },
+    el("summary", {}, "How to read this page"),
+    el("ul", {},
+      el("li", {}, "Every passage is quoted word for word from its source. Nothing is summarized or written by a model."),
+      el("li", {}, "A classification model grades each passage against your thesis: which pillar it concerns, whether it is new to you, how much it matters, and whether it supports or contradicts each assumption."),
+      el("li", {}, "The verdict for an assumption compares the last six months of evidence with the six months before, so a thesis that was losing ground and has turned shows as turning."),
+      el("li", {}, "Scores are not yet checked against your own judgment. Treat a passage as a reason to read the source, not as a signal.")));
+}
+
+function countsList(company) {
+  const contradictions = company.passages.filter((p) => p.in_contradictions).length;
+  const fresh = company.passages.filter((p) => p.in_whats_new).length;
+  const arrivals = company.passages.filter((p) => p.arrived_new).length;
+  return el("ul", { class: "counts num" },
+    el("li", { class: contradictions ? "hot" : "" }, el("strong", {}, String(contradictions)), contradictions === 1 ? " contradiction" : " contradictions"),
+    el("li", {}, el("strong", {}, String(fresh)), " new"),
+    data.previous_view ? el("li", { class: arrivals ? "fresh" : "" }, el("strong", {}, String(arrivals)), " since your last view") : null);
+}
+
+function renderPortfolio() {
+  const nodes = [
+    el("h1", {}, "Where your theses stand"),
+    el("p", { class: "lede" }, "Each bar is a month of evidence: green above the line supports an assumption, red below contradicts it. Open a company to read the passages behind it."),
+    howToRead(),
+  ];
+  if (!data.companies.length) {
+    nodes.push(el("p", { class: "empty" }, "No valid thesis files yet. Add one to thesis/ and run radar run."));
+    return nodes;
+  }
+  const board = el("div", { class: "board" },
+    el("div", { class: "board-head", "aria-hidden": "true" }, el("span", {}, "Company"),
+      el("div", { class: "a-row" }, el("span", {}, "Assumption and verdict"), el("span", {}, "Evidence by month, past year"),
+        el("span", { class: "a-counts" }, "Last six months"))));
+  for (const company of data.companies) {
+    const stats = company.assumptions.map((a) => assumptionStats(company, a.id));
+    const max = monthlyMax(stats);
+    const rows = company.assumptions.map((a, index) => {
+      const s = stats[index];
+      return el("div", { class: "a-row" },
+        el("div", {},
+          verdictLine(s),
+          el("p", { class: "a-statement" }, a.statement)),
+        ledger(s, max, false),
+        el("span", { class: "a-counts num", title: "Passages in the last six months" },
+          s.recentFor + " for, " + s.recentAgainst + " against"));
+    });
+    board.append(el("article", { class: "board-row" },
+      el("div", { class: "board-id" },
+        el("a", { class: "ticker", href: "#" + encodeURIComponent(company.ticker) }, company.ticker),
+        el("p", {}, company.company),
+        countsList(company)),
+      el("div", {}, ...(rows.length ? rows : [el("p", { class: "empty" }, "No assumptions in this thesis yet.")]))));
+  }
+  nodes.push(board);
+  if (data.unsorted.length) {
+    nodes.push(el("p", { class: "board-note" }, plural(data.unsorted.length, "document") + " could not be matched to a company. ",
+      el("a", { href: "#unsorted" }, "Sort them"), "."));
+  }
+  return nodes;
+}
+
+/* Company page */
+
+function renderCompany(company) {
+  const sources = [...new Set(company.passages.map(sourceLabel))].sort();
+  const evidence = [...new Set(company.passages.map((p) => p.evidence).filter(Boolean))].sort();
+  const search = el("input", { type: "search", id: "search", placeholder: "Search passages", "aria-label": "Search passages",
+    value: filters.q, oninput: (event) => { filters.q = event.target.value.trim().toLowerCase(); refresh(); } });
+  const pick = (key, label, options, names) => {
+    const node = el("select", { "aria-label": label, onchange: (event) => { filters[key] = event.target.value; refresh(); } },
+      el("option", { value: "" }, label), ...options.map((o) => el("option", { value: o }, names ? names[o] || o : o)));
+    node.value = filters[key];
+    return node;
+  };
+  const dateBox = (key, label) => {
+    const node = el("input", { type: "date", "aria-label": label, onchange: (event) => { filters[key] = event.target.value; refresh(); } });
+    node.value = filters[key];
+    return el("label", {}, label, node);
+  };
+  const since = el("input", { type: "checkbox", onchange: (event) => { filters.sinceLast = event.target.checked; refresh(); } });
+  since.checked = filters.sinceLast;
+  const clear = el("button", { class: "link", id: "clear-filters", hidden: !filtersActive(), onclick: () => {
+    Object.assign(filters, { q: "", source: "", evidence: "", from: "", to: "", sinceLast: false });
+    render();
+  } }, "Clear filters");
+
+  const chips = el("div", { class: "pillars", role: "group", "aria-label": "Pillars" },
+    ...[["", "All pillars"], ...Object.keys(company.pillars).map((p) => [p, humanize(p)])].map(([key, label]) => {
+      const count = company.passages.filter((p) => p.in_whats_new && (!key || p.pillar === key)).length;
+      return el("button", { class: "chip", "aria-pressed": String(filters.pillar === key), title: key ? company.pillars[key] : "",
+        onclick: () => { filters.pillar = key; render(); } }, label + " ", el("span", { class: "num" }, String(count)));
+    }));
+
+  return [
+    el("div", { class: "co-head" }, el("h1", {}, company.company), el("span", { class: "ticker" }, company.ticker)),
+    countsList(company),
+    chips,
+    el("div", { class: "toolbar" }, search, pick("source", "All sources", sources), pick("evidence", "All evidence", evidence, EVIDENCE_NAMES),
+      dateBox("from", "From"), dateBox("to", "To"),
+      data.previous_view ? el("label", {}, since, "Since last view") : null, clear),
+    el("div", { id: "lists" }, ...companyLists(company)),
+  ];
+}
+
+function companyLists(company) {
+  return [renderScorecard(company), ...renderContradictions(company), ...renderNew(company), renderMaybe(company), renderTimeline(company)];
+}
+
+function renderScorecard(company) {
+  const stats = company.assumptions.map((a) => assumptionStats(company, a.id));
+  const max = monthlyMax(stats);
+  const rows = company.assumptions.map((a, index) => {
+    const s = stats[index];
+    const key = "drawer:" + a.id;
+    const open = expanded.has(key);
+    return el("div", { class: "score-row" },
+      el("div", {},
+        verdictLine(s),
+        el("p", { class: "statement" }, a.statement),
+        el("p", { class: "score-counts num" }, "Last six months: " + s.recentFor + " for, " + s.recentAgainst + " against. In total: " +
+          s.totalFor + " for, " + s.totalAgainst + " against."),
+        s.totalFor + s.totalAgainst ? el("button", { class: "link", "aria-expanded": String(open), "data-key": key, onclick: () => toggle(key) },
+          open ? "Hide the passages" : "Read the passages") : null),
+      el("div", {}, ledger(s, max, true), monthAxis()),
+      open ? drawer(company, a) : null);
+  });
+  return el("section", { id: "assumptions" },
+    el("h2", {}, "Assumptions"),
+    el("p", { class: "hint" }, "Green bars above the line are passages supporting the assumption, red bars below are passages contradicting it, one bar per month. The verdict compares the last six months with the six before."),
+    ...(rows.length ? rows : [el("p", { class: "empty" }, "This thesis has no assumptions yet. Add some to see evidence for and against them.")]));
+}
+
+function drawer(company, assumption) {
+  const side = (label, items, key) => el("div", {},
+    el("h3", {}, label + " (" + items.length + ")"),
+    ...(items.length ? cardList(items, company, key, 4, { focus: assumption.id }) : [el("p", { class: "empty" }, "None match.")]));
+  const against = company.passages.filter((p) => p.contradicts.includes(assumption.id) && matches(p)).sort(byNewest);
+  const support = company.passages.filter((p) => p.supports.includes(assumption.id) && matches(p)).sort(byNewest);
+  return el("div", { class: "drawer" },
+    side("Against", against, "drawer-against:" + assumption.id),
+    side("For", support, "drawer-for:" + assumption.id));
+}
+
+function renderContradictions(company) {
+  const items = company.passages.filter((p) => p.in_contradictions && matches(p)).sort(byNewest);
+  const groups = new Map();
+  for (const p of items) {
+    if (!groups.has(p.document_id)) groups.set(p.document_id, []);
+    groups.get(p.document_id).push(p);
+  }
+  const nodes = [el("h2", {}, "Contradictions ", el("span", { class: "num" }, "(" + items.length + ")")),
+    el("p", { class: "hint" }, "Passages that contradict an assumption, grouped by document, newest first. Filings often make one point in many places, so each document shows its two most material passages.")];
+  if (!items.length) {
+    nodes.push(el("p", { class: "empty" }, filtersActive() ? "No contradictions match these filters." : "Nothing contradicts your assumptions."));
+    return nodes;
+  }
+  for (const [documentId, passages] of groups) {
+    const counts = new Map();
+    for (const p of passages) for (const id of p.contradicts) counts.set(id, (counts.get(id) || 0) + 1);
+    const ranked = [...passages].sort((a, b) => b.materiality - a.materiality);
+    const first = ranked[0];
+    const against = [...counts].sort((a, b) => b[1] - a[1]).map(([id, n]) => humanize(id) + " (" + n + ")").join(", ");
+    nodes.push(el("div", { class: "group" },
+      el("div", { class: "group-head" },
+        el("span", { class: "src", title: first.title }, sourceLabel(first)),
+        el("span", {}, fmtDate(first.date)),
+        first.origin === "edgar" ? null : el("span", {}, first.title),
+        el("span", { class: "num" }, plural(passages.length, "passage")),
+        el("span", { class: "group-against" }, "Against " + against)),
+      ...cardList(ranked, company, "group:" + documentId, 2, { grouped: true })));
+  }
+  return nodes;
+}
+
+function renderNew(company) {
+  const items = company.passages.filter((p) => p.in_whats_new && matches(p) && (!filters.pillar || p.pillar === filters.pillar)).sort(byNewest);
+  const nodes = [el("h2", {}, "What's new ", el("span", { class: "num" }, "(" + items.length + ")")),
+    el("p", { class: "hint" }, "Passages the model rates as new to you and material, by pillar, newest first. Absorb the ones you have taken in so they stop showing here.")];
+  if (!items.length) {
+    nodes.push(el("p", { class: "empty" }, filtersActive() || filters.pillar ? "Nothing new matches these filters."
+      : "Nothing new passes your thresholds. Add documents to inbox/ or loosen whats_new in policy.yaml."));
+    return nodes;
+  }
+  for (const pillar of Object.keys(company.pillars)) {
+    const inPillar = items.filter((p) => p.pillar === pillar);
+    if (!inPillar.length) continue;
+    nodes.push(el("h3", {}, humanize(pillar) + " ", el("span", { class: "num" }, "(" + inPillar.length + ")")),
+      el("p", { class: "pillar-desc" }, company.pillars[pillar]),
+      ...cardList(inPillar, company, "new:" + pillar, 5));
+  }
+  return nodes;
+}
+
+function renderMaybe(company) {
+  const items = company.passages.filter((p) => p.in_maybe && matches(p) && (!filters.pillar || p.pillar === filters.pillar)).sort(byNewest);
+  const details = el("details", { class: "maybe", open: expanded.has("maybe"),
+    ontoggle: (event) => { if (event.target.open) expanded.add("maybe"); else expanded.delete("maybe"); } },
+    el("summary", {}, "Maybe new (" + items.length + ")"),
+    el("p", { class: "hint" }, "Material passages where the model is unsure whether you already know this."),
+    ...(items.length ? cardList(items, company, "maybe-list", 10) : [el("p", { class: "empty" }, "None.")]));
+  return details;
+}
+
+function renderTimeline(company) {
+  const start = MONTHS[0].time;
+  const span = GENERATED - start || 1;
+  const dated = company.passages.filter((p) => p.pillar && p.date && Date.parse(p.date) >= start && matches(p));
+  const selected = dated.find((p) => p.id === selectedMark);
+  const strips = Object.keys(company.pillars).map((pillar) => {
+    const strip = el("div", { class: "strip" });
+    for (const p of dated.filter((q) => q.pillar === pillar)) {
+      const size = 6 + 4 * Math.max(0, Math.min(3, p.materiality));
+      const mark = el("button", { class: "mark " + (SHAPES[p.source_type] || "circle"),
+        "aria-label": fmtDate(p.date) + ", " + sourceLabel(p) + ", " + (p.stance < 1.5 ? "negative" : p.stance > 2.5 ? "positive" : "neutral"),
+        title: fmtDate(p.date) + ": " + sourceLabel(p), "data-key": "mark:" + p.id,
+        onclick: () => { selectedMark = selectedMark === p.id ? null : p.id; refresh(); } });
+      mark.style.left = ((Date.parse(p.date) - start) / span) * 100 + "%";
+      mark.style.width = size + "px";
+      mark.style.height = size + "px";
+      mark.style.background = p.stance < 1.5 ? "var(--against)" : p.stance > 2.5 ? "var(--for)" : "var(--faint)";
+      strip.append(mark);
+    }
+    return el("div", {}, el("div", { class: "strip-label" }, humanize(pillar)), strip);
+  });
+  const ticks = el("div", { class: "ticks", "aria-hidden": "true" });
+  MONTHS.forEach((month, index) => {
+    if (index % 3 !== 0) return;
+    const tick = el("span", {}, monthYearFormat.format(month.time));
+    tick.style.left = ((month.time - start) / span) * 100 + "%";
+    ticks.append(tick);
+  });
+  return el("section", { id: "stance" },
+    el("h2", {}, "Stance over the last year"),
+    el("p", { class: "hint" }, "One mark per passage. Red is bad news for the company, green is good, grey is neutral. Bigger marks matter more; squares are filings, circles are calls, diamonds are reports and notes. Select a mark to read it."),
+    ...strips, ticks,
+    selected ? card(selected, company) : null);
+}
+
+/* Unsorted */
 
 function copyButton(text) {
-  return el("button", { class: "copy", onclick: () => {
-    navigator.clipboard.writeText(text).catch(() => window.prompt("Copy this command:", text));
+  return el("button", { class: "copy", onclick: (event) => {
+    const button = event.currentTarget;
+    const done = () => { button.textContent = "Copied"; setTimeout(() => { button.textContent = "Copy"; }, 1500); };
+    navigator.clipboard.writeText(text).then(done, () => window.prompt("Copy this command:", text));
   } }, "Copy");
 }
 
-const absorbBar = el("div", { class: "meta" });
-function updateAbsorb() {
-  const ids = [...absorbIds].sort((a, b) => a - b);
-  const command = "radar absorb " + ids.join(" ");
-  absorbBar.replaceChildren(ids.length
-    ? el("span", {}, el("code", {}, command), copyButton(command))
-    : el("span", {}, "Tick “absorb” on cards you have taken in, then copy the command."));
-}
-
-function card(p, contra) {
-  const link = typeof p.link === "string" && p.link.startsWith("file:")
-    ? el("a", { href: p.link, target: "_blank", rel: "noopener" }, "p." + p.page + " ↗") : null;
-  const checkbox = el("input", { type: "checkbox", onchange: (event) => {
-    if (event.target.checked) absorbIds.add(p.id); else absorbIds.delete(p.id);
-    updateAbsorb();
-  } });
-  checkbox.checked = absorbIds.has(p.id);
-  const badges = [
-    ...p.contradicts.map((id) => el("span", { class: "badge contra" }, "contradicts " + id)),
-    ...p.supports.map((id) => el("span", { class: "badge supp" }, "supports " + id)),
-  ];
-  return el("div", { class: contra ? "card contra" : "card" },
-    el("p", { class: "quote" }, p.speaker ? p.speaker + ": " + p.text : p.text),
-    el("div", { class: "meta" },
-      p.arrived_new ? el("span", { class: "dot", title: "arrived since your last view" }) : null,
-      el("span", {}, (p.source_type || "unknown") + " · " + (p.date || "undated") + " · " + p.title),
-      link,
-      el("span", { title: "materiality " + fmt(p.materiality) }, "materiality " + materialityBar(p.materiality)),
-      el("span", { title: "stance " + fmt(p.stance) }, "stance " + stanceArrow(p.stance)),
-      el("span", {}, p.evidence),
-      el("span", { title: "probability this is new to you" }, "new " + fmt(p.new_info)),
-      ...badges,
-      el("label", {}, checkbox, " absorb")));
-}
-
-function select(key, options) {
-  const node = el("select", { onchange: (event) => { filters[key] = event.target.value; render(); } },
-    el("option", { value: "" }, "all " + key), ...options.map((o) => el("option", { value: o }, o)));
-  node.value = filters[key];
-  return node;
-}
-
-function dateInput(key) {
-  const node = el("input", { type: "date", onchange: (event) => { filters[key] = event.target.value; render(); } });
-  node.value = filters[key];
-  return node;
-}
-
-function renderAssumptions(company) {
-  const rows = company.assumptions.map((a) => {
-    const against = company.passages.filter((p) => p.contradicts.includes(a.id)).sort(byNewest);
-    const support = company.passages.filter((p) => p.supports.includes(a.id)).sort(byNewest);
-    return el("details", {},
-      el("summary", {}, a.id + " — for " + support.length + " · against " + against.length + " — " + a.statement),
-      el("h4", {}, "Against"), ...against.map((p) => card(p, true)),
-      el("h4", {}, "For"), ...support.map((p) => card(p, false)));
-  });
-  return el("section", {}, el("h2", {}, "Assumptions"),
-    ...(rows.length ? rows : [el("p", { class: "meta" }, "No assumptions in this thesis.")]));
-}
-
-function renderTimelines(company) {
-  const dated = company.passages.filter((p) => p.pillar && p.date);
-  const times = dated.map((p) => Date.parse(p.date));
-  const min = Math.min(...times);
-  const span = Math.max(...times) - min || 1;
-  const detail = el("div", {});
-  const strips = Object.keys(company.pillars).map((pillar) => {
-    const strip = el("div", { class: "timeline", title: pillar });
-    for (const p of dated.filter((q) => q.pillar === pillar)) {
-      const size = 6 + 4 * Math.max(0, Math.min(3, p.materiality));
-      const mark = el("span", {
-        class: "mark " + (SHAPES[p.source_type] || "circle"),
-        title: p.date + " · " + p.source_type + " · " + p.title,
-        onclick: () => detail.replaceChildren(card(p, p.in_contradictions)),
-      });
-      mark.style.left = ((Date.parse(p.date) - min) / span) * 100 + "%";
-      mark.style.width = size + "px";
-      mark.style.height = size + "px";
-      mark.style.background = p.stance < 1.5 ? "var(--red)" : p.stance > 2.5 ? "var(--green)" : "var(--muted)";
-      strip.append(mark);
-    }
-    return el("div", {}, el("div", { class: "meta" }, pillar), strip);
-  });
-  return el("section", {}, el("h2", {}, "Pillar timelines"), ...strips, detail);
-}
-
-function renderCompany(company) {
-  const contradictions = company.passages.filter((p) => p.in_contradictions).sort(byNewest);
-  const fresh = company.passages.filter((p) => p.in_whats_new && passesFilters(p)).sort(byNewest);
-  const maybe = company.passages.filter((p) => p.in_maybe && passesFilters(p)).sort(byNewest);
-  const sources = [...new Set(company.passages.map((p) => p.source_type).filter(Boolean))].sort();
-  const evidence = [...new Set(company.passages.map((p) => p.evidence).filter(Boolean))].sort();
-  const groups = [];
-  for (const pillar of Object.keys(company.pillars)) {
-    const items = fresh.filter((p) => p.pillar === pillar);
-    if (items.length) groups.push(el("h3", {}, pillar), ...items.map((p) => card(p, false)));
-  }
-  return [
-    el("section", {}, el("h2", {}, "⚠ Contradictions (" + contradictions.length + ")"),
-      ...contradictions.map((p) => card(p, true))),
-    el("section", {}, el("h2", {}, "What's new (" + fresh.length + ")"),
-      el("div", { class: "filters" }, select("source", sources), select("evidence", evidence),
-        el("label", {}, "from ", dateInput("from")), el("label", {}, "to ", dateInput("to"))),
-      ...groups),
-    el("section", {}, el("details", {}, el("summary", {}, "Maybe (" + maybe.length + ")"),
-      ...maybe.map((p) => card(p, false)))),
-    renderAssumptions(company),
-    renderTimelines(company),
-  ];
-}
-
 function renderUnsorted() {
-  return [el("section", {}, el("h2", {}, "Unsorted (" + data.unsorted.length + ")"),
-    ...data.unsorted.map((d) => el("div", { class: "card" },
+  const nodes = [el("h1", {}, "Unsorted documents"),
+    el("p", { class: "lede" }, "These could not be matched to a company with enough confidence. Run the command for each one with the right ticker, source, and date, then run radar run.")];
+  if (!data.unsorted.length) nodes.push(el("p", { class: "empty" }, "Nothing to sort."));
+  for (const d of data.unsorted) {
+    nodes.push(el("article", { class: "card" },
       el("p", { class: "quote" }, d.title),
-      el("div", { class: "meta" }, el("span", {}, d.reason || ""), el("span", {}, d.path)),
-      el("div", { class: "meta" }, el("code", {}, d.command), copyButton(d.command)))))];
+      el("div", { class: "card-meta" }, el("span", {}, d.reason ? d.reason.charAt(0).toUpperCase() + d.reason.slice(1) : "Needs sorting"),
+        el("span", {}, d.path)),
+      el("div", { class: "command" }, el("code", {}, d.command), copyButton(d.command))));
+  }
+  return nodes;
 }
+
+/* Shell */
 
 function banner() {
   const pending = data.pending;
   if (!pending.unjudged && !pending.failed) return null;
-  return el("div", { class: "banner" },
-    pending.unjudged + " passages not yet judged, " + pending.failed + " failed. Run radar judge to retry.");
+  const parts = [];
+  if (pending.unjudged) parts.push(plural(pending.unjudged, "passage") + " not graded yet");
+  if (pending.failed) parts.push(pending.failed + " failed");
+  return el("div", { class: "banner", role: "status" }, parts.join(", ") + ". Run radar judge to grade them.");
 }
 
 function renderTabs() {
-  const items = data.companies.map((c) => [c.ticker, c.ticker]);
-  items.push(["__unsorted__", "Unsorted (" + data.unsorted.length + ")"]);
-  document.getElementById("tabs").replaceChildren(...items.map(([key, label]) =>
-    el("button", { class: key === active ? "tab active" : "tab", onclick: () => { active = key; render(); } }, label)));
+  const items = [["portfolio", "Portfolio", null], ...data.companies.map((c) => [c.ticker, c.ticker, null]),
+    ["unsorted", "Unsorted", data.unsorted.length]];
+  document.getElementById("tabs").replaceChildren(...items.map(([key, label, count]) =>
+    el("a", { class: "tab", href: "#" + encodeURIComponent(key), "aria-current": key === view ? "page" : null },
+      label, count ? el("span", { class: "count" }, " " + count) : null)));
+}
+
+function updateAbsorbBar() {
+  const bar = document.getElementById("absorb-bar");
+  const ids = [...absorbIds].sort((a, b) => a - b);
+  if (!ids.length) { bar.hidden = true; bar.replaceChildren(); return; }
+  const command = "radar absorb " + ids.join(" ");
+  bar.hidden = false;
+  bar.replaceChildren(
+    el("span", {}, plural(ids.length, "passage") + " to absorb"),
+    el("code", {}, command),
+    copyButton(command),
+    el("button", { onclick: () => { absorbIds.clear(); refresh(); updateAbsorbBar(); } }, "Clear"));
 }
 
 function render() {
   renderTabs();
-  document.getElementById("generated").textContent = "generated " + data.generated_at;
-  const company = data.companies.find((c) => c.ticker === active);
-  const body = company ? renderCompany(company) : renderUnsorted();
-  app.replaceChildren(...[banner(), absorbBar, ...body].filter(Boolean));
-  updateAbsorb();
+  document.getElementById("generated").textContent = "Built " + builtFormat.format(GENERATED);
+  const company = companyByTicker(view);
+  const body = view === "unsorted" ? renderUnsorted() : company ? renderCompany(company) : renderPortfolio();
+  app.replaceChildren(...[banner(), ...body].filter(Boolean));
+  updateAbsorbBar();
 }
+
+function refresh() {
+  const company = companyByTicker(view);
+  const lists = document.getElementById("lists");
+  if (!company || !lists) { render(); return; }
+  const focusKey = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.key : null;
+  lists.replaceChildren(...companyLists(company));
+  const clear = document.getElementById("clear-filters");
+  if (clear) clear.hidden = !filtersActive();
+  if (focusKey) {
+    const target = [...document.querySelectorAll("[data-key]")].find((node) => node.dataset.key === focusKey);
+    if (target) target.focus({ preventScroll: true });
+  }
+}
+
+function moveFocus(step) {
+  const cards = [...document.querySelectorAll(".card[tabindex]")];
+  if (!cards.length) return;
+  const current = document.activeElement ? document.activeElement.closest(".card") : null;
+  let index = cards.indexOf(current);
+  index = index < 0 ? (step > 0 ? 0 : cards.length - 1) : Math.max(0, Math.min(cards.length - 1, index + step));
+  cards[index].focus();
+  cards[index].scrollIntoView({ block: "nearest" });
+}
+
+document.addEventListener("keydown", (event) => {
+  const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(event.target.tagName) && event.target.type !== "checkbox";
+  if (typing) { if (event.key === "Escape") event.target.blur(); return; }
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (event.key === "/") {
+    const search = document.getElementById("search");
+    if (search) { event.preventDefault(); search.focus(); }
+  } else if (event.key === "j" || event.key === "k") {
+    event.preventDefault();
+    moveFocus(event.key === "j" ? 1 : -1);
+  } else if (event.key === "x") {
+    const current = document.activeElement ? document.activeElement.closest(".card") : null;
+    const box = current ? current.querySelector(".absorb input") : null;
+    if (box) box.click();
+  }
+});
+
+window.addEventListener("hashchange", () => {
+  view = viewFromHash();
+  filters.pillar = "";
+  selectedMark = null;
+  render();
+  window.scrollTo(0, 0);
+});
 
 render();
 </script>

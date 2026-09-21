@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS fetch_state (
 
 _PASSAGE_COLUMNS = """
     p.id AS passage_id, p.document_id, p.seq, p.page, p.char_start, p.char_end, p.speaker, p.text,
-    d.ticker, d.title, d.source_type, d.doc_date, d.path, d.ingested_at
+    d.ticker, d.title, d.source_type, d.doc_date, d.path, d.ingested_at, d.origin
 """
 
 

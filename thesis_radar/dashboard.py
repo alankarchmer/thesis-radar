@@ -46,6 +46,8 @@ def build_payload(
                     "page": row["page"],
                     "speaker": row["speaker"],
                     "title": row["title"],
+                    "origin": row["origin"],
+                    "form": _filing_form(row["origin"], row["title"]),
                     "date": row["doc_date"],
                     "source_type": row["source_type"],
                     "link": _link(ws, row["path"], row["page"]),
@@ -96,6 +98,12 @@ def build_payload(
         "unsorted": unsorted,
         "pending": {"unjudged": len(plan.pending) - len(plan.failed), "failed": len(plan.failed)},
     }
+
+
+def _filing_form(origin: str, title: str) -> str | None:
+    """The SEC form of an EDGAR document; store_filing titles them "{ticker} {form} {date} {file name}"."""
+    parts = title.split(" ")
+    return parts[1] if origin == "edgar" and len(parts) >= 4 else None
 
 
 def _link(ws: Workspace, path: str, page: int) -> str:

@@ -144,3 +144,23 @@ def test_dashboard_script_parses(tmp_path):
     path = tmp_path / "dashboard.js"
     path.write_text(scripts[0], encoding="utf-8")
     subprocess.run(["node", "--check", str(path)], check=True)
+
+
+def test_passages_carry_their_origin_and_filing_form(env):
+    ws, store, theses = env
+    with store.transaction():
+        filing = store.insert_document(
+            NewDocument(text_sha256="d" * 64, path="archive/ACME/2026-08-01_filing_10-q-acme-10q.htm",
+                        title="ACME 10-Q 2026-08-01 acme-10q.htm", origin="edgar", status="sorted", ticker="ACME",
+                        source_type="filing", doc_date="2026-08-01")
+        )
+        store.insert_passages(filing, [PassageDraft(0, 1, 0, 10, "Dealer inventory fell in the quarter. [new]")])
+    for item in plan_judging(store, theses, MODEL).pending:
+        store.save_judgment(
+            JudgmentRecord(item.passage_id, item.cache_key, MODEL, "r", item.thesis_version, "judged",
+                           passage_answers(new_info=0.9, contradicts=0.05))
+        )
+    passages = {p["text"]: p for p in build(env)["companies"][0]["passages"]}
+    assert (passages["Dealer inventory fell in the quarter. [new]"]["origin"],
+            passages["Dealer inventory fell in the quarter. [new]"]["form"]) == ("edgar", "10-Q")
+    assert (passages["Inventory rose. [new]"]["origin"], passages["Inventory rose. [new]"]["form"]) == ("inbox", None)
