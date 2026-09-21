@@ -217,6 +217,7 @@ whats_new:
 contradictions:
   contradicts: {min: 0.7}         # P(contradicts) for any assumption
   materiality: {min: 1.0}
+  boilerplate: {max: 0.5}         # looser than whats_new: a missed contradiction costs more
 maybe:
   new_info: {between: [0.4, 0.6]} # plus the whats_new rules other than new_info
 ```
@@ -244,9 +245,11 @@ Files are never deleted.
 `radar fetch` maps tickers to CIKs from `https://www.sec.gov/files/company_tickers.json`,
 reads `https://data.sec.gov/submissions/CIK##########.json`, and downloads the
 primary document of each 10-K, 10-Q, and 8-K newer than `fetch_state.last_accession`.
-For an 8-K it also downloads every HTML file in the filing's `index.json` whose name
-contains `ex99` (case-insensitive), since earnings releases usually live in exhibit
-99. This is a file-name heuristic; missed exhibits can still be dropped in `inbox/`.
+For an 8-K it also downloads every HTML document that the filing's
+`-index-headers.html` declares as type `EX-99*`, since earnings releases usually live
+in exhibit 99. Timeouts, connection errors, 429 and 5xx responses are retried up to
+three times; a ticker that still fails is reported and skipped without advancing its
+`last_accession`, so the next fetch retries it.
 Requests carry a `User-Agent` with the contact email from `config.yaml` and stay
 under 10 requests per second. Metadata comes from EDGAR, not Jev.
 
@@ -400,3 +403,17 @@ Cost is estimated from token counts at $0.042 per million input tokens.
   document-level calibration halves, recall-targeted thresholds, Brier score,
   calibration error, confident-mistake counts, Wilson intervals, the positive-label
   warning, and `request_id` storage, all prompted by the GEPA study.
+
+## Amendments (2026-09-22, after the first live run on Polaris filings)
+
+- 8-K exhibits are chosen by declared type (`EX-99*`) from `-index-headers.html`, not
+  by an `ex99` file name: Polaris names its release `pii-q22026earningsrelease.htm`.
+- EDGAR downloads retry transient failures; one failing ticker no longer aborts the
+  fetch for the others.
+- A passage is not judged or shown when at least 90% of its five-word runs already
+  appeared in earlier passages of the same ticker (ingestion order); the first
+  occurrence is kept. On the Polaris filings a lower bar (80%) also hid end-market
+  bullets with new figures, while 90% hid only true repeats.
+- The boilerplate question covers risk disclosures that describe what could happen and
+  standard accounting-policy text; assumption questions exclude such disclosures as
+  evidence; contradictions require `boilerplate <= 0.5`. `RUBRIC_VERSION` 2026-09-22.1.
