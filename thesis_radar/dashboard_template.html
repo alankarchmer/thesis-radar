@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>thesis-radar</title>
+<style>
+:root { --bg: #fbfaf7; --panel: #ffffff; --ink: #1c1b19; --muted: #6b6862; --line: #e4e1da;
+        --red: #b3261e; --green: #2e7d32; --amber: #b26a00; --accent: #3b5bdb; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #161513; --panel: #1f1e1b; --ink: #ecebe7; --muted: #a09d96; --line: #34322e;
+          --red: #ef6b61; --green: #6fbf73; --amber: #e0a040; --accent: #8ea2ff; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+header { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+header h1 { font-size: 16px; margin: 0 12px 0 0; }
+.tab { border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-right: 4px; }
+.tab.active { border-color: var(--accent); color: var(--accent); }
+main { padding: 16px 20px; max-width: 1100px; }
+.banner { border: 1px solid var(--amber); color: var(--amber); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
+section { margin-bottom: 24px; }
+h2 { font-size: 15px; margin: 0 0 8px; }
+h3, h4 { font-size: 13px; margin: 12px 0 4px; color: var(--muted); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
+.card.contra { border-left: 4px solid var(--red); }
+.quote { white-space: pre-wrap; margin: 0 0 6px; }
+.meta { color: var(--muted); font-size: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.badge { border: 1px solid var(--line); border-radius: 10px; padding: 0 6px; }
+.badge.contra { color: var(--red); border-color: var(--red); }
+.badge.supp { color: var(--green); border-color: var(--green); }
+.filters { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+details summary { cursor: pointer; }
+.timeline { position: relative; height: 34px; border-bottom: 1px solid var(--line); margin: 4px 0 14px; }
+.mark { position: absolute; top: 50%; transform: translate(-50%, -50%); cursor: pointer; opacity: 0.85; }
+.mark.circle { border-radius: 50%; }
+.mark.square { border-radius: 2px; }
+.mark.diamond { transform: translate(-50%, -50%) rotate(45deg); }
+code { background: var(--line); padding: 1px 4px; border-radius: 4px; }
+button.copy { margin-left: 8px; }
+</style>
+</head>
+<body>
+<header><h1>thesis-radar</h1><nav id="tabs"></nav><span id="generated" class="meta"></span></header>
+<main id="app"></main>
+<script id="radar-data" type="application/json">__RADAR_DATA__</script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("radar-data").textContent);
+const app = document.getElementById("app");
+const absorbIds = new Set();
+const filters = { source: "", evidence: "", from: "", to: "" };
+const SHAPES = { filing: "square", earnings_transcript: "circle", sell_side: "diamond", expert_call: "circle",
+                 ai_research: "square", own_note: "diamond", news: "square", other: "circle" };
+let active = data.companies.length ? data.companies[0].ticker : "__unsorted__";
+
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs || {})) {
+    if (key === "class") node.className = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value);
+  }
+  for (const child of children) {
+    if (child === null || child === undefined) continue;
+    node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return node;
+}
+
+function fmt(value) { return typeof value === "number" ? value.toFixed(2) : "-"; }
+function stanceArrow(stance) { return stance < 1.5 ? "↓" : stance > 2.5 ? "↑" : "→"; }
+function materialityBar(value) {
+  const full = Math.max(0, Math.min(3, Math.round(value)));
+  return "▮".repeat(full) + "▯".repeat(3 - full);
+}
+function byNewest(a, b) { return (b.date || "").localeCompare(a.date || "") || b.id - a.id; }
+function passesFilters(p) {
+  if (filters.source && p.source_type !== filters.source) return false;
+  if (filters.evidence && p.evidence !== filters.evidence) return false;
+  if (filters.from && (!p.date || p.date < filters.from)) return false;
+  if (filters.to && (!p.date || p.date > filters.to)) return false;
+  return true;
+}
+
+function copyButton(text) {
+  return el("button", { class: "copy", onclick: () => {
+    navigator.clipboard.writeText(text).catch(() => window.prompt("Copy this command:", text));
+  } }, "Copy");
+}
+
+const absorbBar = el("div", { class: "meta" });
+function updateAbsorb() {
+  const ids = [...absorbIds].sort((a, b) => a - b);
+  const command = "radar absorb " + ids.join(" ");
+  absorbBar.replaceChildren(ids.length
+    ? el("span", {}, el("code", {}, command), copyButton(command))
+    : el("span", {}, "Tick “absorb” on cards you have taken in, then copy the command."));
+}
+
+function card(p, contra) {
+  const link = typeof p.link === "string" && p.link.startsWith("file:")
+    ? el("a", { href: p.link, target: "_blank", rel: "noopener" }, "p." + p.page + " ↗") : null;
+  const checkbox = el("input", { type: "checkbox", onchange: (event) => {
+    if (event.target.checked) absorbIds.add(p.id); else absorbIds.delete(p.id);
+    updateAbsorb();
+  } });
+  checkbox.checked = absorbIds.has(p.id);
+  const badges = [
+    ...p.contradicts.map((id) => el("span", { class: "badge contra" }, "contradicts " + id)),
+    ...p.supports.map((id) => el("span", { class: "badge supp" }, "supports " + id)),
+  ];
+  return el("div", { class: contra ? "card contra" : "card" },
+    el("p", { class: "quote" }, p.speaker ? p.speaker + ": " + p.text : p.text),
+    el("div", { class: "meta" },
+      p.arrived_new ? el("span", { class: "dot", title: "arrived since your last view" }) : null,
+      el("span", {}, (p.source_type || "unknown") + " · " + (p.date || "undated") + " · " + p.title),
+      link,
+      el("span", { title: "materiality " + fmt(p.materiality) }, "materiality " + materialityBar(p.materiality)),
+      el("span", { title: "stance " + fmt(p.stance) }, "stance " + stanceArrow(p.stance)),
+      el("span", {}, p.evidence),
+      el("span", { title: "probability this is new to you" }, "new " + fmt(p.new_info)),
+      ...badges,
+      el("label", {}, checkbox, " absorb")));
+}
+
+function select(key, options) {
+  const node = el("select", { onchange: (event) => { filters[key] = event.target.value; render(); } },
+    el("option", { value: "" }, "all " + key), ...options.map((o) => el("option", { value: o }, o)));
+  node.value = filters[key];
+  return node;
+}
+
+function dateInput(key) {
+  const node = el("input", { type: "date", onchange: (event) => { filters[key] = event.target.value; render(); } });
+  node.value = filters[key];
+  return node;
+}
+
+function renderAssumptions(company) {
+  const rows = company.assumptions.map((a) => {
+    const against = company.passages.filter((p) => p.contradicts.includes(a.id)).sort(byNewest);
+    const support = company.passages.filter((p) => p.supports.includes(a.id)).sort(byNewest);
+    return el("details", {},
+      el("summary", {}, a.id + " — for " + support.length + " · against " + against.length + " — " + a.statement),
+      el("h4", {}, "Against"), ...against.map((p) => card(p, true)),
+      el("h4", {}, "For"), ...support.map((p) => card(p, false)));
+  });
+  return el("section", {}, el("h2", {}, "Assumptions"),
+    ...(rows.length ? rows : [el("p", { class: "meta" }, "No assumptions in this thesis.")]));
+}
+
+function renderTimelines(company) {
+  const dated = company.passages.filter((p) => p.pillar && p.date);
+  const times = dated.map((p) => Date.parse(p.date));
+  const min = Math.min(...times);
+  const span = Math.max(...times) - min || 1;
+  const detail = el("div", {});
+  const strips = Object.keys(company.pillars).map((pillar) => {
+    const strip = el("div", { class: "timeline", title: pillar });
+    for (const p of dated.filter((q) => q.pillar === pillar)) {
+      const size = 6 + 4 * Math.max(0, Math.min(3, p.materiality));
+      const mark = el("span", {
+        class: "mark " + (SHAPES[p.source_type] || "circle"),
+        title: p.date + " · " + p.source_type + " · " + p.title,
+        onclick: () => detail.replaceChildren(card(p, p.in_contradictions)),
+      });
+      mark.style.left = ((Date.parse(p.date) - min) / span) * 100 + "%";
+      mark.style.width = size + "px";
+      mark.style.height = size + "px";
+      mark.style.background = p.stance < 1.5 ? "var(--red)" : p.stance > 2.5 ? "var(--green)" : "var(--muted)";
+      strip.append(mark);
+    }
+    return el("div", {}, el("div", { class: "meta" }, pillar), strip);
+  });
+  return el("section", {}, el("h2", {}, "Pillar timelines"), ...strips, detail);
+}
+
+function renderCompany(company) {
+  const contradictions = company.passages.filter((p) => p.in_contradictions).sort(byNewest);
+  const fresh = company.passages.filter((p) => p.in_whats_new && passesFilters(p)).sort(byNewest);
+  const maybe = company.passages.filter((p) => p.in_maybe && passesFilters(p)).sort(byNewest);
+  const sources = [...new Set(company.passages.map((p) => p.source_type).filter(Boolean))].sort();
+  const evidence = [...new Set(company.passages.map((p) => p.evidence).filter(Boolean))].sort();
+  const groups = [];
+  for (const pillar of Object.keys(company.pillars)) {
+    const items = fresh.filter((p) => p.pillar === pillar);
+    if (items.length) groups.push(el("h3", {}, pillar), ...items.map((p) => card(p, false)));
+  }
+  return [
+    el("section", {}, el("h2", {}, "⚠ Contradictions (" + contradictions.length + ")"),
+      ...contradictions.map((p) => card(p, true))),
+    el("section", {}, el("h2", {}, "What's new (" + fresh.length + ")"),
+      el("div", { class: "filters" }, select("source", sources), select("evidence", evidence),
+        el("label", {}, "from ", dateInput("from")), el("label", {}, "to ", dateInput("to"))),
+      ...groups),
+    el("section", {}, el("details", {}, el("summary", {}, "Maybe (" + maybe.length + ")"),
+      ...maybe.map((p) => card(p, false)))),
+    renderAssumptions(company),
+    renderTimelines(company),
+  ];
+}
+
+function renderUnsorted() {
+  return [el("section", {}, el("h2", {}, "Unsorted (" + data.unsorted.length + ")"),
+    ...data.unsorted.map((d) => el("div", { class: "card" },
+      el("p", { class: "quote" }, d.title),
+      el("div", { class: "meta" }, el("span", {}, d.reason || ""), el("span", {}, d.path)),
+      el("div", { class: "meta" }, el("code", {}, d.command), copyButton(d.command)))))];
+}
+
+function banner() {
+  const pending = data.pending;
+  if (!pending.unjudged && !pending.failed) return null;
+  return el("div", { class: "banner" },
+    pending.unjudged + " passages not yet judged, " + pending.failed + " failed. Run radar judge to retry.");
+}
+
+function renderTabs() {
+  const items = data.companies.map((c) => [c.ticker, c.ticker]);
+  items.push(["__unsorted__", "Unsorted (" + data.unsorted.length + ")"]);
+  document.getElementById("tabs").replaceChildren(...items.map(([key, label]) =>
+    el("button", { class: key === active ? "tab active" : "tab", onclick: () => { active = key; render(); } }, label)));
+}
+
+function render() {
+  renderTabs();
+  document.getElementById("generated").textContent = "generated " + data.generated_at;
+  const company = data.companies.find((c) => c.ticker === active);
+  const body = company ? renderCompany(company) : renderUnsorted();
+  app.replaceChildren(...[banner(), absorbBar, ...body].filter(Boolean));
+  updateAbsorb();
+}
+
+render();
+</script>
+</body>
+</html>
