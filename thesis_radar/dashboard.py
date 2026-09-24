@@ -241,7 +241,9 @@ def company_payload(app: App, thesis: Thesis, plan: JudgePlan, *, previous_view:
         "divergence": analysis.divergence(judged, pillars, policy, today=today),
         "ledger": ledger.ledger_summary(store, thesis, passages_by_id, policy),
         "redlines": analysis.redlines(store, ticker),
-        "metrics": metrics.metric_series(store, thesis, policy, link=lambda path, page: link_for(app, path, page)),
+        "metrics": metrics.metric_series(
+            store, thesis, policy, model=app.config.model, link=lambda path, page: link_for(app, path, page)
+        ),
     }
 
 

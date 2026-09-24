@@ -52,7 +52,7 @@ def test_mentions_carry_kind_value_range_and_sentence():
         ("$7.0 to $7.4 billion", [(CURRENCY, 7e9, 7.4e9)]),
         ("a $18,999 price", [(CURRENCY, 18999.0, None)]),
         ("margin of 21.5 percent", [(PERCENT, 21.5, None)]),
-        ("down 3-4%", [(PERCENT, 3.0, 4.0)]),
+        ("down 3-4%", [(PERCENT, -4.0, -3.0)]),
         ("200 bps", [(BPS, 200.0, None)]),
         ("in 2026 and 2027 revenue", []),
         ("we opened 5 stores", []),
@@ -60,6 +60,43 @@ def test_mentions_carry_kind_value_range_and_sentence():
 )
 def test_mention_edge_cases(text, expected):
     assert [(m.kind, m.value, m.high) for m in find_mentions(text)] == expected
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        # Minus signs, attached: hyphen, the minus sign, and an en dash as PDFs set it.
+        ("gross margin was -5% in the quarter", [("-5%", -5.0, None)]),
+        ("gross margin was −5.2%", [("−5.2%", -5.2, None)]),
+        ("sales of 1,850 million, –4.5% y/y", [("–4.5%", -4.5, None)]),
+        ("operating income was -$10 million", [("-$10 million", -1e7, None)]),
+        ("operating income was $-10 million", [("$-10 million", -1e7, None)]),
+        ("guidance of -1% to 1%", [("-1% to 1%", -1.0, 1.0)]),
+        ("guidance of −3% to −1%", [("−3% to −1%", -3.0, -1.0)]),
+        # Accounting parentheses around the number alone.
+        ("operating income was $(10.5) million", [("$(10.5) million", -1.05e7, None)]),
+        ("change in net sales (8)%", [("(8)%", -8.0, None)]),
+        ("margin contracted (120) bps", [("(120) bps", -120.0, None)]),
+        # Parentheses around number and unit: negative in a table, an aside in prose.
+        ("| Net income | 12.1 | ($10.0 million) |", [("($10.0 million)", -1e7, None)]),
+        ("Gross margin 20.6% 21.8% (1.2%)", [("20.6%", 20.6, None), ("21.8%", 21.8, None), ("(1.2%)", -1.2, None)]),
+        ("our largest markets are Europe (25%) and Asia (12%)", [("25%", 25.0, None), ("12%", 12.0, None)]),
+        ("a one-time charge ($3 million)", [("$3 million", 3e6, None)]),
+        # Words of decline next to the number; a level after "to" or "from" stays positive.
+        ("retail sales declined 6%, while off-road was flat", [("6%", -6.0, None)]),
+        ("revenue was down by approximately $120 million", [("$120 million", -1.2e8, None)]),
+        ("margin was 19.8%, down 240 basis points", [("19.8%", 19.8, None), ("240 basis points", -240.0, None)]),
+        ("an 8% decline in shipments and 5% lower pricing", [("8%", -8.0, None), ("5%", -5.0, None)]),
+        ("dealers took 1,200 fewer units", [("1,200 fewer", -1200.0, None)]),
+        ("gross margin fell to 20.6% from 21.8%", [("20.6%", 20.6, None), ("21.8%", 21.8, None)]),
+        ("up 12%, and revenue rose 5%", [("12%", 12.0, None), ("5%", 5.0, None)]),
+        # Hyphens that are not signs.
+        ("costs of $5 million in Q3-5% of sales", [("$5 million", 5e6, None), ("5%", 5.0, None)]),
+        ("growth of 5-7% on 5% lower-priced models", [("5-7%", 5.0, 7.0), ("5%", 5.0, None)]),
+    ],
+)
+def test_negative_numbers(text, expected):
+    assert [(m.text, m.value, m.high) for m in find_mentions(text)] == expected
 
 
 def test_units_and_conversion():

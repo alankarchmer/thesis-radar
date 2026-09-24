@@ -76,11 +76,18 @@ def compatible_metrics(thesis: Thesis, mentions: Sequence[Mention]) -> dict[str,
     return {m.id: [metric_id for metric_id, allowed in kinds.items() if m.kind in allowed] for m in mentions}
 
 
-def passage_requests(thesis: Thesis, row: Any, *, model: str) -> list[tuple[str, JudgeRequest]]:
-    mentions = find_mentions(row["text"])
+def passage_requests(
+    thesis: Thesis,
+    row: Any,
+    *,
+    model: str,
+    mentions: Sequence[Mention] | None = None,
+    periods: Sequence[PeriodCandidate] | None = None,
+) -> list[tuple[str, JudgeRequest]]:
+    mentions = find_mentions(row["text"]) if mentions is None else mentions
     if not mentions:
         return []
-    periods = find_periods(row["text"], _doc_day(row))
+    periods = find_periods(row["text"], _doc_day(row)) if periods is None else periods
     return metric_parts(
         thesis, passage_text=row["text"], speaker=row["speaker"], source_type=row["source_type"],
         doc_date=row["doc_date"], title=row["title"], mentions=mentions, periods=periods,
@@ -151,27 +158,48 @@ def _probability(answer: Mapping[str, Any]) -> float:
     return float(answer.get("probabilities", {}).get(answer["choice"], 0.0))
 
 
+def _current_answers(
+    requests: Sequence[tuple[str, JudgeRequest]],
+    by_key: Mapping[str, Mapping[str, Any]],
+    newest_by_part: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Answers to a passage's current requests. Each part's answers come from its current cache key or, until that
+    is judged, from the newest earlier judgment of the same part (stale, like a passage awaiting re-judgment), and
+    only for the questions the current part asks: after a metrics edit changes how numbers split into parts, an
+    obsolete part's answers never reach the series or override current ones."""
+    answers: dict[str, Any] = {}
+    for part, request in requests:
+        found = by_key.get(cache_key(request)) or newest_by_part.get(part)
+        if found:
+            answers.update({qid: answer for qid, answer in found.items() if qid in request.questions})
+    return answers
+
+
 def extract_points(
-    store: Store, thesis: Thesis, policy: Policy, *, link: Callable[[str, int | None], str]
+    store: Store, thesis: Thesis, policy: Policy, *, model: str, link: Callable[[str, int | None], str]
 ) -> dict[str, list[dict[str, Any]]]:
-    """Points per metric id from the newest judged answers of each passage."""
+    """Points per metric id from each passage's answers to its current metric requests."""
     metrics = {metric.id: metric for metric in thesis.metrics}
-    answers_by_passage: dict[int, dict[str, Any]] = {}
-    by_part: dict[tuple[int, str], dict[str, Any]] = {}
-    for judgment in store.metric_judgments_for_ticker(thesis.ticker):
+    by_key: dict[int, dict[str, dict[str, Any]]] = {}
+    newest_by_part: dict[int, dict[str, dict[str, Any]]] = {}
+    for judgment in store.metric_judgments_for_ticker(thesis.ticker):  # oldest first
         if judgment["status"] == "judged":
-            by_part[(judgment["passage_id"], judgment["part"])] = json.loads(judgment["answers_json"])
-    for (pid, _), answers in sorted(by_part.items()):
-        answers_by_passage.setdefault(pid, {}).update(answers)
+            answers = json.loads(judgment["answers_json"])
+            by_key.setdefault(judgment["passage_id"], {})[judgment["cache_key"]] = answers
+            newest_by_part.setdefault(judgment["passage_id"], {})[judgment["part"]] = answers
     points: dict[str, list[dict[str, Any]]] = {metric_id: [] for metric_id in metrics}
-    rows = {row["passage_id"]: row for row in store.get_passages(sorted(answers_by_passage))}
-    for pid, answers in sorted(answers_by_passage.items()):
+    rows = {row["passage_id"]: row for row in store.get_passages(sorted(by_key))}
+    for pid in sorted(by_key):
         row = rows.get(pid)
         if row is None or row["ticker"] != thesis.ticker:
             continue
         doc_day = _doc_day(row)
-        periods = {p.key: p for p in find_periods(row["text"], doc_day)}
-        for mention in find_mentions(row["text"]):
+        mentions = find_mentions(row["text"])
+        candidates = find_periods(row["text"], doc_day)
+        requests = passage_requests(thesis, row, model=model, mentions=mentions, periods=candidates)
+        answers = _current_answers(requests, by_key[pid], newest_by_part[pid])
+        periods = {p.key: p for p in candidates}
+        for mention in mentions:
             metric_answer = answers.get(f"{mention.id}__metric")
             kind_answer = answers.get(f"{mention.id}__kind")
             if metric_answer is None or kind_answer is None:
@@ -324,12 +352,12 @@ def _latest(metric: Metric, periods: Sequence[Mapping[str, Any]]) -> dict[str, A
 
 
 def metric_series(
-    store: Store, thesis: Thesis, policy: Policy, *, link: Callable[[str, int | None], str]
+    store: Store, thesis: Thesis, policy: Policy, *, model: str, link: Callable[[str, int | None], str]
 ) -> list[dict[str, Any]]:
     """Company.metrics for the payload: one series per metric in thesis order."""
     if not thesis.metrics:
         return []
-    points = extract_points(store, thesis, policy, link=link)
+    points = extract_points(store, thesis, policy, model=model, link=link)
     return [build_series(metric, points[metric.id]) for metric in thesis.metrics]
 
 
@@ -338,16 +366,18 @@ def metric_series(
 
 def format_value(value: float, high: float | None, unit: str) -> str:
     def one(x: float) -> str:
-        text = f"{x:,.2f}".rstrip("0").rstrip(".")
+        sign = "-" if x < 0 else ""
+        text = f"{abs(x):,.2f}".rstrip("0").rstrip(".")
         u = unit.strip()
         if u.startswith("$"):
-            suffix = u[1:]
-            return f"${text}{suffix}" if suffix else f"${text}"
+            return f"{sign}${text}{u[1:]}"  # -$10M, not $-10M
         if u in {"%", "x"}:
-            return f"{text}{u}"
-        return f"{text} {u}"
+            return f"{sign}{text}{u}"
+        return f"{sign}{text} {u}"
 
-    return one(value) if high is None else f"{one(value)}–{one(high)}"
+    if high is None:
+        return one(value)
+    return f"{one(value)} to {one(high)}" if value < 0 else f"{one(value)}–{one(high)}"
 
 
 def metrics_text(series: Sequence[Mapping[str, Any]], *, ticker: str) -> str:

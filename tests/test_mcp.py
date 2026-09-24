@@ -352,3 +352,23 @@ def test_missing_database_is_a_tool_error(tmp_path):
     for name in TOOLS:
         assert "radar run" in error_text(call(ws, name, ticker="ACME", query="x", id=1))
     assert not ws.db_path.exists() and not (tmp_path / "empty").exists()
+
+
+def test_get_metrics_on_a_schema_v1_database(tmp_path):
+    """Right after upgrading, `radar mcp` may be the first command: it opens radar.db read-only, cannot migrate it,
+    and must still answer (no metric judgments exist yet) without changing the file."""
+    import sqlite3
+
+    from thesis_radar.store import MIGRATIONS
+
+    ws = Workspace(tmp_path / "ws")
+    ws.ensure_layout()
+    write_thesis(ws.thesis_dir, text=THESIS + 'metrics:\n  gross_margin: {label: "Gross margin", unit: "%"}\n')
+    conn = sqlite3.connect(ws.db_path)
+    conn.executescript("BEGIN;" + MIGRATIONS[0] + "PRAGMA user_version = 1;COMMIT;")
+    conn.close()
+    [metric] = data(ws, "get_metrics", ticker="ACME")["metrics"]
+    assert metric["id"] == "gross_margin" and metric["periods"] == [] and metric["latest"] is None
+    conn = sqlite3.connect(ws.db_path)
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == 1
+    conn.close()

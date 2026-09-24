@@ -4,9 +4,14 @@ Code finds the candidates; Jev only chooses among them (which metric a number me
 of number it is, which period it covers). Nothing here guesses what a number means.
 
 A `Mention` is one number (or range) as written, with its kind of unit and its value in base units
-(dollars, percent, basis points, days, a count, or a multiple). A `PeriodCandidate` is a reporting
-period named in the text, resolved to a sortable key such as "2026-Q3", "FY2027", "2026-H2", or
-"2026-09" using the document's date for any missing year.
+(dollars, percent, basis points, days, a count, or a multiple). A value is negative when its notation
+or wording says so: an attached minus sign (-5%, −5%, -$10 million, $-10), accounting parentheses
+around the number alone ((5)%, $(10) million, (120) bps), parentheses around a number and its unit
+where a table puts them ("| (5%) |", "20.6% 21.8% (1.2%)", but not an aside such as "Europe (25%)"),
+or a word of decline right next to it ("declined 6%", "down $10 million", "an 8% decline").
+
+A `PeriodCandidate` is a reporting period named in the text, resolved to a sortable key such as
+"2026-Q3", "FY2027", "2026-H2", or "2026-09" using the document's date for any missing year.
 """
 
 from __future__ import annotations
@@ -27,19 +32,48 @@ _SCALES = {
 _NUM = r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?"
 _SCALE = r"(?:thousand|million|billion|trillion|bn|mm|mn|tn|[kmb])\b"
 _DASH = r"\s*(?:to|-|–|—|and)\s*"
+_MINUS = "-−–"  # hyphen-minus, the minus sign, and the en dash PDFs often set for a minus
+
+
+def _signed(name: str, *, parens: bool = True) -> str:
+    """A number with an optional attached minus sign (-5, −5) and, if `parens`, accounting parentheses ((5))."""
+    if not parens:
+        return rf"(?P<{name}_minus>[{_MINUS}])?(?P<{name}>{_NUM})"
+    return rf"(?P<{name}_minus>[{_MINUS}])?(?P<{name}_paren>\()?(?P<{name}>{_NUM})(?({name}_paren)\))"
+
+
+def _money(name: str, *, dollar_optional: bool = False) -> str:
+    """-$10, $-10, $(10), or $10 (the dollar sign optional for the high end of "$7.0-7.4 billion")."""
+    dollar = r"\$?" if dollar_optional else r"\$"
+    return (rf"(?P<{name}_minus>[{_MINUS}])?{dollar}\s?(?P<{name}_minus2>[{_MINUS}])?"
+            rf"(?P<{name}_paren>\()?(?P<{name}>{_NUM})(?({name}_paren)\))")
+
 
 _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (CURRENCY, re.compile(
-        rf"(?<![\w.])\$\s?(?P<a>{_NUM})\s*(?P<sa>{_SCALE})?(?:{_DASH}\$?\s?(?P<b>{_NUM})\s*(?P<sb>{_SCALE})?)?", re.I)),
+        rf"(?<![\w.]){_money('a')}\s*(?P<sa>{_SCALE})?(?:{_DASH}{_money('b', dollar_optional=True)}\s*(?P<sb>{_SCALE})?)?", re.I)),
     (PERCENT, re.compile(
-        rf"(?<![\w.$])(?P<a>{_NUM})\s*(?:%|percent|per cent)?{_DASH}(?P<b>{_NUM})\s*(?:%|percent\b|per cent\b)", re.I)),
-    (PERCENT, re.compile(rf"(?<![\w.$])(?P<a>{_NUM})\s*(?:%|percent\b|per cent\b)", re.I)),
-    (BPS, re.compile(rf"(?<![\w.$])(?P<a>{_NUM})(?:{_DASH}(?P<b>{_NUM}))?\s*(?:basis[ -]points?|bps|bp)\b", re.I)),
-    (DAYS, re.compile(rf"(?<![\w.$])(?P<a>{_NUM})(?:{_DASH}(?P<b>{_NUM}))?\s*days?\b", re.I)),
-    (MULTIPLE, re.compile(rf"(?<![\w.$])(?P<a>{_NUM})(?:{_DASH}(?P<b>{_NUM}))?\s*(?:x\b|times\b)", re.I)),
+        rf"(?<![\w.$]){_signed('a')}\s*(?:%|percent|per cent)?{_DASH}{_signed('b')}\s*(?:%|percent\b|per cent\b)", re.I)),
+    (PERCENT, re.compile(rf"(?<![\w.$]){_signed('a')}\s*(?:%|percent\b|per cent\b)", re.I)),
+    (BPS, re.compile(rf"(?<![\w.$]){_signed('a')}(?:{_DASH}{_signed('b')})?\s*(?:basis[ -]points?|bps|bp)\b", re.I)),
+    (DAYS, re.compile(rf"(?<![\w.$]){_signed('a')}(?:{_DASH}{_signed('b')})?\s*days?\b", re.I)),
+    (MULTIPLE, re.compile(rf"(?<![\w.$]){_signed('a')}(?:{_DASH}{_signed('b')})?\s*(?:x\b|times\b)", re.I)),
     # Counts: a number followed by a word ("41,000 units", "1,100 retail reservations"); years are not counts.
-    (COUNT, re.compile(rf"(?<![\w.$])(?P<a>{_NUM})(?:{_DASH}(?P<b>{_NUM}))?\s+(?P<noun>[a-z][a-z\-]{{2,}})", re.I)),
+    # No parentheses: "(12) Represents ..." is a footnote marker far more often than a negative count.
+    (COUNT, re.compile(
+        rf"(?<![\w.$]){_signed('a', parens=False)}(?:{_DASH}{_signed('b', parens=False)})?\s+(?P<noun>[a-z][a-z\-]{{2,}})",
+        re.I)),
 ]
+# A word of decline right before a number ("declined 6%", "down by about $10 million", "a decrease of 120 bps")
+# or right after it ("an 8% decline", "5% lower"). "fell to 20.6%" and "down from 22%" name a level, not a decline.
+_DOWN_BEFORE = re.compile(
+    r"(?:^|\W)(?:declin\w*|decreas\w*|fell|falls|falling|fall\s+of|drop(?:s|ped|ping)?|down|reduc\w*|contract(?:ed|ion)"
+    r"|shr[au]nk|negative|minus|lower\s+by)\s+(?:(?:by|of)\s+)?"
+    r"(?:(?:about|approximately|roughly|nearly|almost|around|some|over|more\s+than|less\s+than)\s+)?$",
+    re.I,
+)
+_DOWN_AFTER = re.compile(r"\s+(?:declines?|decreases?|drops?|reductions?|contraction|lower|less)\b(?!-)", re.I)
+_DOWN_NOUNS = frozenset({"fewer"})  # "1,200 fewer units"
 _NOT_COUNT_NOUNS = frozenset(
     {"percent", "per", "basis", "bps", "days", "day", "times", "to", "and", "or", "of", "in", "on", "at", "for", "from",
      "the", "a", "an", "is", "was", "were", "are", "million", "billion", "thousand", "trillion", "quarter", "quarters",
@@ -65,6 +99,24 @@ class Mention:
 
 def _number(raw: str) -> float:
     return float(raw.replace(",", ""))
+
+
+def _negative(match: re.Match[str], name: str) -> bool:
+    groups = match.groupdict()
+    return any(groups.get(f"{name}_{mark}") for mark in ("minus", "minus2", "paren"))
+
+
+def _in_table_parens(text: str, start: int, end: int) -> bool:
+    """Parentheses around a number and its unit ("(1.2%)", "($10 million)") where a table puts them: in a cell
+    ("| (1.2%) |") or after another figure ("20.6% 21.8% (1.2%)"). Elsewhere they are an aside ("Europe (25%)")."""
+    if start == 0 or text[start - 1] != "(" or text[end : end + 1] != ")":
+        return False
+    before = text[: start - 1].rstrip(" \t")
+    return not before or before[-1] in "\n|%)" or before[-1].isdigit()
+
+
+def _declining(text: str, start: int, end: int) -> bool:
+    return bool(_DOWN_BEFORE.search(text[max(0, start - 40) : start]) or _DOWN_AFTER.match(text, end))
 
 
 def _is_year(raw: str) -> bool:
@@ -97,8 +149,14 @@ def find_mentions(text: str, *, limit: int = 40) -> list[Mention]:
                     continue
                 if _number(a) < 10 and "," not in a:
                     continue  # "3 new models" is a quantity in prose, rarely a tracked metric
-            value = _number(a)
-            high = _number(b) if b is not None else None
+            value = -_number(a) if _negative(match, "a") else _number(a)
+            high = None if b is None else -_number(b) if _negative(match, "b") else _number(b)
+            end = start + len(text[start:end].rstrip())  # an optional tail ("$10 " before no scale) can end in spaces
+            if _in_table_parens(text, start, end):
+                start, end = start - 1, end + 1  # the mention reads "(1.2%)", as written
+                value, high = -abs(value), None if high is None else -abs(high)
+            elif _declining(text, start, end) or (kind == COUNT and match.group("noun").lower() in _DOWN_NOUNS):
+                value, high = -abs(value), None if high is None else -abs(high)
             if kind == CURRENCY:
                 scale_a = _SCALES.get((match.group("sa") or "").lower(), 1.0)
                 scale_b = _SCALES.get((match.group("sb") or "").lower(), scale_a)

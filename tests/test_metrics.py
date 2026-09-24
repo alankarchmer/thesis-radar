@@ -102,7 +102,7 @@ def judge_numbers(store, theses, respond=number_answers):
 
 
 def series(store, theses):
-    return {m["id"]: m for m in metric_series(store, theses["ACME"], Policy(), link=lambda path, page: f"file:///{path}")}
+    return {m["id"]: m for m in metric_series(store, theses["ACME"], Policy(), model=MODEL, link=lambda path, page: f"file:///{path}")}
 
 
 def test_requests_only_offer_metrics_whose_unit_fits(corpus):
@@ -149,6 +149,55 @@ def test_non_retryable_failures_are_not_resent(corpus):
     judge_numbers(store, theses, broken)
     again = plan_metrics(store, theses, MODEL, plan=plan_judging(store, theses, MODEL, today=TODAY), policy=Policy())
     assert again.pending == []
+
+
+def reported(metric):
+    return [p["reported"]["value"] for p in metric["periods"] if p["reported"]]
+
+
+def test_series_read_only_the_current_parts_after_a_metrics_edit(corpus, tmp_path):
+    store, theses, _ = corpus
+    text = ("Revenue was $1.1 billion, $1.2 billion, $1.3 billion, $1.4 billion, and $1.5 billion over five years. "
+            "Gross margin was 19.0% in the first quarter.")
+    pid = add(store, "f", text, date_="2026-10-22")
+    plan = plan_judging(store, theses, MODEL, today=TODAY)
+    asyncio.run(run_judging(store, FakeJudge(passage_answers), plan.pending, concurrency=4, limiter=RateLimiter(60000)))
+    judge_numbers(store, theses)
+    [row] = store.get_passages([pid])
+    assert [part for part, _ in passage_requests(theses["ACME"], row, model=MODEL)] == ["k0", "k1"]  # 19.0% in k1
+    assert 19.0 in reported(series(store, theses)["gross_margin"])
+
+    # Dropping revenue leaves one number to ask about, so the passage now has a single part, k0, holding 19.0%.
+    without_revenue = "".join(line for line in METRICS.splitlines(keepends=True) if "revenue" not in line)
+    edited = {"ACME": load_thesis(write_thesis(tmp_path / "edited", text=ACME_THESIS + without_revenue))}
+    assert [part for part, _ in passage_requests(edited["ACME"], row, model=MODEL)] == ["k0"]
+    # Until re-judged, a part keeps its earlier answers, but only for the questions it asks now; the obsolete k1 is gone.
+    stale = series(store, edited)["gross_margin"]
+    assert 20.6 in reported(stale) and 19.0 not in reported(stale)
+
+    def not_margin(request):
+        answers = number_answers(request)
+        if "19.0%" not in request.state["passage"]:
+            return answers
+        return {name: choice_from(request.questions[name], NONE, 0.9) if name.endswith("__metric") else answer
+                for name, answer in answers.items()}
+
+    judge_numbers(store, edited, not_margin)
+    # Re-judged: the current k0 says 19.0% is no metric, and the old k1 that said gross margin no longer counts.
+    current = series(store, edited)["gross_margin"]
+    assert 20.6 in reported(current) and 19.0 not in reported(current)
+
+
+def test_negative_numbers_reach_the_series(corpus):
+    store, theses, _ = corpus
+    pid = add(store, "g", "Gross margin was -2.5% in the first quarter of 2026.", date_="2026-10-22")
+    plan = plan_judging(store, theses, MODEL, today=TODAY)
+    asyncio.run(run_judging(store, FakeJudge(passage_answers), plan.pending, concurrency=4, limiter=RateLimiter(60000)))
+    judge_numbers(store, theses)
+    margin = series(store, theses)["gross_margin"]
+    [q1] = [p for p in margin["periods"] if p["period"] == "2026-Q1"]
+    assert q1["reported"]["value"] == -2.5 and q1["reported"]["passage_id"] == pid
+    assert "Q1 2026   reported -2.5%" in metrics_text([margin], ticker="ACME")
 
 
 def test_series_track_results_guidance_estimates_and_changes(corpus):

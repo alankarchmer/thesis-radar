@@ -197,9 +197,12 @@ class Store:
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
         self._clock = clock
-        if not readonly:
+        if readonly:
+            self._check_version()  # a read-only connection cannot migrate; tables added since read as empty
+        else:
             self._migrate()
         self.has_fts = self._table_exists("passages_fts")
+        self.has_metric_judgments = self._table_exists("metric_judgments")
 
     # Setup
 
@@ -207,10 +210,14 @@ class Store:
         row = self.conn.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (name,)).fetchone()
         return row is not None
 
-    def _migrate(self) -> None:
-        version = self.conn.execute("PRAGMA user_version").fetchone()[0]
+    def _check_version(self) -> int:
+        version = int(self.conn.execute("PRAGMA user_version").fetchone()[0])
         if version > SCHEMA_VERSION:
             raise SchemaTooNew(f"radar.db has schema version {version}; this radar understands up to {SCHEMA_VERSION}")
+        return version
+
+    def _migrate(self) -> None:
+        version = self._check_version()
         for target in range(version, SCHEMA_VERSION):
             self.conn.executescript("BEGIN;" + MIGRATIONS[target] + f"PRAGMA user_version = {target + 1};COMMIT;")
             if target == 0 and fts_available():
@@ -478,9 +485,11 @@ class Store:
             )
 
     def usage_since(self, since: str) -> tuple[int, int]:
-        """(requests, input tokens) for judgments and follow-ups created at or after `since`."""
+        """(requests, input tokens) for judgments, follow-ups, and metric judgments created at or after `since`."""
         total_requests = total_tokens = 0
         for table in ("judgments", "followups", "metric_judgments"):
+            if table == "metric_judgments" and not self.has_metric_judgments:
+                continue
             row = self.conn.execute(
                 f"SELECT COUNT(*), COALESCE(SUM(input_tokens), 0) FROM {table} WHERE created_at >= ? AND status = 'judged'",
                 (since,),
@@ -518,11 +527,15 @@ class Store:
     # Metric judgments (KPI tracker)
 
     def metric_judgment(self, passage_id: int, cache_key: str) -> sqlite3.Row | None:
+        if not self.has_metric_judgments:
+            return None
         return self.conn.execute(
             "SELECT * FROM metric_judgments WHERE passage_id = ? AND cache_key = ?", (passage_id, cache_key)
         ).fetchone()
 
     def metric_judgments_for_ticker(self, ticker: str) -> list[sqlite3.Row]:
+        if not self.has_metric_judgments:
+            return []  # a schema-v1 database opened read-only (radar mcp before any other command since upgrading)
         return self.conn.execute(
             "SELECT * FROM metric_judgments WHERE ticker = ? ORDER BY created_at, rowid", (ticker,)
         ).fetchall()

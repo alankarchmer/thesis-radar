@@ -221,7 +221,8 @@ def get_thesis(app: App, arguments: Mapping[str, Any]) -> dict[str, Any]:
 def get_metrics(app: App, arguments: Mapping[str, Any]) -> dict[str, Any]:
     thesis = _thesis(app, arguments)
     series = metrics.metric_series(
-        app.store, thesis, app.policy, link=lambda path, page: dashboard.link_for(app, path, page)
+        app.store, thesis, app.policy, model=app.config.model,
+        link=lambda path, page: dashboard.link_for(app, path, page),
     )
     wanted = arguments.get("metric")
     if wanted is not None:

@@ -390,6 +390,12 @@ metrics:
 
 **Finding numbers (code, `numbers.py`).** Every number with a unit, including ranges ("20% to 21%",
 "$7.0 to $7.4 billion"), with the sentence it sits in; years and small prose counts are skipped.
+A value is negative when its notation or wording says so: an attached minus sign (`-5%`, `−5%`,
+`-$10 million`, `$-10`), accounting parentheses around the number alone (`(5)%`, `$(10) million`,
+`(120) bps`; not for counts, where `(12)` is usually a footnote marker), parentheses around a number and
+its unit where a table puts them (in a cell, or after another figure: `20.6% 21.8% (1.2%)`; elsewhere
+they are an aside, as in "Europe (25%)"), or a word of decline next to it ("declined 6%", "down $10
+million", "an 8% decline", "1,200 fewer units"; "fell to 20.6%" names a level and stays positive).
 Every reporting period named in the passage ("third quarter", "Q3 2026", "3Q26", "fiscal 2027",
 "full-year", "second half of 2026", "September 2026"), with a missing year resolved to the instance
 nearest the document's date.
@@ -401,7 +407,11 @@ period (the periods found, plus `unstated`); at most five numbers per request (p
 The rules say a change never measures a level (and vice versa), and that numbers from analysts,
 experts, or the reader's notes are estimates unless they quote the company. Answers are stored in
 `metric_judgments` (schema version 2) and run after passages and ledger follow-ups in `radar judge`,
-within the same cost cap.
+within the same cost cap. The series reads each passage's answers to its current requests: a part's
+answers at its current cache key or, until that is judged, the newest earlier judgment of the same part
+(stale, as passages are), and only for the questions that part asks now, so a part a metrics edit made
+obsolete never contributes. A read-only store on a schema older than version 2 (`radar mcp` before any
+other command since upgrading) reads `metric_judgments` as empty.
 
 **Series (arithmetic, `metrics.py`).** A number counts when Jev's probability for its metric is at
 least `metrics.min_probability` (default 0.6) and its kind is not `other`. A reported number with no

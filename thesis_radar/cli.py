@@ -369,7 +369,8 @@ def cmd_metrics(ctx: Context, args: argparse.Namespace) -> None:
         raise Refused(f"unknown ticker {args.ticker}; known: {', '.join(sorted(app.theses)) or 'none'}")
     for ticker in tickers:
         series = metrics.metric_series(
-            app.store, app.theses[ticker], app.policy, link=lambda path, page: link_for(app, path, page)
+            app.store, app.theses[ticker], app.policy, model=app.config.model,
+            link=lambda path, page: link_for(app, path, page),
         )
         if args.metric:
             series = [m for m in series if m["id"] == args.metric]
