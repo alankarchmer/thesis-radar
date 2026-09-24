@@ -126,3 +126,31 @@ def test_load_theses_keeps_valid_files_and_reports_errors(tmp_path):
 
 def test_missing_directory_is_empty(tmp_path):
     assert load_theses(tmp_path / "nope") == ({}, [])
+
+
+METRICS = ACME_THESIS + """metrics:
+  gross_margin: {label: "Gross margin", unit: "%", pillar: pricing, higher_is: good}
+  revenue: {label: Revenue, unit: $M}
+"""
+
+
+def test_metrics_load_and_do_not_change_the_version(tmp_path):
+    thesis = load_thesis(write_thesis(tmp_path, text=METRICS))
+    assert [(m.id, m.unit, m.pillar, m.higher_is) for m in thesis.metrics] == [
+        ("gross_margin", "%", "pricing", "good"), ("revenue", "$M", None, "neutral"),
+    ]
+    assert thesis.version == load_thesis(write_thesis(tmp_path)).version
+
+
+@pytest.mark.parametrize(
+    "old, new, field",
+    [
+        ('unit: "%", pillar', 'unit: "", pillar', "metrics.gross_margin.unit"),
+        ("pillar: pricing, higher_is", "pillar: margins, higher_is", "metrics.gross_margin.pillar"),
+        ("higher_is: good", "higher_is: up", "metrics.gross_margin.higher_is"),
+        ("{label: Revenue, unit: $M}", "{label: Revenue, unit: $M, color: red}", "metrics.revenue.color"),
+        ("  revenue:", "  Revenue:", "metrics.Revenue"),
+    ],
+)
+def test_metrics_are_validated(tmp_path, old, new, field):
+    _expect_error(tmp_path, METRICS.replace(old, new), field)

@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, TextIO
 
-from . import __version__, analysis, dashboard, search
+from . import __version__, analysis, dashboard, metrics, search
 from .app import App
 from .config import ConfigError, Workspace
 from .policy import PolicyError, passage_day
@@ -153,6 +153,10 @@ def _thesis_outline(thesis: Thesis) -> dict[str, Any]:
         "pillars": dict(thesis.pillars),
         "assumptions": [{"id": a.id, "pillar": a.pillar, "statement": a.statement} for a in thesis.assumptions],
         "open_questions": [{"id": q.id, "text": q.text} for q in thesis.open_questions],
+        "metrics": [
+            {"id": m.id, "label": m.label, "unit": m.unit, "pillar": m.pillar, "higher_is": m.higher_is}
+            for m in thesis.metrics
+        ],
     }
 
 
@@ -212,6 +216,22 @@ def get_thesis(app: App, arguments: Mapping[str, Any]) -> dict[str, Any]:
         "predictions": predictions,
         "forecast": forecast,
     }
+
+
+def get_metrics(app: App, arguments: Mapping[str, Any]) -> dict[str, Any]:
+    thesis = _thesis(app, arguments)
+    series = metrics.metric_series(
+        app.store, thesis, app.policy, link=lambda path, page: dashboard.link_for(app, path, page)
+    )
+    wanted = arguments.get("metric")
+    if wanted is not None:
+        if not isinstance(wanted, str):
+            raise ToolError("metric must be a string")
+        series = [m for m in series if m["id"] == wanted]
+        if not series:
+            raise ToolError(f"{thesis.ticker} has no metric {wanted!r}; its metrics: "
+                            + (", ".join(m.id for m in thesis.metrics) or "none"))
+    return {"ticker": thesis.ticker, "metrics": series}
 
 
 def _feed(app: App, arguments: Mapping[str, Any], flag: str, window_days: int) -> dict[str, Any]:
@@ -374,6 +394,18 @@ TOOLS: dict[str, Tool] = {
             "such as pricing.0, dates, and source passage ids), and predictions with the user's probability, due "
             "date, outcome, and related passage ids.",
             _schema({"ticker": _TICKER}, ["ticker"]), get_thesis,
+        ),
+        Tool(
+            "get_metrics", "Get tracked metrics",
+            "The numbers the thesis tracks (its `metrics:`), per period: the figure the company reported, every "
+            "guidance revision, and outside estimates, each with the number as written, the verbatim sentence, "
+            "and its source; plus whether the result was above, within, or below guidance, beat or missed "
+            "estimates, and whether guidance was raised or cut. Values are in the metric's unit.",
+            _schema(
+                {"ticker": _TICKER, "metric": {"type": "string", "description": "One metric id (see get_thesis)."}},
+                ["ticker"],
+            ),
+            get_metrics,
         ),
         Tool(
             "whats_new", "What's new",

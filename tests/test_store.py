@@ -35,9 +35,28 @@ def test_schema_is_versioned_and_reopens(tmp_path):
     path = tmp_path / "radar.db"
     Store(path).close()
     again = Store(path)
-    assert again.schema_version == SCHEMA_VERSION == 1
+    assert again.schema_version == SCHEMA_VERSION == 2
     assert again.has_fts
     again.close()
+
+
+def test_a_version_1_database_is_upgraded_in_place(tmp_path):
+    from thesis_radar.store import FTS_V1, MIGRATIONS
+
+    path = tmp_path / "radar.db"
+    conn = sqlite3.connect(path)
+    conn.executescript("BEGIN;" + MIGRATIONS[0] + "PRAGMA user_version = 1;COMMIT;")
+    conn.executescript("BEGIN;" + FTS_V1 + "COMMIT;")
+    conn.execute(
+        "INSERT INTO documents (text_sha256, path, title, origin, status, ingested_at) VALUES ('x', 'p', 't', 'inbox', 'unsorted', 'now')"
+    )
+    conn.commit()
+    conn.close()
+    upgraded = Store(path)
+    assert upgraded.schema_version == 2
+    assert upgraded.find_document_by_hash("x")["title"] == "t"
+    assert upgraded.conn.execute("SELECT COUNT(*) FROM metric_judgments").fetchone()[0] == 0
+    upgraded.close()
 
 
 def test_newer_schema_is_refused(tmp_path):

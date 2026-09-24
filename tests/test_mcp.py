@@ -168,8 +168,8 @@ def test_tools_list_describes_every_tool(corpus):
     [response] = rpc(ws, request("tools/list"))
     tools = response["result"]["tools"]
     assert [t["name"] for t in tools] == [
-        "list_companies", "get_thesis", "whats_new", "contradictions", "search_passages", "get_passage",
-        "get_document",
+        "list_companies", "get_thesis", "get_metrics", "whats_new", "contradictions", "search_passages",
+        "get_passage", "get_document",
     ]
     for tool in tools:
         schema = tool["inputSchema"]
@@ -301,12 +301,19 @@ def test_get_document(corpus):
     assert "Unknown ticker" in error_text(call(ws, "get_document", id=ids["call"], ticker="NOPE"))
 
 
-@pytest.mark.parametrize("tool", ["get_thesis", "whats_new", "contradictions"])
+@pytest.mark.parametrize("tool", ["get_thesis", "get_metrics", "whats_new", "contradictions"])
 def test_bad_ticker_is_a_tool_error(corpus, tool):
     ws, _ = corpus
     text = error_text(call(ws, tool, ticker="NOPE"))
     assert "Unknown ticker 'NOPE'" in text and "ACME" in text
     assert "ticker" in error_text(call(ws, tool))
+
+
+def test_get_metrics_without_metrics_and_unknown_metric(corpus):
+    ws, _ = corpus
+    assert data(ws, "get_metrics", ticker="ACME") == {"ticker": "ACME", "metrics": []}
+    assert "no metric 'margin'" in error_text(call(ws, "get_metrics", ticker="ACME", metric="margin"))
+    assert data(ws, "get_thesis", ticker="ACME")["metrics"] == []
 
 
 def test_protocol_errors(corpus):

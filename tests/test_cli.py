@@ -270,3 +270,28 @@ def test_mcp_speaks_json_rpc(ws):
     assert code == 0 and [r["id"] for r in replies] == [1, 2]
     result = replies[1]["result"]["structuredContent"]
     assert any("We cut promotions" in p["text"] for p in result["passages"])
+
+
+def test_kpi_tracker_end_to_end(tmp_path):
+    from test_metrics import METRICS, Q3, number_answers
+
+    root = tmp_path / "research"
+    (root / "inbox").mkdir(parents=True)
+    write_thesis(root / "thesis", text=ACME_THESIS + METRICS)
+    (root / "inbox" / "release.txt").write_text(f"ACME third quarter release\nOctober 20, 2026\n\n{Q3}", encoding="utf-8")
+
+    def respond(request):
+        return number_answers(request) if "numbers" in request.state else responder(request)
+
+    code, out, err = radar(root, "run", respond=respond)
+    assert code == 0, err
+    assert "metrics: 1 number requests judged, 0 failed" in out
+    code, out, _ = radar(root, "metrics", "--ticker", "ACME")
+    assert code == 0 and "ACME · Gross margin (%)" in out and "Q3 2026   reported 20.6%" in out
+    assert "FY 2026   guidance 20%–21%" in out
+    assert radar(root, "metrics", "--ticker", "ACME", "--metric", "nope")[0] == 2
+    company = dashboard_payload(root)["companies"][0]
+    margin = next(m for m in company["metrics"] if m["id"] == "gross_margin")
+    assert margin["latest"]["value"] == 20.6 and margin["periods"][0]["reported"]["quote"].startswith("Gross margin was")
+    code, out, _ = radar(root, "judge", "--dry-run")
+    assert "metrics: 0 requests for numbers in 1 passages" in out

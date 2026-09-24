@@ -213,7 +213,7 @@ Policy (flat) {
   new_info_min, materiality_min, contradictions_window_days, contradicts_min,
   contradiction_materiality_min, contradiction_boilerplate_max, maybe_new_info_low, maybe_new_info_high,
   open_questions_min, divergence_window_days, divergence_min_gap, divergence_min_passages,
-  ledger_min_probability
+  ledger_min_probability, metric_min_probability
 }
 
 Company {
@@ -234,6 +234,7 @@ Company {
   divergence: {pillar, inside: {stance, n, ids}, outside: {stance, n, ids}, gap, flagged}[]
   ledger: {items: {promise_id, status: "kept"|"missed"|"open", result_id, p}[],
            kept, missed, open, credibility}
+  metrics: Metric[]                           // KPI tracker, section 11
   redlines: {form, new_document, old_document,
              changed: {id, old_id, similarity, diff: [op, text][]}[],
              added: passage_id[],
@@ -251,7 +252,8 @@ Passage {
   }
   similar: null | {id, similarity, diff: [op, text][]}   // op is "=", "+", "-"
   context: string | null
-  triage: {status: null | "dismissed" | "absorbed" | "acknowledged", starred: bool}
+  triage: {status: null | "dismissed" | "absorbed" | "acknowledged", starred: bool,
+           false_alarms: assumption_id[]}   // contradicts__<id> labeled no
   classified: {in_contradictions, in_whats_new, in_maybe, flagged,
                contradicts: string[], supports: string[], questions: string[]}
 }
@@ -314,6 +316,7 @@ a spot-check `y`/`n` gives `whats_new=1/0` with origin `spotcheck`.
 | `radar search QUERY [--ticker] [--limit]` | Full-text search |
 | `radar quote IDS...` | Markdown quotes with citations |
 | `radar label` / `radar calibrate` | As in v1, with weights, keys, triage, and spot checks |
+| `radar metrics [--ticker T] [--metric M]` | The tracked metrics: reported, guidance, estimates, beats and misses |
 | `radar mcp` | Read-only MCP server over stdio |
 
 ## 9. Decisions made during implementation
@@ -363,3 +366,63 @@ The live run also tuned repeat detection on the earlier implementation (hide a p
 its five-word runs appeared before; 80% hid bullets with new figures). This code instead hides only
 exact repeats and shows near duplicates with a diff while passing the earlier version to Jev, so a
 changed figure is judged rather than hidden; the two approaches were not merged.
+
+## 11. KPI tracker (v1.2)
+
+The numbers a thesis depends on, tracked over time, each point quoted verbatim with its source.
+It lifts the v1 non-goal "no numeric extraction" in the way the v1 spec's future-work list proposed:
+code finds the candidates, Jev only selects.
+
+**Thesis file.** An optional `metrics:` section (at most 12), outside the thesis version (adding or
+editing a metric never re-judges passages):
+
+```yaml
+metrics:
+  gross_margin: {label: "Gross margin", unit: "%", pillar: margins, higher_is: good}
+  revenue: {label: "Revenue", unit: "$M", higher_is: good}
+  dealer_inventory: {label: "Dealer inventory", unit: "units", pillar: dealer_inventory, higher_is: bad,
+                     definition: "Units on North American dealer lots at period end"}
+```
+
+`unit` decides which numbers can measure the metric: `%` percentages; `bps` basis points; `pp` or
+`pts` basis points or percentages (converted to points); `$`, `$K`, `$M`, `$B` dollar amounts
+(converted to that scale); `days`; `x` multiples; anything else a count ("41,000 units").
+
+**Finding numbers (code, `numbers.py`).** Every number with a unit, including ranges ("20% to 21%",
+"$7.0 to $7.4 billion"), with the sentence it sits in; years and small prose counts are skipped.
+Every reporting period named in the passage ("third quarter", "Q3 2026", "3Q26", "fiscal 2027",
+"full-year", "second half of 2026", "September 2026"), with a missing year resolved to the instance
+nearest the document's date.
+
+**Choosing (Jev, `metric_parts`).** For each judged, non-boilerplate passage of the company's own
+documents that has numbers in a metric's unit: per number, a Choice of metric (only metrics whose unit
+fits, plus `none`), a Choice of kind (`reported`, `guidance`, `estimate`, `other`), and a Choice of
+period (the periods found, plus `unstated`); at most five numbers per request (parts `k0`, `k1`, ...).
+The rules say a change never measures a level (and vice versa), and that numbers from analysts,
+experts, or the reader's notes are estimates unless they quote the company. Answers are stored in
+`metric_judgments` (schema version 2) and run after passages and ledger follow-ups in `radar judge`,
+within the same cost cap.
+
+**Series (arithmetic, `metrics.py`).** A number counts when Jev's probability for its metric is at
+least `metrics.min_probability` (default 0.6) and its kind is not `other`. A reported number with no
+stated period is placed in the quarter that ended before the document; guidance or an estimate with
+no stated period is dropped. Per metric and period: the reported figure (filings beat calls beat
+everything else, then the likelier match, then the newest), every guidance revision, every estimate,
+`vs_guidance` (reported against the latest guidance issued before it: above / within / below),
+`vs_estimates` (against the mean estimate dated before it; in line within 0.1 points for percentages,
+else 0.5%), `guidance_change` (raised / lowered / narrowed / widened / maintained), and `latest`
+(change from the previous period of the same length, judged good or bad by `higher_is`).
+
+**Payload.** `Company.metrics`:
+
+```text
+Metric { id, label, unit, pillar, higher_is, periods: Period[] (oldest first),
+         latest: null | {period, label, value, change, direction: good | bad | flat | null} }
+Period { period ("2026-Q3", "FY2026", "2026-H2", "2026-09"), label ("Q3 2026", ...),
+         reported: Point | null, guidance: Point[], estimates: Point[],
+         vs_guidance, vs_estimates, guidance_change }
+Point  { value, high, unit, text (as written), quote (the sentence, verbatim), kind,
+         passage_id, document_id, date, source_type, title, link, speaker, p }
+```
+
+`radar metrics` prints the same series as text, and the MCP server's `get_metrics` tool returns it.
