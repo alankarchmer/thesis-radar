@@ -1,9 +1,10 @@
 """Apply dashboard actions (triage, labels, facts, prediction outcomes, policy) to the workspace.
 
 Action shapes are spec v1.1 section 7. `apply_actions` validates every action before it applies
-any, so a malformed batch changes nothing. Actions apply in order, and each one is validated against
-the state the actions before it leave behind (fact ids and counts, policy values). A fact edit that
-the thesis file itself rejects at apply time stops the batch there; the actions before it stay applied.
+any, so a malformed batch changes nothing. Actions apply in order: fact ids, fact counts, and policy
+values are checked against the state the earlier actions in the batch leave behind. Labels store the
+judgment keys from before the batch, since those are the judgments the user was looking at. A fact
+edit the thesis file itself rejects at apply time stops the batch there; earlier actions stay applied.
 """
 
 from __future__ import annotations

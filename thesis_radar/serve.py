@@ -141,6 +141,8 @@ class RadarHandler(BaseHTTPRequestHandler):
         except HttpError as exc:
             extra = (("Allow", exc.allow),) if exc.allow else ()
             self._json(exc.status, {"ok": False, "error": exc.message}, extra)
+        except (ConnectionError, TimeoutError):
+            raise  # the client went away; RadarServer.handle_error drops it quietly
         except Exception:
             traceback.print_exc(file=sys.stderr)
             self._json(500, {"ok": False, "error": _INTERNAL_ERROR})
