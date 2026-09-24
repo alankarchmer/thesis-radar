@@ -1,0 +1,77 @@
+"""One real round trip per request kind. Opt in with `uv run pytest -m live -s` and TYPESAFE_API_KEY."""
+
+import asyncio
+import os
+import time
+
+import pytest
+from helpers import ACME_THESIS, write_thesis
+
+from thesis_radar.judge import JevJudge, JudgeRequest
+from thesis_radar.rubric import document_request, followup_request, passage_questions, passage_state, question_parts
+from thesis_radar.thesis import load_thesis
+
+pytestmark = [
+    pytest.mark.live,
+    pytest.mark.skipif(not os.environ.get("TYPESAFE_API_KEY"), reason="needs TYPESAFE_API_KEY"),
+]
+MODEL = "jev-1.13.0"
+THESIS = ACME_THESIS.replace("known_facts:", "open_questions:\n  q4: Will dealers cut Q4 orders?\nknown_facts:")
+
+
+def judge_once(request):
+    async def go():
+        async with JevJudge() as judge:
+            started = time.perf_counter()
+            result = await judge.judge(request)
+            return result, time.perf_counter() - started
+
+    return asyncio.run(go())
+
+
+def test_passage_rubric_round_trip(tmp_path):
+    thesis = load_thesis(write_thesis(tmp_path, text=THESIS))
+    state = passage_state(
+        thesis,
+        passage_text="Dealer inventory rose 12% in the quarter and management now expects it to stay elevated through spring.",
+        speaker="CFO", source_type="earnings_transcript", doc_date="2026-09-15", title="ACME Q3 call",
+        context="Operator: Our next question is about the channel.",
+        previously_seen=[{"date": "2026-06-15", "source_type": "earnings_transcript", "text": "Dealer inventory rose 8%."}],
+    )
+    [(part, questions)] = question_parts(passage_questions(thesis, thesis.facts()))
+    request = JudgeRequest(state=state, questions=questions, model=MODEL)
+    result, seconds = judge_once(request)
+    assert set(result.answers) == set(request.questions)
+    assert result.model.startswith("jev-")
+    for answer in result.answers.values():
+        if answer["type"] != "noul":
+            assert abs(sum(answer["probabilities"].values()) - 1) < 0.02
+    print(f"\npassage request ({part}): {seconds:.2f}s, {result.input_tokens} input tokens, model {result.model}")
+
+
+def test_document_metadata_round_trip(tmp_path):
+    thesis = load_thesis(write_thesis(tmp_path))
+    request, candidates = document_request(
+        {"ACME": thesis}, file_name="acme-q3-call.txt", title="ACME Snowmobiles Q3 2026 earnings call",
+        text="ACME Snowmobiles Q3 2026 earnings call\nSeptember 15, 2026\n\nOperator: Welcome to the call.",
+        model=MODEL,
+    )
+    result, seconds = judge_once(request)
+    assert candidates == ["September 15, 2026"]
+    assert result.answers["ticker"]["choice"] == "ACME"
+    print(f"\ndocument request: {seconds:.2f}s, source {result.answers['source_type']['choice']}")
+
+
+def test_followup_round_trip(tmp_path):
+    thesis = load_thesis(write_thesis(tmp_path))
+    request = followup_request(
+        thesis,
+        promise={"text": "We expect dealer inventory to be back to normal by the end of the first quarter.",
+                 "doc_date": "2026-03-01", "speaker": "CEO", "source_type": "earnings_transcript"},
+        result={"text": "Dealer inventory ended the first quarter at normal levels.", "doc_date": "2026-05-01",
+                "source_type": "filing"},
+        model=MODEL,
+    )
+    result, seconds = judge_once(request)
+    assert result.answers["followup"]["choice"] in {"confirms", "misses", "not_addressed"}
+    print(f"\nfollow-up request: {seconds:.2f}s, {result.answers['followup']['choice']}")

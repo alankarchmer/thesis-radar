@@ -1,5 +1,7 @@
 # thesis-radar Implementation Plan
 
+> **Status:** executed. The code was built from this plan with the review fixes and features in `docs/superpowers/specs/2026-09-24-thesis-radar-v1.1.md`; where the two differ, the v1.1 document and the code are authoritative.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build `radar`, a personal CLI that judges every new research passage against a per-company investment thesis with TypeSafe's Jev model and writes an offline dashboard of what is new, material, and contradicting.

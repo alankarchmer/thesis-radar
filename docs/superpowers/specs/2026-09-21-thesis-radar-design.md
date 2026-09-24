@@ -1,7 +1,7 @@
 # thesis-radar design
 
 Date: 2026-09-21
-Status: approved in brainstorming, awaiting spec review
+Status: implemented, with the amendments in `2026-09-24-thesis-radar-v1.1.md` (which take precedence where they differ)
 
 ## Problem
 
