@@ -89,7 +89,8 @@ def fts_match(query: str) -> str | None:
 
 
 def search(store: Store, query: str, *, tickers: Sequence[str] | None = None, limit: int = 50) -> list[dict[str, Any]]:
-    """Ranked hits: {passage_id, document_id, ticker, title, doc_date, source_type, page, speaker, text, snippet, path}."""
+    """Ranked hits (best first; newest first without FTS5) as dicts with passage_id, document_id, ticker, title,
+    doc_date, source_type, form, page, speaker, text, snippet (matches in [brackets]), and path."""
     match = fts_match(query)
     if match is None:
         return []
@@ -98,7 +99,8 @@ def search(store: Store, query: str, *, tickers: Sequence[str] | None = None, li
         return [_hit(row, row["snippet"]) for row in rows]
     groups = parse_query(query)
     needles = [term.text.lower() for group in groups for term in group]
-    return [_hit(row, _snippet(row["text"], needles) or row["snippet"]) for row in _substring_rows(store, groups, tickers)[:limit]]
+    rows = _substring_rows(store, groups, tickers)[:limit]
+    return [_hit(row, _snippet(row["text"], needles) or row["snippet"]) for row in rows]
 
 
 def _hit(row: Any, snippet: str) -> dict[str, Any]:
