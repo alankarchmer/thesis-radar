@@ -8,6 +8,163 @@ you triage from the keyboard. It never writes text of its own: every passage it 
 is quoted verbatim with a link to its source, and Jev only chooses, scores, or answers
 yes/no.
 
+## Quick start on a Mac: Apple (AAPL)
+
+A complete first run with a real company. It fetches Apple's last year of SEC filings from EDGAR,
+has Jev judge them against a sample thesis, and opens the dashboard. Paste each block into
+Terminal. The blocks carry no `#` comments on purpose: zsh on macOS does not treat `#` as a comment
+at the prompt.
+
+**1. Install git and uv** (skip what you already have). `xcode-select --install` provides git.
+If you use Homebrew, `brew install uv` works instead of the installer script.
+
+```bash
+xcode-select --install
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**2. Get the code and install `radar`.** uv fetches Python 3.11+ itself if you don't have it.
+After `uv tool update-shell`, open a new Terminal window so `radar` is on your PATH.
+
+```bash
+git clone https://github.com/alankarchmer/thesis-radar.git ~/thesis-radar
+cd ~/thesis-radar
+uv tool install --editable .
+uv tool update-shell
+```
+
+**3. In a new Terminal window, set your key and create the workspace.** Replace the key and the
+email with your own. SEC EDGAR requires a contact email on every request. The workspace lives
+outside the repository, since filings and judgments never belong in git.
+
+```bash
+radar --version
+export TYPESAFE_API_KEY="paste-your-typesafe-key-here"
+export RADAR_HOME=~/radar-aapl
+radar init
+echo "edgar_email: you@example.com" >> "$RADAR_HOME/config.yaml"
+```
+
+To keep these settings for future Terminal windows, append the two `export` lines to `~/.zshrc`.
+
+**4. Write the thesis.** This is a sample thesis to edit, not investment advice. The assumptions,
+open questions, and predictions are opinions to replace with your own. The known facts are
+deliberately general: add the specifics you already know, since novelty is judged against them.
+
+```bash
+cat > "$RADAR_HOME/thesis/AAPL.yaml" <<'EOF'
+ticker: AAPL
+company: Apple Inc.
+aliases: [Apple, "Apple Inc."]
+# peers: [GOOGL, QCOM]   # optional: also read these companies' earnings releases against this thesis (costs more)
+
+pillars:
+  iphone: iPhone demand, the upgrade cycle, pricing, and mix.
+  services: App Store, advertising, iCloud, subscriptions, and licensing such as Google's search payments.
+  china: Demand in Greater China and competition from local brands.
+  margins: Gross margin for products and services, tariffs, and component costs.
+  ai: Apple Intelligence, Siri, and partnerships with outside AI models.
+  regulation: App Store rules, antitrust cases, and the EU's Digital Markets Act.
+  capital_return: Share buybacks and dividends.
+
+assumptions:
+  iphone_grows: {pillar: iphone, statement: "iPhone revenue grows year over year through fiscal 2027."}
+  services_double_digit: {pillar: services, statement: "Services revenue keeps growing at least 10% a year."}
+  gross_margin_holds: {pillar: margins, statement: "Total gross margin stays at or above 45% despite tariffs and component costs."}
+  china_stabilizes: {pillar: china, statement: "Greater China revenue stops declining year over year."}
+  ai_on_schedule: {pillar: ai, statement: "Apple ships its announced AI features, including the new Siri, on the schedule it has given."}
+  search_payments_hold: {pillar: regulation, statement: "Court remedies leave Google's default-search payments to Apple largely intact."}
+  buybacks_continue: {pillar: capital_return, statement: "Apple keeps repurchasing at least $90 billion of stock a year."}
+
+open_questions:
+  tariff_cost: How much are tariffs costing Apple each quarter, and is it raising prices to offset them?
+  ai_partners: Which outside AI models will Apple use, and on what terms?
+  china_share: Is Apple losing share in China to Huawei and other local brands?
+  memory_costs: Are rising memory prices squeezing product gross margin?
+
+predictions:
+  dec_services_record: {statement: "Services revenue sets a record in the December 2026 quarter.", by: 2027-02-15, p: 0.8, pillar: services}
+  dec_china_growth: {statement: "Greater China revenue grows year over year in the December 2026 quarter.", by: 2027-02-15, p: 0.5, pillar: china}
+
+known_facts:
+  iphone:
+    - "iPhone is Apple's largest product category, about half of total revenue."
+    - "Apple reports revenue for iPhone, Mac, iPad, Wearables/Home and Accessories, and Services."
+  services:
+    - "Services is Apple's second-largest revenue category, with a much higher gross margin than products."
+    - "Google pays Apple to be the default search engine in Safari."
+  china:
+    - "Greater China is one of Apple's five reportable segments, with the Americas, Europe, Japan, and Rest of Asia Pacific."
+  margins:
+    - "Apple reports gross margin separately for Products and Services."
+  regulation:
+    - "In the EU, the Digital Markets Act requires Apple to allow alternative app marketplaces and payment options."
+
+metrics:
+  revenue: {label: "Revenue", unit: "$B", higher_is: good}
+  iphone_revenue: {label: "iPhone revenue", unit: "$B", pillar: iphone, higher_is: good}
+  services_revenue: {label: "Services revenue", unit: "$B", pillar: services, higher_is: good}
+  greater_china_revenue: {label: "Greater China revenue", unit: "$B", pillar: china, higher_is: good}
+  gross_margin: {label: "Gross margin", unit: "%", pillar: margins, higher_is: good, definition: "Total company gross margin, products and services combined"}
+  services_gross_margin: {label: "Services gross margin", unit: "%", pillar: margins, higher_is: good}
+  eps: {label: "Diluted EPS", unit: "$", higher_is: good}
+EOF
+radar status
+```
+
+`radar status` should list `theses: AAPL`. If the thesis has a mistake, it names the key at fault.
+
+**5. Fetch Apple's filings from SEC EDGAR.** The first fetch takes the last 365 days of 10-K, 10-Q,
+and 8-K filings, including the earnings releases filed as 8-K exhibit 99. Later fetches take only
+newer filings. It needs no API key.
+
+```bash
+radar fetch
+radar status
+```
+
+**6. Judge with Jev.** Start with a dry run: it prints how many requests would be sent and the
+estimated cost, without calling Jev.
+
+```bash
+radar judge --dry-run
+radar judge
+```
+
+- **Over the cost cap:** if the estimate exceeds `max_cost_per_run` ($2.00 by default), `radar judge`
+  stops without sending anything. Run `radar judge --yes` to go ahead, or raise `max_cost_per_run`
+  in `$RADAR_HOME/config.yaml`.
+- **Metrics show 0 in the dry run:** that's expected. Numbers are asked about only for passages
+  already judged, so `radar judge` handles them after the passages. The guidance ledger follow-ups
+  work the same way.
+- **Skipped as over the cap:** when the metric numbers or ledger follow-ups don't fit in what's left
+  of the budget, `radar judge` says they were skipped. Run `radar judge --yes` to send them.
+
+**7. Open the dashboard.** `radar serve` opens `http://127.0.0.1:8765` in your browser and saves
+your triage as you go. Press `Ctrl-C` in Terminal to stop it.
+
+```bash
+radar metrics --ticker AAPL
+radar serve
+```
+
+To get a static file instead of the server:
+
+```bash
+radar view
+open "$RADAR_HOME/dashboard.html"
+```
+
+**Every day after that.** `radar run` fetches new filings, ingests anything you dropped into
+`inbox/` (sell-side PDFs, transcripts, notes), judges, and rewrites the dashboard. Then serve it:
+
+```bash
+export RADAR_HOME=~/radar-aapl
+cp ~/Downloads/some-apple-report.pdf "$RADAR_HOME/inbox/"
+radar run
+radar serve
+```
+
 ## Install
 
 ```bash
