@@ -177,6 +177,9 @@ _PERIOD_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 
+_DAY_AFTER = re.compile(r"\.?\s+\d{1,2}(?:st|nd|rd|th)?\b(?!\s*(?:%|percent))")
+
+
 @dataclass(frozen=True)
 class PeriodCandidate:
     key: str  # "2026-Q3", "2026-H2", "FY2026", "2026-09"
@@ -257,6 +260,8 @@ def find_periods(text: str, doc_date: date) -> list[PeriodCandidate]:
                 name = groups["m"].lower().rstrip(".")
                 if not groups.get("y") and (len(name) <= 3 or name == "may"):
                     continue  # bare "may", "mar", "jun" are ordinary words far more often than months
+                if _DAY_AFTER.match(text, match.start("m") + len(groups["m"])):
+                    continue  # "September 18, 2026" is a date (a dateline, a call date), not a reporting period
                 sub = _MONTHS[name]
             else:
                 sub = 12

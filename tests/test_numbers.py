@@ -91,3 +91,9 @@ def test_period_helpers():
     keys = ["FY2026", "2026-Q4", "2026-H2", "2026-Q3", "2026-09", "2027-Q1"]
     assert sorted(keys, key=period_sort_key) == ["2026-09", "2026-Q3", "2026-Q4", "2026-H2", "FY2026", "2027-Q1"]
     assert [period_granularity(k) for k in ("FY2026", "2026-Q3", "2026-H2", "2026-09")] == ["year", "quarter", "half", "month"]
+
+
+def test_calendar_dates_are_not_reporting_periods():
+    text = "ACME preview September 18, 2026 We estimate third quarter gross margin of 21.0%. Sept. 3rd call."
+    assert [p.key for p in find_periods(text, date(2026, 9, 18))] == ["2026-Q3"]
+    assert [p.key for p in find_periods("sales in September 2026 rose", date(2026, 10, 5))] == ["2026-09"]
