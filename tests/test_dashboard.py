@@ -121,8 +121,15 @@ def test_triage_changes_classification(app):
     pid = by_text(build(app))["Inventory rose again. [new]"]["id"]
     app.store.set_triage("ACME", pid, status="dismissed", starred=True)
     passage = by_text(build(app))["Inventory rose again. [new]"]
-    assert passage["triage"] == {"status": "dismissed", "starred": True}
+    assert passage["triage"] == {"status": "dismissed", "starred": True, "false_alarms": []}
     assert not passage["classified"]["in_whats_new"]
+
+
+def test_false_alarms_are_carried_for_the_verdicts(app):
+    pid = by_text(build(app))["Inventory stays high. [contradicts]"]["id"]
+    app.store.save_label(pid, "contradicts__inv_normalizes", False, ticker="ACME", origin="triage")
+    app.store.save_label(pid, "new_info", False, ticker="ACME", origin="triage")
+    assert by_text(build(app))["Inventory stays high. [contradicts]"]["triage"]["false_alarms"] == ["inv_normalizes"]
 
 
 def test_stale_answers_are_shown_after_a_thesis_edit(app):

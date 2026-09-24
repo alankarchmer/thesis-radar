@@ -12,13 +12,13 @@ from datetime import date
 from pathlib import Path
 from typing import Any, TextIO
 
-from . import __version__, ledger
+from . import __version__, ledger, metrics
 from .absorb import absorb_text
 from .app import App
 from .apply import ActionError, apply_actions, parse_actions
 from .calibrate import calibration_report, run_labeling, sample_for_labeling
 from .config import ConfigError, Workspace, resolve_workspace
-from .dashboard import build_payload, render_html, write_dashboard
+from .dashboard import build_payload, link_for, render_html, write_dashboard
 from .edgar import EdgarError, fetch_all, make_http_get
 from .ingest import ingest_inbox, tag_document
 from .judge import JevJudge, Judge, JudgeFatal
@@ -185,6 +185,9 @@ def cmd_judge(ctx: Context, args: argparse.Namespace) -> None:
     if args.dry_run:
         followups = ledger.plan_followups(app.store, app.theses, app.config.model, plan=plan, policy=app.policy)
         ctx.say(f"ledger: {len(followups.pending)} follow-up requests (${followups.estimated_cost:.2f}) with current judgments")
+        numbers = metrics.plan_metrics(app.store, app.theses, app.config.model, plan=plan, policy=app.policy)
+        ctx.say(f"metrics: {len(numbers.pending)} requests for numbers in {numbers.passages} passages "
+                f"(${numbers.estimated_cost:.2f}) with current judgments")
         return
     if plan.estimated_cost > cap and not args.yes:
         raise Refused(
@@ -211,32 +214,43 @@ def cmd_judge(ctx: Context, args: argparse.Namespace) -> None:
         ctx.say(f"judge: {report.judged} judged, {report.failed} failed, {report.input_tokens:,} input tokens")
         for error in report.errors[:10]:
             ctx.warn(f"  {error}")
-    _judge_followups(ctx, args, budget=cap - spent)
+    current = app.plan()
+    followups = ledger.plan_followups(app.store, app.theses, app.config.model, plan=current, policy=app.policy)
+    spent += _judge_extra(
+        ctx, args, "ledger", "follow-ups", [ledger.followup_work(app.store, i) for i in followups.pending],
+        followups.estimated_cost, budget=cap - spent,
+    )
+    numbers = metrics.plan_metrics(app.store, app.theses, app.config.model, plan=current, policy=app.policy)
+    _judge_extra(
+        ctx, args, "metrics", "number requests", [metrics.metric_work(app.store, i) for i in numbers.pending],
+        numbers.estimated_cost, budget=cap - spent,
+    )
 
 
-def _judge_followups(ctx: Context, args: argparse.Namespace, *, budget: float) -> None:
+def _judge_extra(
+    ctx: Context, args: argparse.Namespace, step: str, what: str, items: list, estimated_cost: float, *, budget: float
+) -> float:
+    """Run a follow-on batch of requests (ledger follow-ups, metric numbers) within what is left of the budget."""
     app = ctx.app
-    followups = ledger.plan_followups(app.store, app.theses, app.config.model, plan=app.plan(), policy=app.policy)
-    if not followups.pending:
-        return
-    if followups.estimated_cost > budget and not args.yes:
-        ctx.warn(
-            f"ledger: {len(followups.pending)} follow-up requests (${followups.estimated_cost:.2f}) skipped: "
-            "over max_cost_per_run; rerun with --yes"
-        )
-        return
+    if not items:
+        return 0.0
+    if estimated_cost > budget and not args.yes:
+        ctx.warn(f"{step}: {len(items)} {what} (${estimated_cost:.2f}) skipped: over max_cost_per_run; rerun with --yes")
+        return 0.0
     judge = ctx.make_judge()
 
     async def go():
         async with judge:
-            items = [ledger.followup_work(app.store, item) for item in followups.pending]
             return await run_work(judge, items, concurrency=app.config.concurrency, limiter=ctx.limiter())
 
     try:
         report = asyncio.run(go())
     except JudgeFatal as exc:
         raise Refused(f"Jev refused the request; stopped: {exc}") from exc
-    ctx.say(f"ledger: {report.judged} follow-ups judged, {report.failed} failed")
+    from .config import PRICE_PER_MILLION_INPUT_TOKENS
+
+    ctx.say(f"{step}: {report.judged} {what} judged, {report.failed} failed")
+    return report.input_tokens * PRICE_PER_MILLION_INPUT_TOKENS / 1_000_000
 
 
 def cmd_view(ctx: Context, args: argparse.Namespace) -> None:
@@ -346,6 +360,23 @@ def cmd_search(ctx: Context, args: argparse.Namespace) -> None:
             f"{hit['title']} · p.{hit['page']}"
         )
         ctx.say(f"    {hit['snippet']}")
+
+
+def cmd_metrics(ctx: Context, args: argparse.Namespace) -> None:
+    app = ctx.app
+    tickers = [args.ticker] if args.ticker else sorted(app.theses)
+    if args.ticker and args.ticker not in app.theses:
+        raise Refused(f"unknown ticker {args.ticker}; known: {', '.join(sorted(app.theses)) or 'none'}")
+    for ticker in tickers:
+        series = metrics.metric_series(
+            app.store, app.theses[ticker], app.policy, model=app.config.model,
+            link=lambda path, page: link_for(app, path, page),
+        )
+        if args.metric:
+            series = [m for m in series if m["id"] == args.metric]
+            if not series:
+                raise Refused(f"{ticker} has no metric {args.metric}")
+        ctx.say(metrics.metrics_text(series, ticker=ticker).rstrip())
 
 
 def cmd_quote(ctx: Context, args: argparse.Namespace) -> None:
@@ -461,6 +492,11 @@ def build_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("--ticker")
     search_cmd.add_argument("--limit", type=int, default=20)
     search_cmd.set_defaults(handler=cmd_search)
+
+    metrics_cmd = sub.add_parser("metrics", help="print the tracked metrics: reported, guidance, estimates")
+    metrics_cmd.add_argument("--ticker")
+    metrics_cmd.add_argument("--metric", help="one metric id")
+    metrics_cmd.set_defaults(handler=cmd_metrics)
 
     quote = sub.add_parser("quote", help="print passages as Markdown quotes with citations")
     quote.add_argument("passage_ids", type=int, nargs="+")

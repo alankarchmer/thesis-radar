@@ -64,3 +64,18 @@ class FollowupRecord:
     retryable: bool = True
     input_tokens: int | None = None
     request_id: str | None = None
+
+
+@dataclass(frozen=True)
+class MetricRecord:
+    passage_id: int
+    cache_key: str
+    ticker: str
+    part: str
+    model: str
+    status: str  # "judged" or "failed"
+    answers: dict[str, Any] | None = None
+    error: str | None = None
+    retryable: bool = True
+    input_tokens: int | None = None
+    request_id: str | None = None

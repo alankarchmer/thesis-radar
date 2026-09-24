@@ -11,7 +11,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
-from . import analysis, ledger, search
+from . import analysis, ledger, metrics, search
 from .app import App
 from .policy import classify_passage, signals
 from .rubric import CONTEXT_CHARS, OFF_THESIS
@@ -94,6 +94,11 @@ class _PassageBuilder:
         self.plan = plan
         self.previous_view = previous_view
         self.triage = app.store.triage_map(thesis.ticker)
+        # Assumptions the user marked as false alarms for a passage (`contradicts__<id>` labeled no).
+        self.false_alarms: dict[int, list[str]] = {}
+        for label in app.store.labels(thesis.ticker):
+            if label["question"].startswith("contradicts__") and not label["value"]:
+                self.false_alarms.setdefault(label["passage_id"], []).append(label["question"][len("contradicts__"):])
         self._similar_text: dict[int, str] = {}
 
     def preload_similar(self, rows: Sequence[Any]) -> None:
@@ -137,7 +142,11 @@ class _PassageBuilder:
             "p": p,
             "similar": similar,
             "context": _clip_context(context),
-            "triage": {"status": triage["status"], "starred": bool(triage["starred"])},
+            "triage": {
+                "status": triage["status"],
+                "starred": bool(triage["starred"]),
+                "false_alarms": sorted(self.false_alarms.get(row["passage_id"], [])),
+            },
         }
         passage["classified"] = classify_passage(passage, self.app.policy, self.app.today).as_payload()
         return passage
@@ -232,6 +241,9 @@ def company_payload(app: App, thesis: Thesis, plan: JudgePlan, *, previous_view:
         "divergence": analysis.divergence(judged, pillars, policy, today=today),
         "ledger": ledger.ledger_summary(store, thesis, passages_by_id, policy),
         "redlines": analysis.redlines(store, ticker),
+        "metrics": metrics.metric_series(
+            store, thesis, policy, model=app.config.model, link=lambda path, page: link_for(app, path, page)
+        ),
     }
 
 

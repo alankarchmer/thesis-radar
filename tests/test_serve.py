@@ -127,7 +127,7 @@ def test_actions_apply_and_persist(served):
     assert served.app.store.triage_map("ACME") == {pid: {"status": "absorbed", "starred": False}}
     payload = payload_from_html(request(served, "/", token=False)[2].decode())
     [passage] = [p for p in payload["companies"][0]["passages"] if p["id"] == pid]
-    assert passage["triage"] == {"status": "absorbed", "starred": False}
+    assert passage["triage"] == {"status": "absorbed", "starred": False, "false_alarms": []}
 
 
 def test_a_bare_array_body_is_accepted(served):

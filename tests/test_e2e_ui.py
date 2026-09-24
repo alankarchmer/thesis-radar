@@ -17,7 +17,7 @@ from datetime import date
 import pytest
 from helpers import write_thesis
 from test_cli import CALL, NOTE, WEATHER, responder
-from test_dashboard_ui import _chromium_executable, focus_first, goto_tab
+from test_dashboard_ui import VERDICT_LABELS, _chromium_executable, focus_first, goto_section, goto_tab
 
 from thesis_radar.app import App
 from thesis_radar.cli import main
@@ -28,6 +28,7 @@ from thesis_radar.serve import make_server
 sync_api = pytest.importorskip("playwright.sync_api")
 pytestmark = pytest.mark.ui
 TODAY = date.today()
+VERDICTS = set(VERDICT_LABELS)
 
 
 @pytest.fixture(scope="module")
@@ -79,9 +80,20 @@ def test_static_dashboard_from_the_real_pipeline(browser, workspace):
     context, page, errors = open_tab(browser)
     page.goto((workspace / "dashboard.html").as_uri())
     page.wait_for_selector("#app > *")
+    # The portfolio board has a verdict for every assumption the real thesis defines.
+    board = page.locator('.board-card[data-ticker="ACME"]')
+    assert board.locator(".score-row").count() >= 1
+    assert all(
+        v in VERDICTS for v in board.locator(".score-row .verdict").evaluate_all("ns => ns.map(n => n.dataset.verdict)")
+    )
     for key in ["ACME", "unsorted", "overview", "ACME"]:
         goto_tab(page, key)
+    for section in ["thesis", "metrics", "signals", "filings", "read"]:
+        goto_section(page, section)
+        assert page.url.endswith(f"#ACME/{section}")
     assert page.locator('[data-count="whats_new"]').first.text_content().strip() == "1"
+    card = page.locator('.card[data-section="new"]').first
+    assert card.locator(".src").is_visible() and card.locator(".more").is_visible()
     assert page.get_by_text("We cut promotions sharply in September.").first.is_visible()
     pid = focus_first(page, "new")
     page.keyboard.press("d")
@@ -129,3 +141,51 @@ def test_serve_round_trip_in_the_browser(browser, workspace):
         server.shutdown()
         server.server_close()
         app.close()
+
+
+def test_metrics_view_from_the_real_pipeline(browser, tmp_path):
+    from helpers import ACME_THESIS
+    from test_metrics import METRICS, Q2, Q3, number_answers
+    from test_metrics import NOTE as ESTIMATE
+
+    root = tmp_path / "research"
+    (root / "inbox").mkdir(parents=True)
+    write_thesis(root / "thesis", text=ACME_THESIS + METRICS)
+    (root / "inbox" / "q2.txt").write_text(f"ACME second quarter release\nJuly 21, 2026\n\n{Q2}", encoding="utf-8")
+    (root / "inbox" / "note.txt").write_text(f"ACME preview\nSeptember 18, 2026\n\n{ESTIMATE}", encoding="utf-8")
+    (root / "inbox" / "q3.txt").write_text(f"ACME third quarter release\nOctober 20, 2026\n\n{Q3}", encoding="utf-8")
+
+    def respond(request):
+        return number_answers(request) if "numbers" in request.state else responder(request)
+
+    code, out, err = cli(["--workspace", str(root), "run"], judge_factory=lambda: FakeJudge(respond))
+    assert code == 0, err
+    assert "metrics:" in out
+    context, page, errors = open_tab(browser)
+    page.goto((root / "dashboard.html").as_uri())
+    page.wait_for_selector("#app > *")
+    assert "Gross margin" in page.locator('.board-card[data-ticker="ACME"]').text_content()
+    goto_tab(page, "ACME")
+    goto_section(page, "metrics")
+    margin = page.locator('.metric-card[data-metric="gross_margin"]')
+    assert margin.locator(".metric-value").text_content().strip() == "20.6%"
+    assert "Down 1.2 pts" in margin.text_content()
+    # The analyst's estimate is placed in Q3 despite the note's "September 18, 2026" dateline.
+    assert "Missed estimates" in margin.text_content()
+    assert margin.locator("svg").count() >= 1
+    margin.get_by_text("Show as table").click()
+    table = margin.locator("table")
+    assert "Q3 2026" in table.text_content() and "20.6%" in table.text_content()
+    # Every number opens to the sentence it came from.
+    cell = table.locator("details.qnum", has_text="20.6%").first
+    cell.locator("summary").click()
+    assert cell.locator(".qtext").is_visible()
+    assert "Gross margin was 20.6% in the third quarter." in cell.locator(".qtext").text_content()
+    revenue = page.locator('.metric-card[data-metric="revenue"]')
+    assert "1,920" in revenue.locator(".metric-value").text_content()
+    assert revenue.locator(".chart-key").text_content() == "Line: reported"  # no guidance or estimates to explain
+    assert "FY 2026 guidance cut" in margin.text_content()
+    inventory = page.locator('.metric-card[data-metric="dealer_inventory"]')
+    assert [t.strip() for t in inventory.locator(".ytick").all_text_contents()] == ["35K", "40K", "45K", "50K"]
+    assert errors == []
+    context.close()

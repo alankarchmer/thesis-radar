@@ -40,6 +40,7 @@ class Policy:
     divergence_min_gap: float = 1.0
     divergence_min_passages: int = 3
     ledger_min_probability: float = 0.6
+    metric_min_probability: float = 0.6
 
     def flat(self) -> dict[str, float | int]:
         return asdict(self)
@@ -61,6 +62,7 @@ _SETTINGS: dict[tuple[str, ...], str] = {
     ("divergence", "min_gap"): "divergence_min_gap",
     ("divergence", "min_passages"): "divergence_min_passages",
     ("ledger", "min_probability"): "ledger_min_probability",
+    ("metrics", "min_probability"): "metric_min_probability",
 }
 _MAYBE_BAND = ("maybe", "new_info", "between")
 _INTEGER_FIELDS = frozenset(
@@ -68,7 +70,7 @@ _INTEGER_FIELDS = frozenset(
 )
 _PROBABILITY_FIELDS = frozenset(
     {"metadata_min_probability", "pillar_probability_min", "boilerplate_max", "new_info_min", "contradicts_min",
-     "contradiction_boilerplate_max",
+     "contradiction_boilerplate_max", "metric_min_probability",
      "maybe_new_info_low", "maybe_new_info_high", "open_questions_min", "ledger_min_probability"}
 )
 
@@ -150,6 +152,8 @@ def policy_yaml(policy: Policy) -> str:
         f"  min_passages: {p.divergence_min_passages}\n"
         "ledger:\n"
         f"  min_probability: {p.ledger_min_probability:g}\n"
+        "metrics:\n"
+        f"  min_probability: {p.metric_min_probability:g}\n"
     )
 
 

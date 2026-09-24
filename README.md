@@ -47,7 +47,7 @@ known_facts:                      # what you already know; novelty is judged aga
     - {text: "Promotions up 200 bps year over year.", as_of: 2026-08-05, source: 1234}
 ```
 
-Limits: 1-12 pillars, 10 assumptions, 5 open questions, 10 predictions, 5 peers, 20 facts
+Limits: 1-12 pillars, 10 assumptions, 5 open questions, 10 predictions, 5 peers, 12 metrics, 20 facts
 per pillar. Quote any key YAML might read as a boolean (`yes`, `no`, `on`, `off`).
 
 `config.yaml` (every key optional):
@@ -77,11 +77,23 @@ radar serve    # open the dashboard on localhost with write-back (recommended)
 Drop downloaded files (PDF, HTML, DOCX, TXT, MD) into `inbox/`. Files Jev cannot place
 confidently appear under **Unsorted** with a `radar tag` command to copy.
 
-The dashboard has an **Overview** (heat map of stance by pillar and week, evidence balance
-per assumption, management-versus-outside divergence, guidance credibility, predictions
-due) and a tab per company: **Contradictions** (grouped by assumption), **What's new**,
-**Maybe**, **Open questions**, **Guidance ledger**, **Changed language** (filing-to-filing
-redlines), **Predictions**, and **Known facts**.
+The dashboard opens on an **Overview**: per company, a verdict on each assumption (holding,
+contradicted, mixed, turning, or quiet: the last six months of evidence against the six
+before, with a 12-month chart), what to read next, a line per tracked metric, and signals
+in plain sentences (where management and outside sources disagree, guidance hit rate,
+predictions due). Each company has five sections:
+
+- **Read**: contradictions grouped by assumption, then what's new by pillar, maybe-new,
+  and starred.
+- **Thesis**: the assumption scorecard with the evidence for and against each, open
+  questions and the passages bearing on them, predictions, and known facts.
+- **Metrics**: each tracked number by period (see *Track the numbers*).
+- **Signals**: tone by pillar and month, management versus outside sources, and the
+  guidance ledger.
+- **Filings**: filing-to-filing redlines of changed language.
+
+A chip in the header counts what needs attention (stale, unjudged, or failed passages).
+Blue means supports your thesis, red means contradicts it.
 
 Triage from the keyboard; every action also teaches the calibration report:
 
@@ -96,6 +108,7 @@ Triage from the keyboard; every action also teaches the calibration report:
 | `v` | skim the whole document, `n` / `p` to jump between highlights |
 | `o` | open the source at its page |
 | `u` | undo |
+| `g` then `r` `t` `m` `s` `f` | Read, Thesis, Metrics, Signals, Filings (`g o` Overview, `g 1`-`9` company) |
 | `/` | search |
 | `?` | all shortcuts |
 
@@ -122,6 +135,7 @@ terminal.
 | `radar fact T PILLAR TEXT [--source ID] [--replace FACT]` | Add or replace a known fact (keeps your comments) |
 | `radar resolve T PREDICTION yes/no/clear` | Record a prediction's outcome |
 | `radar search QUERY [--ticker T]` | Full-text search (`"phrases"`, `prefix*`, `OR`) |
+| `radar metrics [--ticker T] [--metric M]` | The tracked metrics per period: reported, guidance, estimates |
 | `radar quote ID...` | Markdown quotes with citations for memos |
 | `radar label [--ticker T] [--n 20]` | Label a weighted random sample of passages |
 | `radar calibrate [--ticker T] [--precision P] [--recall R]` | Report Jev's accuracy against your labels |
@@ -141,6 +155,26 @@ terminal.
 - Risk-factor language about what could happen, and standard accounting-policy text, counts as
   boilerplate: it is never evidence for or against an assumption, and never a contradiction.
 
+## Track the numbers
+
+Add a `metrics:` section to a thesis to follow the figures it depends on:
+
+```yaml
+metrics:
+  gross_margin: {label: "Gross margin", unit: "%", pillar: margins, higher_is: good}
+  revenue: {label: "Revenue", unit: "$M", higher_is: good}
+  dealer_inventory: {label: "Dealer inventory", unit: "units", pillar: dealer_inventory, higher_is: bad}
+```
+
+On the next `radar run`, code finds every number and reporting period in the company's documents,
+and Jev picks which metric each number measures, whether it is a reported result, company guidance,
+or an outside estimate, and which period it covers. `radar metrics` (and the dashboard's Metrics
+view) then shows, per period, what was reported, every guidance revision, the estimates, whether the
+result beat or missed guidance and estimates, and whether guidance was raised or cut — every number
+with the sentence it came from and a link to its page. Units: `%`, `bps`, `pp`, `$`, `$K`, `$M`, `$B`,
+`days`, `x`, or any word for a count. Metrics never re-judge passages; changing one only re-asks
+about the numbers.
+
 ## Trust the feed only after calibrating it
 
 Jev's probabilities are only useful once checked against your own judgment. In your first
@@ -158,8 +192,8 @@ on the feed.
 
 ## Use it from Claude
 
-`radar mcp` exposes the corpus read-only (companies, theses, What's new, contradictions,
-search, passages, documents), with a citation on every passage:
+`radar mcp` exposes the corpus read-only (companies, theses, tracked metrics, What's new,
+contradictions, search, passages, documents), with a citation on every passage:
 
 ```bash
 claude mcp add thesis-radar -- radar --workspace ~/research mcp

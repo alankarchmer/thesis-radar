@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .models import FollowupRecord, JudgmentRecord, NewDocument, PassageDraft
+from .models import FollowupRecord, JudgmentRecord, MetricRecord, NewDocument, PassageDraft
 
 SCHEMA_V1 = """
 CREATE TABLE documents (
@@ -135,7 +135,26 @@ CREATE TRIGGER passages_fts_delete AFTER DELETE ON passages BEGIN
 END;
 """
 
-MIGRATIONS: tuple[str, ...] = (SCHEMA_V1,)
+SCHEMA_V2 = """
+CREATE TABLE metric_judgments (
+    passage_id INTEGER NOT NULL REFERENCES passages(id),
+    cache_key TEXT NOT NULL,
+    ticker TEXT NOT NULL,
+    part TEXT NOT NULL,
+    model TEXT NOT NULL,
+    answers_json TEXT,
+    status TEXT NOT NULL CHECK (status IN ('judged', 'failed')),
+    error TEXT,
+    retryable INTEGER NOT NULL DEFAULT 1,
+    input_tokens INTEGER,
+    request_id TEXT,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (passage_id, cache_key)
+);
+CREATE INDEX metric_judgments_ticker ON metric_judgments (ticker, passage_id);
+"""
+
+MIGRATIONS: tuple[str, ...] = (SCHEMA_V1, SCHEMA_V2)
 SCHEMA_VERSION = len(MIGRATIONS)
 
 _PASSAGE_COLUMNS = """
@@ -178,9 +197,12 @@ class Store:
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
         self._clock = clock
-        if not readonly:
+        if readonly:
+            self._check_version()  # a read-only connection cannot migrate; tables added since read as empty
+        else:
             self._migrate()
         self.has_fts = self._table_exists("passages_fts")
+        self.has_metric_judgments = self._table_exists("metric_judgments")
 
     # Setup
 
@@ -188,10 +210,14 @@ class Store:
         row = self.conn.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (name,)).fetchone()
         return row is not None
 
-    def _migrate(self) -> None:
-        version = self.conn.execute("PRAGMA user_version").fetchone()[0]
+    def _check_version(self) -> int:
+        version = int(self.conn.execute("PRAGMA user_version").fetchone()[0])
         if version > SCHEMA_VERSION:
             raise SchemaTooNew(f"radar.db has schema version {version}; this radar understands up to {SCHEMA_VERSION}")
+        return version
+
+    def _migrate(self) -> None:
+        version = self._check_version()
         for target in range(version, SCHEMA_VERSION):
             self.conn.executescript("BEGIN;" + MIGRATIONS[target] + f"PRAGMA user_version = {target + 1};COMMIT;")
             if target == 0 and fts_available():
@@ -276,7 +302,7 @@ class Store:
             self.conn.execute(
                 f"UPDATE passages SET similar_to = NULL, similarity = NULL WHERE similar_to IN ({marks})", old
             )
-            for table in ("judgments", "labels", "triage"):
+            for table in ("judgments", "labels", "triage", "metric_judgments"):
                 self.conn.execute(f"DELETE FROM {table} WHERE passage_id IN ({marks})", old)
             self.conn.execute(f"DELETE FROM followups WHERE promise_id IN ({marks}) OR result_id IN ({marks})", old + old)
             self.conn.execute("DELETE FROM passages WHERE document_id = ?", (document_id,))
@@ -459,9 +485,11 @@ class Store:
             )
 
     def usage_since(self, since: str) -> tuple[int, int]:
-        """(requests, input tokens) for judgments and follow-ups created at or after `since`."""
+        """(requests, input tokens) for judgments, follow-ups, and metric judgments created at or after `since`."""
         total_requests = total_tokens = 0
-        for table in ("judgments", "followups"):
+        for table in ("judgments", "followups", "metric_judgments"):
+            if table == "metric_judgments" and not self.has_metric_judgments:
+                continue
             row = self.conn.execute(
                 f"SELECT COUNT(*), COALESCE(SUM(input_tokens), 0) FROM {table} WHERE created_at >= ? AND status = 'judged'",
                 (since,),
@@ -491,6 +519,35 @@ class Store:
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     record.promise_id, record.result_id, record.ticker, record.cache_key, record.model,
+                    None if record.answers is None else json.dumps(record.answers), record.status, record.error,
+                    int(record.retryable), record.input_tokens, record.request_id, self._clock(),
+                ),
+            )
+
+    # Metric judgments (KPI tracker)
+
+    def metric_judgment(self, passage_id: int, cache_key: str) -> sqlite3.Row | None:
+        if not self.has_metric_judgments:
+            return None
+        return self.conn.execute(
+            "SELECT * FROM metric_judgments WHERE passage_id = ? AND cache_key = ?", (passage_id, cache_key)
+        ).fetchone()
+
+    def metric_judgments_for_ticker(self, ticker: str) -> list[sqlite3.Row]:
+        if not self.has_metric_judgments:
+            return []  # a schema-v1 database opened read-only (radar mcp before any other command since upgrading)
+        return self.conn.execute(
+            "SELECT * FROM metric_judgments WHERE ticker = ? ORDER BY created_at, rowid", (ticker,)
+        ).fetchall()
+
+    def save_metric_judgment(self, record: MetricRecord) -> None:
+        with self.conn:
+            self.conn.execute(
+                """INSERT OR REPLACE INTO metric_judgments (passage_id, cache_key, ticker, part, model, answers_json,
+                       status, error, retryable, input_tokens, request_id, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    record.passage_id, record.cache_key, record.ticker, record.part, record.model,
                     None if record.answers is None else json.dumps(record.answers), record.status, record.error,
                     int(record.retryable), record.input_tokens, record.request_id, self._clock(),
                 ),

@@ -18,12 +18,15 @@ MAX_FACTS_PER_PILLAR = 20
 MAX_OPEN_QUESTIONS = 5
 MAX_PREDICTIONS = 10
 MAX_PEERS = 5
+MAX_METRICS = 12
+HIGHER_IS = frozenset({"good", "bad", "neutral"})
 RESERVED_PILLARS = frozenset({"off_thesis"})
 _IDENTIFIER = re.compile(r"^[a-z][a-z0-9_]*$")
 _TICKER = re.compile(r"^[A-Z][A-Z0-9.\-]{0,9}$")
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _KNOWN_KEYS = frozenset(
-    {"ticker", "company", "aliases", "peers", "pillars", "assumptions", "open_questions", "predictions", "known_facts"}
+    {"ticker", "company", "aliases", "peers", "pillars", "assumptions", "open_questions", "predictions", "known_facts",
+     "metrics"}
 )
 
 
@@ -58,6 +61,18 @@ class Prediction:
 
 
 @dataclass(frozen=True)
+class Metric:
+    """A number the thesis depends on, tracked over time from the passages that report it."""
+
+    id: str
+    label: str
+    unit: str
+    pillar: str | None = None
+    higher_is: str = "neutral"
+    definition: str | None = None
+
+
+@dataclass(frozen=True)
 class Fact:
     id: str
     pillar: str
@@ -81,6 +96,9 @@ class Thesis:
     predictions: tuple[Prediction, ...] = ()
     peers: tuple[str, ...] = ()
     path: Path | None = field(default=None, compare=False)
+    # Metrics are asked about in their own requests, so they are not part of `canonical()` or `version`:
+    # adding or editing a metric never re-judges passages.
+    metrics: tuple[Metric, ...] = ()
 
     def canonical(self) -> dict[str, Any]:
         """Everything Jev sees about the thesis. The version hashes exactly this."""
@@ -134,8 +152,10 @@ def load_thesis(path: Path) -> Thesis:
     open_questions = _open_questions(path, _mapping(path, "open_questions", data.get("open_questions")))
     predictions = _predictions(path, _mapping(path, "predictions", data.get("predictions")), pillars)
     known_facts = _known_facts(path, _mapping(path, "known_facts", data.get("known_facts")), pillars)
+    metrics = _metrics(path, _mapping(path, "metrics", data.get("metrics")), pillars)
     return Thesis(
-        ticker, company, aliases, pillars, assumptions, known_facts, open_questions, predictions, peers, path=path
+        ticker, company, aliases, pillars, assumptions, known_facts, open_questions, predictions, peers, path=path,
+        metrics=metrics,
     )
 
 
@@ -342,3 +362,35 @@ def _fact(path: Path, where: str, pillar: str, index: int, item: Any) -> Fact:
     if source is not None and (isinstance(source, bool) or not isinstance(source, int)):
         raise ThesisError(path, f"{where}.source", "must be a passage id")
     return Fact(fact_id, pillar, text.strip(), as_of, source)
+
+
+def _metrics(path: Path, raw: dict[str, Any], pillars: dict[str, str]) -> tuple[Metric, ...]:
+    if len(raw) > MAX_METRICS:
+        raise ThesisError(path, "metrics", f"at most {MAX_METRICS} metrics")
+    metrics = []
+    for metric_id, body in raw.items():
+        where = f"metrics.{metric_id}"
+        _identifier(path, where, metric_id, "id")
+        if not isinstance(body, dict):
+            raise ThesisError(path, where, "must have label and unit")
+        _check_string_keys(path, where, body)
+        unknown = sorted(set(body) - {"label", "unit", "pillar", "higher_is", "definition"})
+        if unknown:
+            raise ThesisError(path, f"{where}.{unknown[0]}", "unknown key; allowed: label, unit, pillar, higher_is, definition")
+        label, unit = body.get("label"), body.get("unit")
+        if not isinstance(label, str) or not label.strip():
+            raise ThesisError(path, f"{where}.label", "must be non-empty text")
+        if not isinstance(unit, str) or not unit.strip():
+            raise ThesisError(path, f"{where}.unit", "must be non-empty text such as %, $M, days, or units")
+        pillar = body.get("pillar")
+        if pillar is not None and pillar not in pillars:
+            raise ThesisError(path, f"{where}.pillar", f"must name an existing pillar, got {pillar!r}")
+        higher_is = body.get("higher_is", "neutral")
+        if higher_is not in HIGHER_IS:
+            raise ThesisError(path, f"{where}.higher_is", "must be good, bad, or neutral")
+        definition = body.get("definition")
+        if definition is not None and (not isinstance(definition, str) or not definition.strip()):
+            raise ThesisError(path, f"{where}.definition", "must be non-empty text")
+        metrics.append(Metric(metric_id, label.strip(), unit.strip(), pillar, higher_is,
+                              definition.strip() if definition else None))
+    return tuple(metrics)
