@@ -196,3 +196,13 @@ def test_rate_limiter_spaces_request_starts():
 
     asyncio.run(go())
     assert sleeps == [pytest.approx(0.05), pytest.approx(0.10)]
+
+
+def test_passage_keys_match_the_plan(setup):
+    from thesis_radar.runner import passage_keys
+
+    store, theses, _ = setup
+    p = plan(store, theses)
+    for row in store.passages_for_ticker("ACME"):
+        assert passage_keys(store, theses["ACME"], row["passage_id"], MODEL) == p.keys("ACME", row["passage_id"])
+    assert passage_keys(store, theses["ACME"], 999, MODEL) == []

@@ -193,6 +193,26 @@ def _seen_rows(store: Store, rows: Sequence[Any]) -> dict[int, Any]:
     return {row["passage_id"]: row for row in store.get_passages(ids)}
 
 
+def passage_keys(store: Store, thesis: Thesis, passage_id: int, model: str) -> list[str]:
+    """The current cache keys (one per part) for one passage under `thesis`, without planning everything."""
+    [row] = store.get_passages([passage_id]) or [None]
+    if row is None:
+        return []
+    siblings = store.passages_for_document(row["document_id"])
+    context = None
+    for sibling in siblings:
+        if sibling["passage_id"] == passage_id:
+            break
+        context = sibling["text"]
+    seen_rows = _seen_rows(store, [row])
+    seen = [
+        {"date": s["doc_date"], "source_type": s["source_type"], "text": s["text"]}
+        for s in (seen_rows.get(i) for i in json.loads(row["seen_ids"] or "[]"))
+        if s is not None
+    ]
+    return [cache_key(request) for _, request in build_requests(thesis, row, model=model, context=context, seen=seen)]
+
+
 class RateLimiter:
     """Spaces request starts at least 60 / requests_per_minute seconds apart."""
 
