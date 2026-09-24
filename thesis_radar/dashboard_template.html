@@ -1,0 +1,1757 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>thesis-radar</title>
+<style>
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --panel-2: #f0eee8; --ink: #1c1b18; --muted: #66625a; --faint: #99958b;
+  --line: #e2dfd7; --line-2: #cdc8bd;
+  --accent: #2f5bd3; --accent-soft: rgba(47, 91, 211, 0.10);
+  --neg: #c0392b; --neg-soft: rgba(192, 57, 43, 0.08); --pos: #17805a; --pos-soft: rgba(23, 128, 90, 0.10);
+  --warn: #9a5b00; --warn-soft: rgba(178, 106, 0, 0.10); --mid: #8b877e;
+  --spot: #7048c0; --spot-soft: rgba(112, 72, 192, 0.08);
+  --radius: 10px; --shadow: 0 1px 2px rgba(20, 18, 10, 0.05);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151412; --panel: #1e1d1a; --panel-2: #262521; --ink: #ecebe6; --muted: #a8a49b; --faint: #7a766e;
+    --line: #34322d; --line-2: #48453e;
+    --accent: #8ea8ff; --accent-soft: rgba(142, 168, 255, 0.14);
+    --neg: #f07b6f; --neg-soft: rgba(240, 123, 111, 0.11); --pos: #4fc596; --pos-soft: rgba(79, 197, 150, 0.12);
+    --warn: #e2a64b; --warn-soft: rgba(226, 166, 75, 0.12); --mid: #8f8b82;
+    --spot: #b79cf5; --spot-soft: rgba(183, 156, 245, 0.10); --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); overflow-x: hidden; }
+body.locked { overflow: hidden; }
+body.has-bar main { padding-bottom: 150px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); }
+code, kbd, .mono { font-family: var(--mono); font-size: 12px; }
+code { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 0 4px; overflow-wrap: anywhere; }
+kbd { border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--muted); font-size: 10.5px; background: var(--panel); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+/* header */
+header.top { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.bar { display: flex; align-items: center; gap: 8px 14px; padding: 10px 16px 6px; flex-wrap: wrap; max-width: 1120px; margin: 0 auto; }
+.brand { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -0.01em; white-space: nowrap; }
+.brand span { color: var(--accent); }
+nav#tabs { display: flex; gap: 4px; overflow-x: auto; min-width: 0; flex: 1 1 auto; scrollbar-width: thin; }
+.tab { border: 1px solid transparent; background: none; padding: 4px 10px; border-radius: 7px; white-space: nowrap; color: var(--muted); }
+.tab:hover { background: var(--panel-2); color: var(--ink); }
+.tab.active { background: var(--panel); border-color: var(--line); color: var(--ink); font-weight: 600; box-shadow: var(--shadow); }
+.tab .badge { margin-left: 6px; }
+.badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 600; text-align: center; line-height: 17px; }
+.tools { display: flex; gap: 6px; align-items: center; flex: 0 1 auto; min-width: 0; }
+#search { width: 220px; max-width: 100%; min-width: 0; padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.btn { border: 1px solid var(--line); background: var(--panel); padding: 5px 10px; border-radius: 8px; white-space: nowrap; }
+.btn:hover { border-color: var(--line-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn[aria-pressed="true"], .btn[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.sub { max-width: 1120px; margin: 0 auto; padding: 0 16px 8px; color: var(--muted); font-size: 12px; display: flex; gap: 4px 12px; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .bar { padding: 8px 16px 6px; }
+  .brand { font-size: 14px; }
+  nav#tabs { flex: 1 1 0; }
+  .tools { flex: 1 1 100%; }
+  #search { flex: 1; width: auto; }
+  .sub span:not(:first-child) { display: none; }
+}
+
+/* thresholds panel, banner */
+#thresholds { max-width: 1120px; margin: 12px auto 0; padding: 0 16px; }
+.th { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+.th-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 6px 18px; }
+.slider { display: grid; grid-template-columns: 1fr 52px; gap: 0 8px; align-items: center; font-size: 12px; color: var(--muted); }
+.slider input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 0 0 4px; }
+.slider output { text-align: right; font-family: var(--mono); color: var(--ink); grid-row: 1; grid-column: 2; }
+.th-counts { margin: 10px 0; display: grid; gap: 4px; font-size: 13px; }
+.th-counts .changed { color: var(--accent); font-weight: 600; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+#banner { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.banner { margin-top: 12px; border: 1px solid var(--warn); background: var(--warn-soft); color: var(--ink); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; }
+.banner div + div { margin-top: 2px; }
+.banner b { color: var(--warn); }
+.banner code { white-space: nowrap; }
+
+/* layout */
+main { max-width: 1120px; margin: 0 auto; padding: 8px 16px 48px; }
+h2 { font-size: 16px; margin: 0; letter-spacing: -0.01em; }
+h3 { font-size: 13px; margin: 16px 0 6px; color: var(--muted); font-weight: 600; }
+h4 { font-size: 12px; margin: 12px 0 4px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.section { margin-top: 22px; }
+.section-head { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.count { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--panel-2); border-radius: 999px; padding: 0 8px; }
+.count.neg { color: var(--neg); background: var(--neg-soft); }
+details.fold { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::before { content: "▸"; color: var(--faint); width: 12px; }
+details.fold[open] > summary::before { content: "▾"; }
+details.fold.inner { border-top: 0; padding-top: 0; margin-top: 8px; }
+details.fold.inner > summary { font-size: 13px; }
+.empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
+.pillar-head { margin: 14px 0 4px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.pillar-head b { font-size: 13px; }
+.pillar-head span { color: var(--muted); font-size: 12px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 4px 0 8px; }
+.filters select, .filters input { border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 3px 6px; font-size: 12px; max-width: 100%; min-width: 0; }
+.filters input[type="search"] { flex: 1 1 140px; }
+.confirm { display: inline-flex; gap: 6px; align-items: center; background: var(--warn-soft); border-radius: 8px; padding: 2px 4px 2px 10px; font-size: 12px; }
+
+/* cards */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 14px 10px; margin: 8px 0; box-shadow: var(--shadow); scroll-margin: 140px 0 160px; position: relative; }
+.card:focus { outline: none; }
+.card.focused { box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
+.card.contra { border-left: 4px solid var(--neg); background: linear-gradient(var(--neg-soft), var(--neg-soft)), var(--panel); }
+.card.spot { border: 1.5px dashed var(--spot); background: linear-gradient(var(--spot-soft), var(--spot-soft)), var(--panel); }
+.card.done { opacity: 0.72; }
+.spot-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; color: var(--spot); font-weight: 600; font-size: 13px; }
+.spot-head .muted { font-weight: 400; font-size: 12px; }
+.quote { margin: 0 0 7px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14.5px; line-height: 1.55; }
+.speaker { font-weight: 600; }
+mark { background: rgba(255, 200, 0, 0.35); color: inherit; border-radius: 2px; }
+.meta { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 3px 10px; align-items: center; }
+.meta + .meta { margin-top: 3px; }
+.meta .title { color: var(--ink); overflow-wrap: anywhere; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+.chip { display: inline-flex; align-items: center; gap: 3px; border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; font-size: 11.5px; line-height: 18px; color: var(--muted); max-width: 100%; overflow-wrap: anywhere; }
+.chip.neg { color: var(--neg); border-color: color-mix(in srgb, var(--neg) 45%, transparent); background: var(--neg-soft); }
+.chip.pos { color: var(--pos); border-color: color-mix(in srgb, var(--pos) 45%, transparent); background: var(--pos-soft); }
+.chip.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: var(--warn-soft); }
+.chip.acc { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: var(--accent-soft); }
+.chip.spot { color: var(--spot); border-color: var(--spot); }
+.mbar { display: inline-flex; gap: 2px; vertical-align: middle; }
+.mbar i { width: 7px; height: 9px; border-radius: 2px; background: var(--line-2); }
+.mbar i.on { background: var(--ink); }
+.st-neg { color: var(--neg); } .st-pos { color: var(--pos); } .st-mid { color: var(--mid); }
+.actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; align-items: center; }
+.mini { border: 1px solid var(--line); background: var(--panel-2); border-radius: 6px; padding: 1px 7px; font-size: 12px; line-height: 20px; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+.mini:hover { border-color: var(--line-2); background: var(--panel); }
+.mini.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.mini.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.mini kbd { padding: 0 3px; font-size: 10px; }
+.check { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; color: var(--muted); }
+.panel-x { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--panel-2); font-size: 12.5px; overflow-wrap: anywhere; }
+.panel-x ul { margin: 0; padding-left: 16px; }
+.diff { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; line-height: 1.55; }
+ins { color: var(--pos); background: var(--pos-soft); text-decoration: underline; text-underline-offset: 2px; }
+del { color: var(--neg); background: var(--neg-soft); text-decoration: line-through; }
+form.absorb { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; padding: 8px; border-radius: 8px; background: var(--accent-soft); }
+form.absorb input[type="text"] { flex: 1 1 220px; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; background: var(--panel); }
+form.absorb select { border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; background: var(--panel); max-width: 100%; }
+.stub { display: block; width: 100%; text-align: left; border: 0; background: none; color: var(--faint); font-size: 12px; padding: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* overview */
+.ov { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-top: 16px; box-shadow: var(--shadow); }
+.ov-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 12px 0; }
+.stat { background: var(--panel-2); border-radius: 10px; padding: 8px 10px; }
+.stat b { display: block; font-size: 22px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat.neg b { color: var(--neg); }
+.ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px 22px; }
+.ov-grid > div { min-width: 0; }
+.ov-grid > .wide { grid-column: 1 / -1; }
+.ov-grid h3 { margin-top: 4px; }
+.hm-scroll { overflow-x: auto; padding-bottom: 4px; }
+.hm { display: grid; gap: 3px; align-items: center; font-size: 11px; width: max-content; }
+.hm .lbl { color: var(--muted); padding-right: 8px; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+.hm .wk { color: var(--faint); font-size: 10px; white-space: nowrap; overflow: visible; width: 16px; }
+.hm .wk:not(:empty) { position: relative; }
+.hm-cell { width: 16px; height: 16px; border-radius: 3px; border: 0; padding: 0; color: #fff; font-size: 11px; line-height: 16px; font-weight: 700; text-align: center; }
+.hm-cell.neg { background: var(--neg); } .hm-cell.pos { background: var(--pos); } .hm-cell.mid { background: var(--mid); }
+.hm-empty { width: 16px; height: 16px; border-radius: 3px; background: var(--panel-2); }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--muted); margin-top: 6px; align-items: center; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 3px; }
+.asm-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 6px 0; border-bottom: 1px solid var(--line); align-items: center; }
+.asm-row:last-child { border-bottom: 0; }
+.asm-row .meta { grid-column: 1 / -1; }
+svg.spark { overflow: visible; }
+.spark-line { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.spark-zero { stroke: var(--line-2); stroke-dasharray: 2 2; }
+.spark-pos { fill: var(--pos); } .spark-neg { fill: var(--neg); } .spark-mid { fill: var(--mid); }
+.div-row { display: block; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 10px; margin: 5px 0; }
+.div-row.flagged { border-color: var(--warn); background: var(--warn-soft); }
+.gauge { height: 6px; border-radius: 3px; background: var(--neg-soft); overflow: hidden; margin: 6px 0; }
+.gauge i { display: block; height: 100%; background: var(--pos); }
+.plist { list-style: none; margin: 0; padding: 0; }
+.plist li { padding: 4px 0; border-bottom: 1px solid var(--line); }
+.plist li:last-child { border-bottom: 0; }
+
+/* company extras */
+.promise { border-left: 3px solid var(--line-2); padding-left: 10px; margin: 12px 0; }
+.promise.kept { border-color: var(--pos); } .promise.missed { border-color: var(--neg); }
+.result { margin-left: 14px; }
+.change { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: var(--panel); }
+.prediction, .fact { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: var(--panel); }
+.timeline { position: relative; height: 34px; border-bottom: 1px solid var(--line); margin: 2px 0 12px; }
+.mark { position: absolute; top: 50%; transform: translate(-50%, -50%); border: 0; padding: 0; opacity: 0.85; border-radius: 50%; }
+.mark.square { border-radius: 2px; }
+.mark.diamond { border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); }
+.unsorted-cmd { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+
+/* skim, overlays, action bar, toasts */
+#overlay { position: fixed; inset: 0; z-index: 50; background: rgba(10, 10, 8, 0.45); display: flex; justify-content: center; align-items: flex-start; padding: 24px 12px; overflow-y: auto; }
+#overlay[hidden] { display: none; }
+.sheet { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; width: 100%; max-width: 860px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); }
+.sheet-head { position: sticky; top: -24px; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); padding: 12px 16px; display: flex; gap: 8px 12px; align-items: flex-start; justify-content: space-between; border-radius: 14px 14px 0 0; }
+.sheet-head > div { min-width: 0; }
+.sheet-body { padding: 8px 16px 18px; }
+.skim-p { padding: 8px 10px; margin: 6px 0; border-radius: 8px; border: 1px solid transparent; scroll-margin: 110px 0 40px; }
+.skim-p .quote { font-size: 14px; margin: 0; }
+.skim-p.hl-new { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.skim-p.hl-maybe { background: var(--panel-2); border-color: var(--line-2); }
+.skim-p.contra { background: var(--neg-soft); border-color: color-mix(in srgb, var(--neg) 45%, transparent); }
+.skim-p.unjudged { color: var(--faint); }
+.skim-p.skim-current { box-shadow: 0 0 0 2px var(--accent); }
+.skim-note { font-size: 12px; color: var(--warn); margin-top: 4px; }
+.help-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; }
+.copybox { width: 100%; font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--panel); }
+#actionbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--panel); border-top: 1px solid var(--line); box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.08); padding: 8px 16px; }
+#actionbar[hidden] { display: none; }
+.ab-row { max-width: 1120px; margin: 0 auto; display: flex; gap: 6px 10px; align-items: center; flex-wrap: wrap; }
+.ab-row + .ab-row { margin-top: 6px; }
+.cmd { flex: 1 1 260px; min-width: 0; max-height: 3.2em; overflow: auto; white-space: pre-wrap; word-break: break-all; display: block; padding: 3px 6px; }
+#toasts { position: fixed; right: 16px; bottom: 16px; z-index: 60; display: grid; gap: 6px; justify-items: end; pointer-events: none; }
+body.has-bar #toasts { bottom: 110px; }
+.toast { background: var(--ink); color: var(--bg); padding: 7px 12px; border-radius: 8px; font-size: 13px; max-width: min(420px, calc(100vw - 32px)); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2); }
+.toast.error { background: var(--neg); color: #fff; }
+@media (max-width: 640px) {
+  .card { padding: 10px 11px 9px; }
+  .ov { padding: 12px; }
+  .ov-grid { grid-template-columns: minmax(0, 1fr); }
+  .sheet-body { padding: 6px 10px 14px; }
+}
+</style>
+</head>
+<body>
+<svg id="svg-ns" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute"></svg>
+<header class="top">
+  <div class="bar">
+    <h1 class="brand">thesis<span>·</span>radar</h1>
+    <nav id="tabs" role="tablist" aria-label="Views"></nav>
+    <div class="tools">
+      <input id="search" type="search" placeholder="Search passages ( / )" aria-label="Search passages" autocomplete="off" data-fkey="search">
+      <button id="btn-thresholds" class="btn" type="button" aria-expanded="false" aria-controls="thresholds">Thresholds</button>
+      <button id="btn-help" class="btn" type="button" aria-label="Keyboard shortcuts">?</button>
+    </div>
+  </div>
+  <div id="meta-line" class="sub"></div>
+</header>
+<section id="thresholds" hidden aria-label="Thresholds"></section>
+<div id="banner"></div>
+<main id="app"></main>
+<div id="actionbar" hidden></div>
+<div id="overlay" hidden></div>
+<div id="toasts" aria-live="polite"></div>
+<script id="radar-data" type="application/json">__RADAR_DATA__</script>
+<script id="radar-logic">
+"use strict";
+// Pure functions shared with the tests (run under node). No DOM access here.
+const RadarLogic = (() => {
+  const DAY_MS = 86400000;
+  const CLEARS_FEED = ["dismissed", "absorbed"];
+  const DEFAULT_POLICY = {
+    metadata_min_probability: 0.6, whats_new_window_days: 30, pillar_probability_min: 0.5, boilerplate_max: 0.3,
+    new_info_min: 0.6, materiality_min: 1.5, contradictions_window_days: 120, contradicts_min: 0.7,
+    contradiction_materiality_min: 1.0, maybe_new_info_low: 0.4, maybe_new_info_high: 0.6, open_questions_min: 0.6,
+    divergence_window_days: 120, divergence_min_gap: 1.0, divergence_min_passages: 3, ledger_min_probability: 0.6,
+  };
+  const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+  const num = (v, fallback) => (isNum(v) ? v : fallback);
+
+  // --- dates -------------------------------------------------------------
+  function passageDate(passage) {
+    if (!passage) return null;
+    const raw = passage.date || (passage.ingested_at ? String(passage.ingested_at).slice(0, 10) : null);
+    return raw ? String(raw).slice(0, 10) : null;
+  }
+  function shiftDate(iso, days) {
+    return new Date(Date.parse(String(iso).slice(0, 10) + "T00:00:00Z") + days * DAY_MS).toISOString().slice(0, 10);
+  }
+  function recent(passage, days, today) {
+    const d = passageDate(passage);
+    return d !== null && d >= shiftDate(today, -Math.trunc(days));
+  }
+  function weekLabel(week) {
+    const iso = /^\d{4}-W(\d{1,2})$/.exec(String(week || ""));
+    return iso ? "W" + iso[1] : String(week || "").slice(5, 10);
+  }
+  function weekStart(week) {
+    const s = String(week || "");
+    const iso = /^(\d{4})-W(\d{1,2})$/.exec(s);
+    if (!iso) return s.slice(0, 10);
+    const jan4 = Date.UTC(+iso[1], 0, 4);
+    const monday = jan4 - ((new Date(jan4).getUTCDay() + 6) % 7) * DAY_MS;
+    return new Date(monday + (+iso[2] - 1) * 7 * DAY_MS).toISOString().slice(0, 10);
+  }
+  function byNewest(a, b) {
+    const da = passageDate(a) || "", db = passageDate(b) || "";
+    if (da !== db) return da < db ? 1 : -1;
+    return a.id === b.id ? 0 : a.id < b.id ? 1 : -1;
+  }
+
+  // --- classification (spec section 4) -------------------------------------
+  function triageStatus(passage) {
+    const t = passage && passage.triage;
+    if (!t) return null;
+    return typeof t === "string" ? t : t.status || null;
+  }
+  function evidence(p, policy) {
+    const asm = (p && p.assumptions) || {};
+    const qs = (p && p.questions) || {};
+    const min = policy.contradicts_min;
+    const contradicts = Object.keys(asm).filter((a) => asm[a] && isNum(asm[a].contradicts) && asm[a].contradicts >= min).sort();
+    const supports = Object.keys(asm)
+      .filter((a) => asm[a] && isNum(asm[a].supports) && asm[a].supports >= min && !contradicts.includes(a)).sort();
+    const questions = Object.keys(qs).filter((q) => isNum(qs[q]) && qs[q] >= policy.open_questions_min).sort();
+    return { contradicts, supports, questions };
+  }
+  function checks(passage, policy, today) {
+    const p = passage.p;
+    const status = triageStatus(passage);
+    const ev = evidence(p, policy);
+    const mat = num(p.materiality, 0), bp = num(p.boilerplate, 1), ni = num(p.new_info, 0);
+    const onPillar = !!p.pillar && p.pillar !== "off_thesis" && num(p.pillar_p, 0) >= policy.pillar_probability_min;
+    const contraRaw = ev.contradicts.length > 0 && mat >= policy.contradiction_materiality_min;
+    const recentContra = recent(passage, policy.contradictions_window_days, today);
+    const recentNew = recent(passage, policy.whats_new_window_days, today);
+    const base = onPillar && bp <= policy.boilerplate_max && mat >= policy.materiality_min;
+    const eligible = base && !contraRaw && recentNew && !CLEARS_FEED.includes(status);
+    const inNew = eligible && ni >= policy.new_info_min;
+    const inMaybe = eligible && !inNew && policy.maybe_new_info_low <= ni && ni < policy.maybe_new_info_high;
+    const inContra = contraRaw && recentContra && status !== "acknowledged";
+    const flagged = contraRaw || (base && ni >= policy.maybe_new_info_low);
+    return { p, status, ev, mat, bp, ni, onPillar, contraRaw, recentContra, recentNew, inNew, inMaybe, inContra, flagged };
+  }
+  function classify(passage, policy, today) {
+    if (!passage || !passage.p) {
+      return { in_contradictions: false, in_whats_new: false, in_maybe: false, flagged: false,
+               contradicts: [], supports: [], questions: [] };
+    }
+    const c = checks(passage, policy, today);
+    return { in_contradictions: c.inContra, in_whats_new: c.inNew, in_maybe: c.inMaybe, flagged: c.flagged,
+             contradicts: c.ev.contradicts, supports: c.ev.supports, questions: c.ev.questions };
+  }
+  function isAcknowledgedContradiction(passage, policy, today) {
+    return triageStatus(passage) === "acknowledged" &&
+      classify(Object.assign({}, passage, { triage: null }), policy, today).in_contradictions;
+  }
+  function countFeeds(passages, policy, today) {
+    const n = { contradictions: 0, whats_new: 0, maybe: 0 };
+    for (const p of passages || []) {
+      const c = classify(p, policy, today);
+      if (c.in_contradictions) n.contradictions++;
+      if (c.in_whats_new) n.whats_new++;
+      if (c.in_maybe) n.maybe++;
+    }
+    return n;
+  }
+
+  // --- "why am I seeing this" ---------------------------------------------
+  const f2 = (v) => (isNum(v) ? v.toFixed(2) : "–");
+  const f1 = (v) => (isNum(v) ? v.toFixed(1) : "–");
+  function whyShown(passage, policy, today) {
+    if (!passage || !passage.p) return ["Not judged yet, so no thresholds apply to this passage."];
+    const c = checks(passage, policy, today);
+    const p = c.p, asm = p.assumptions || {}, qs = p.questions || {};
+    const date = passageDate(passage) || "undated";
+    const out = [];
+    const tick = (ok, text) => out.push((ok ? "✓ " : "✗ ") + text);
+    if (c.inContra) out.push("In Contradictions.");
+    else if (c.inNew) out.push("In What's new.");
+    else if (c.inMaybe) out.push("In Maybe.");
+    else if (c.contraRaw && c.status === "acknowledged") out.push("An acknowledged contradiction.");
+    else out.push(c.flagged ? "Flagged, but not in a feed right now." : "Not flagged at the current thresholds.");
+    for (const a of c.ev.contradicts) tick(true, `contradicts ${a}: P ${f2(asm[a].contradicts)} ≥ ${f2(policy.contradicts_min)}`);
+    if (c.ev.contradicts.length) {
+      const ok = c.contraRaw;
+      tick(ok, `materiality ${f1(c.mat)} ${ok ? "≥" : "<"} ${f1(policy.contradiction_materiality_min)} (contradiction minimum)`);
+      if (ok) {
+        tick(c.recentContra, `dated ${date}, ${c.recentContra ? "inside" : "outside"} the ${policy.contradictions_window_days}-day contradiction window`);
+        if (c.status === "acknowledged") tick(false, "you acknowledged this contradiction");
+        out.push("Contradictions are never repeated in What's new or Maybe.");
+      }
+    }
+    if (!c.contraRaw) {
+      if (!p.pillar || p.pillar === "off_thesis") tick(false, "off thesis");
+      else tick(c.onPillar, `pillar ${p.pillar}: P ${f2(p.pillar_p)} ${c.onPillar ? "≥" : "<"} ${f2(policy.pillar_probability_min)}`);
+      const bpOk = c.bp <= policy.boilerplate_max;
+      tick(bpOk, `boilerplate P ${f2(c.bp)} ${bpOk ? "≤" : ">"} ${f2(policy.boilerplate_max)}`);
+      const matOk = c.mat >= policy.materiality_min;
+      tick(matOk, `materiality ${f1(c.mat)} ${matOk ? "≥" : "<"} ${f1(policy.materiality_min)}`);
+      const low = policy.maybe_new_info_low, high = policy.maybe_new_info_high;
+      if (c.ni >= policy.new_info_min) tick(true, `new to you: P ${f2(c.ni)} ≥ ${f2(policy.new_info_min)}`);
+      else if (c.ni >= low && c.ni < high) tick(true, `new to you: P ${f2(c.ni)} in the maybe band [${f2(low)}, ${f2(high)})`);
+      else tick(false, `new to you: P ${f2(c.ni)} below ${f2(policy.new_info_min)} and outside the maybe band [${f2(low)}, ${f2(high)})`);
+      tick(c.recentNew, `dated ${date}, ${c.recentNew ? "inside" : "outside"} the ${policy.whats_new_window_days}-day What's new window`);
+      if (CLEARS_FEED.includes(c.status)) tick(false, `you marked it ${c.status}`);
+    }
+    for (const a of c.ev.supports) tick(true, `supports ${a}: P ${f2(asm[a].supports)} ≥ ${f2(policy.contradicts_min)}`);
+    for (const q of c.ev.questions) tick(true, `bears on open question ${q}: P ${f2(qs[q])} ≥ ${f2(policy.open_questions_min)}`);
+    return out;
+  }
+
+  // --- feed layout: every 10th position is a spot check ----------------------
+  function interleave(items, spots, every) {
+    const n = every || 10, out = [];
+    let s = 0;
+    for (const item of items) {
+      if (out.length % n === n - 1 && s < spots.length) out.push({ spot: spots[s++] });
+      out.push({ item });
+    }
+    return out;
+  }
+
+  // --- shell, YAML, quotes, forecasts -----------------------------------------
+  function shellQuote(text) {
+    return "'" + String(text).replace(/'/g, "'\\''") + "'";
+  }
+  function applyCommand(actions) {
+    return "radar apply " + shellQuote(JSON.stringify(actions));
+  }
+  function policyYaml(policy) {
+    const pol = Object.assign({}, DEFAULT_POLICY, policy || {});
+    const fl = (v) => { const x = Math.round(Number(v) * 1000) / 1000; return Number.isInteger(x) ? x.toFixed(1) : String(x); };
+    const int = (v) => String(Math.round(Number(v)));
+    return [
+      "metadata:",
+      `  min_probability: ${fl(pol.metadata_min_probability)}`,
+      "whats_new:",
+      `  window_days: ${int(pol.whats_new_window_days)}`,
+      `  pillar_probability: {min: ${fl(pol.pillar_probability_min)}}`,
+      `  boilerplate: {max: ${fl(pol.boilerplate_max)}}`,
+      `  new_info: {min: ${fl(pol.new_info_min)}}`,
+      `  materiality: {min: ${fl(pol.materiality_min)}}`,
+      "contradictions:",
+      `  window_days: ${int(pol.contradictions_window_days)}`,
+      `  contradicts: {min: ${fl(pol.contradicts_min)}}`,
+      `  materiality: {min: ${fl(pol.contradiction_materiality_min)}}`,
+      "maybe:",
+      `  new_info: {between: [${fl(pol.maybe_new_info_low)}, ${fl(pol.maybe_new_info_high)}]}`,
+      "open_questions:",
+      `  min: ${fl(pol.open_questions_min)}`,
+      "divergence:",
+      `  window_days: ${int(pol.divergence_window_days)}`,
+      `  min_gap: ${fl(pol.divergence_min_gap)}`,
+      `  min_passages: ${int(pol.divergence_min_passages)}`,
+      "ledger:",
+      `  min_probability: ${fl(pol.ledger_min_probability)}`,
+      "",
+    ].join("\n");
+  }
+  function markdownQuotes(passages) {
+    return (passages || []).map((p) => {
+      const body = (p.speaker ? p.speaker + ": " : "") + String(p.text || "");
+      const quote = body.split(/\r?\n/).map((line) => "> " + line).join("\n");
+      const cite = [p.title, p.source_type ? String(p.source_type).replace(/_/g, " ") : null, p.date,
+        p.page !== null && p.page !== undefined ? "p. " + p.page : null].filter(Boolean).join(", ");
+      const link = typeof p.link === "string" && p.link.startsWith("file:") ? p.link : null;
+      return quote + "\n\n— " + cite + (link ? "\n" + link : "");
+    }).join("\n\n") + "\n";
+  }
+  function brier(predictions) {
+    const done = (predictions || []).filter((p) => p.outcome === true || p.outcome === false);
+    if (!done.length) return { resolved: 0, brier: null };
+    const sum = done.reduce((acc, p) => acc + Math.pow(num(p.p, 0.5) - (p.outcome ? 1 : 0), 2), 0);
+    return { resolved: done.length, brier: sum / done.length };
+  }
+
+  return { DEFAULT_POLICY, passageDate, shiftDate, recent, weekLabel, weekStart, byNewest, triageStatus, classify,
+           isAcknowledgedContradiction, countFeeds, whyShown, interleave, shellQuote, applyCommand, policyYaml,
+           markdownQuotes, brier };
+})();
+if (typeof module !== "undefined") module.exports = RadarLogic;
+</script>
+<script>
+"use strict";
+(() => {
+  // ================================================================ setup
+  const L = RadarLogic;
+  const DATA = JSON.parse(document.getElementById("radar-data").textContent);
+  const COMPANIES = Array.isArray(DATA.companies) ? DATA.companies : [];
+  const UNSORTED = Array.isArray(DATA.unsorted) ? DATA.unsorted : [];
+  const TODAY = DATA.today || new Date().toISOString().slice(0, 10);
+  const TOKEN = DATA.mode === "serve" && DATA.serve && DATA.serve.token ? String(DATA.serve.token) : null;
+  const SVG_NS = document.getElementById("svg-ns").namespaceURI;
+  const QUEUE_PREFIX = "thesis-radar:queue:";
+  const QUEUE_KEY = QUEUE_PREFIX + (DATA.generated_at || "");
+  const DEFAULTS = Object.assign({}, L.DEFAULT_POLICY, DATA.policy_defaults || {});
+  const APP = document.getElementById("app");
+  const NAV = document.getElementById("tabs");
+  const SEARCH = document.getElementById("search");
+  const BAR = document.getElementById("actionbar");
+  const OVERLAY = document.getElementById("overlay");
+  const TOASTS = document.getElementById("toasts");
+  const TH_PANEL = document.getElementById("thresholds");
+  const SLIDERS = [
+    ["whats_new_window_days", "What's new window (days)", 0, 365, 1],
+    ["pillar_probability_min", "Pillar probability ≥", 0, 1, 0.01],
+    ["boilerplate_max", "Boilerplate ≤", 0, 1, 0.01],
+    ["new_info_min", "New info ≥", 0, 1, 0.01],
+    ["materiality_min", "Materiality ≥ (0–3)", 0, 3, 0.05],
+    ["maybe_new_info_low", "Maybe band: new info ≥", 0, 1, 0.01],
+    ["maybe_new_info_high", "Maybe band: new info <", 0, 1, 0.01],
+    ["contradicts_min", "Contradicts / supports ≥", 0, 1, 0.01],
+    ["contradiction_materiality_min", "Contradiction materiality ≥", 0, 3, 0.05],
+    ["contradictions_window_days", "Contradictions window (days)", 0, 730, 1],
+    ["open_questions_min", "Open question ≥", 0, 1, 0.01],
+  ];
+  const SHAPES = { filing: "square", earnings_transcript: "circle", sell_side: "diamond", expert_call: "circle",
+                   ai_research: "square", own_note: "diamond", news: "square", other: "circle" };
+
+  for (const c of COMPANIES) {
+    for (const key of ["passages", "documents", "assumptions", "open_questions", "predictions", "redlines", "divergence", "spot_checks"]) {
+      if (!Array.isArray(c[key])) c[key] = [];
+    }
+    c.pillars = c.pillars || {};
+    c.known_facts = c.known_facts || {};
+    c._byId = new Map(c.passages.map((p) => [p.id, p]));
+    c._docs = new Map(c.documents.map((d) => [d.id, d]));
+    for (const p of c.passages) normalizeTriage(p);
+    for (const pr of c.predictions) pr._openStatus = pr.status === "resolved" ? null : pr.status;
+  }
+
+  const S = {
+    tab: "overview", policy: Object.assign({}, DEFAULTS, DATA.policy || {}), saved: null,
+    queue: [], sending: null, undo: [], selected: new Map(), filters: {}, open: new Map(), focus: null,
+    search: null, spotDone: new Set(), absorb: null, confirm: null, overlay: null, g: false, older: [],
+  };
+  S.saved = Object.assign({}, S.policy);
+  const REFS = new Map();
+  let CLS = new WeakMap();
+
+  // ================================================================ helpers
+  function el(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(attrs || {})) {
+      if (value === null || value === undefined || value === false) continue;
+      if (key === "class") node.className = value;
+      else if (key.startsWith("on") && typeof value === "function") node.addEventListener(key.slice(2), value);
+      else if (key === "value" || key === "checked") node[key] = value;
+      else node.setAttribute(key, value === true ? "" : String(value));
+    }
+    append(node, children);
+    return node;
+  }
+  function append(node, children) {
+    for (const child of children.flat(Infinity)) {
+      if (child === null || child === undefined || child === false) continue;
+      node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+    }
+    return node;
+  }
+  function svg(tag, attrs, ...children) {
+    const node = document.createElementNS(SVG_NS, tag);
+    for (const [key, value] of Object.entries(attrs || {})) node.setAttribute(key, String(value));
+    for (const child of children) if (child) node.append(child);
+    return node;
+  }
+  function normalizeTriage(p) {
+    const t = p.triage && typeof p.triage === "object" ? p.triage : {};
+    p.triage = { status: t.status || null, starred: !!t.starred };
+  }
+  const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+  const f2 = (v) => (isNum(v) ? v.toFixed(2) : "–");
+  const f1 = (v) => (isNum(v) ? v.toFixed(1) : "–");
+  const signed = (v, digits) => (isNum(v) ? (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(digits || 1) : "–");
+  const human = (s) => (s ? String(s).replace(/_/g, " ") : "");
+  const stamp = (iso) => (iso ? String(iso).replace("T", " ").replace(/(:\d\d)?(\.\d+)?Z$/, " UTC") : "never");
+  const plural = (n, word) => n + " " + word + (n === 1 ? "" : "s");
+  const safeLink = (link) => (typeof link === "string" && link.startsWith("file:") ? link : null);
+  const company = (ticker) => COMPANIES.find((c) => c.ticker === ticker) || null;
+  const cls = (p) => {
+    let k = CLS.get(p);
+    if (!k) { k = L.classify(p, S.policy, TODAY); CLS.set(p, k); }
+    return k;
+  };
+  const statement = (c, id) => { const a = c.assumptions.find((x) => x.id === id); return a ? a.statement : id; };
+  function factById(c, id) {
+    for (const list of Object.values(c.known_facts)) for (const f of list || []) if (f.id === id) return f;
+    return null;
+  }
+  function stance(v) {
+    if (!isNum(v)) return el("span", { class: "st-mid" }, "stance –");
+    const [cls_, arrow, word] = v < 1.5 ? ["st-neg", "↓", "negative"] : v > 2.5 ? ["st-pos", "↑", "positive"] : ["st-mid", "→", "neutral"];
+    return el("span", { class: cls_, title: "stance " + f1(v) + " on 0–4" }, arrow + " " + word);
+  }
+  function materiality(v) {
+    const n = isNum(v) ? Math.max(0, Math.min(3, Math.round(v))) : 0;
+    return el("span", { title: "materiality " + f1(v) + " of 3", class: "mat" },
+      el("span", { class: "mbar", "aria-hidden": "true" }, [0, 1, 2].map((i) => el("i", { class: i < n ? "on" : "" }))),
+      " material " + f1(v));
+  }
+  function highlight(text, terms) {
+    const words = (terms || []).map((t) => t.trim()).filter(Boolean);
+    if (!words.length) return [text];
+    const re = new RegExp("(" + words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi");
+    return String(text).split(re).map((part, i) => (i % 2 ? el("mark", {}, part) : part));
+  }
+  function diffNodes(ops) {
+    return (ops || []).map(([op, text]) => (op === "+" ? el("ins", {}, text) : op === "-" ? el("del", {}, text) : text));
+  }
+  function toast(message, kind) {
+    const node = el("div", { class: "toast " + (kind || ""), role: kind === "error" ? "alert" : "status" }, message);
+    TOASTS.append(node);
+    while (TOASTS.children.length > 4) TOASTS.firstChild.remove();
+    setTimeout(() => node.remove(), kind === "error" ? 8000 : 2600);
+  }
+  function copyText(text, what) {
+    const fallback = () => showOverlay("modal", "Copy " + what, () => {
+      const box = el("textarea", { class: "copybox", rows: 10, readonly: true, "aria-label": what }, text);
+      setTimeout(() => { box.focus(); box.select(); }, 0);
+      return [el("p", { class: "muted small" }, "Clipboard access was blocked; select and copy the text below."), box];
+    });
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => toast("Copied " + what), fallback);
+      } else fallback();
+    } catch (err) { fallback(); }
+  }
+  function linkTo(link, label) {
+    const href = safeLink(link);
+    return href ? el("a", { href, target: "_blank", rel: "noopener", title: "Open the source file" }, label) : null;
+  }
+  function openLink(link) {
+    const href = safeLink(link);
+    if (href) window.open(href, "_blank", "noopener");
+    else toast("No local file link for this passage");
+  }
+
+  // ================================================================ storage (static mode queue)
+  function persist() {
+    if (TOKEN) return;
+    try {
+      if (S.queue.length) window.localStorage.setItem(QUEUE_KEY, JSON.stringify(S.queue));
+      else window.localStorage.removeItem(QUEUE_KEY);
+    } catch (err) { /* storage unavailable: the queue lives only in this page */ }
+  }
+  function restoreQueue() {
+    if (TOKEN) return;
+    let saved = [];
+    try { saved = JSON.parse(window.localStorage.getItem(QUEUE_KEY) || "[]"); } catch (err) { saved = []; }
+    if (Array.isArray(saved)) {
+      for (const action of saved) replay(action);
+      S.queue = saved;
+    }
+    // Queues left by earlier dashboards (another generated_at) that were never cleared.
+    try {
+      const store = window.localStorage;
+      for (let i = 0; i < store.length; i++) {
+        const key = store.key(i);
+        if (!key || !key.startsWith(QUEUE_PREFIX) || key === QUEUE_KEY) continue;
+        const actions = JSON.parse(store.getItem(key) || "[]");
+        if (Array.isArray(actions) && actions.length) S.older.push({ key, generated: key.slice(QUEUE_PREFIX.length), actions });
+      }
+    } catch (err) { S.older = []; }
+  }
+  function discardOlder(entry) {
+    try { window.localStorage.removeItem(entry.key); } catch (err) { /* ignore */ }
+    S.older = S.older.filter((x) => x !== entry);
+    renderActionBar();
+  }
+  function replay(action) {
+    const c = company(action && action.ticker);
+    if (!c) return;
+    const p = c._byId.get(action.passage_id);
+    if (action.op === "triage" && p) {
+      if ("status" in action) p.triage.status = action.status || null;
+      if ("starred" in action) p.triage.starred = !!action.starred;
+    } else if (action.op === "label" && action.origin === "spotcheck") {
+      S.spotDone.add(c.ticker + "|" + action.passage_id);
+    } else if (action.op === "fact") {
+      applyFact(c, action);
+    } else if (action.op === "resolve") {
+      const pr = c.predictions.find((x) => x.id === action.prediction_id);
+      if (pr) setOutcome(pr, action.outcome);
+    }
+  }
+
+  // ================================================================ actions: dispatch, send, undo
+  async function api(method, path, body) {
+    const init = { method, headers: { "X-Radar-Token": TOKEN } };
+    if (body !== undefined) {
+      init.headers["Content-Type"] = "application/json";
+      init.body = JSON.stringify(body);
+    }
+    const response = await fetch(path, init);
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    return response.json();
+  }
+  function dispatch(actions) {
+    if (!actions.length) return;
+    S.queue.push(...actions);
+    if (TOKEN) flush(); else persist();
+    renderActionBar();
+  }
+  async function flush() {
+    if (!TOKEN || S.sending || !S.queue.length) return;
+    const batch = S.queue.slice();
+    S.sending = batch;
+    let ok = false;
+    try {
+      const result = await api("POST", "/api/actions", { actions: batch });
+      if (!result || result.ok === false) throw new Error((result && result.error) || "the server rejected the actions");
+      S.queue = S.queue.filter((a) => !batch.includes(a));
+      ok = true;
+    } catch (err) {
+      toast("Could not save " + plural(batch.length, "action") + " (" + err.message + "). They stay queued; use Retry.", "error");
+    }
+    S.sending = null;
+    renderActionBar();
+    if (ok && S.queue.length) flush();
+  }
+  function commit(group) {
+    const index = focusIndex();
+    group.focusKey = S.focus;
+    group.apply();
+    S.undo.push(group);
+    if (S.undo.length > 200) S.undo.shift();
+    dispatch(group.actions);
+    render();
+    refocus(index);
+    toast(group.name + " · u to undo");
+  }
+  function undo() {
+    const group = S.undo.pop();
+    if (!group) { toast("Nothing to undo"); return; }
+    const index = focusIndex();
+    group.revert();
+    const unsent = group.actions.every((a) => S.queue.includes(a) && !(S.sending && S.sending.includes(a)));
+    let note = "";
+    if (unsent) {
+      S.queue = S.queue.filter((a) => !group.actions.includes(a));
+      persist();
+    } else {
+      dispatch(group.inverse());
+      if (group.actions.some((a) => a.op === "label" || a.op === "fact")) note = " (labels and facts already sent stay recorded)";
+    }
+    if (group.focusKey) S.focus = group.focusKey;
+    render();
+    refocus(index);
+    toast("Undid: " + group.name + note);
+  }
+  const label = (c, p, question, value, origin) =>
+    ({ op: "label", ticker: c.ticker, passage_id: p.id, question, value, origin: origin || "triage" });
+  function triageGroup(c, p, change, labels, name, extra) {
+    const before = Object.assign({}, p.triage);
+    const after = Object.assign({}, before, change);
+    const action = Object.assign({ op: "triage", ticker: c.ticker, passage_id: p.id }, change);
+    return {
+      name, actions: [action, ...labels, ...(extra ? extra.actions : [])],
+      apply() { p.triage = Object.assign({}, after); if (extra) extra.apply(); },
+      revert() { p.triage = Object.assign({}, before); if (extra) extra.revert(); },
+      inverse: () => [{ op: "triage", ticker: c.ticker, passage_id: p.id, status: before.status, starred: before.starred }],
+    };
+  }
+  function leave(c, p, key) {
+    const status = cls(p).in_contradictions ? "acknowledged" : "dismissed";
+    const labels = key === "d" ? [label(c, p, "new_info", 0), label(c, p, "whats_new", 0)]
+                               : [label(c, p, "material", 0), label(c, p, "whats_new", 0)];
+    commit(triageGroup(c, p, { status }, labels, key === "d" ? "Knew it" : "Doesn't matter"));
+  }
+  function toggleStar(c, p) {
+    const on = !p.triage.starred;
+    const labels = on ? [label(c, p, "material", 1), label(c, p, "whats_new", 1)] : [];
+    commit(triageGroup(c, p, { starred: on }, labels, on ? "Starred" : "Unstarred"));
+  }
+  function verdict(c, p, value) {
+    const ids = cls(p).contradicts;
+    if (!ids.length) { toast("No flagged contradiction on this passage"); return; }
+    const labels = ids.map((id) => label(c, p, "contradicts__" + id, value));
+    commit(triageGroup(c, p, { status: "acknowledged" }, labels, value ? "Acknowledged" : "False alarm"));
+  }
+  function reopen(c, p) {
+    commit(triageGroup(c, p, { status: null }, [], "Reopened"));
+  }
+  function startAbsorb(c, p, key) {
+    const pillar = p.p && c.pillars[p.p.pillar] !== undefined ? p.p.pillar : Object.keys(c.pillars)[0] || "";
+    S.absorb = { key, text: "", pillar, replace: true };
+    render();
+    const input = document.querySelector('[data-fkey="absorb-text"]');
+    if (input) input.focus();
+  }
+  function absorb(c, p, form) {
+    const labels = [label(c, p, "new_info", 1), label(c, p, "material", 1), label(c, p, "whats_new", 1)];
+    let extra = null;
+    if (form.text) {
+      const fact = { op: "fact", ticker: c.ticker, pillar: form.pillar, text: form.text, source: p.id };
+      if (form.replace) fact.replace = form.replace;
+      const snapshot = JSON.parse(JSON.stringify(c.known_facts));
+      extra = { actions: [fact], apply: () => applyFact(c, fact), revert: () => { c.known_facts = snapshot; } };
+    }
+    const status = cls(p).in_contradictions ? "acknowledged" : "absorbed";
+    commit(triageGroup(c, p, { status }, labels, form.text ? "Absorbed with a fact" : "Absorbed", extra));
+  }
+  function applyFact(c, fact) {
+    const entry = { text: fact.text, as_of: TODAY, source: fact.source === undefined ? null : fact.source };
+    const old = fact.replace ? factById(c, fact.replace) : null;
+    if (old) { Object.assign(old, entry); return; }
+    const list = c.known_facts[fact.pillar] || (c.known_facts[fact.pillar] = []);
+    list.push(Object.assign({ id: fact.pillar + "." + list.length }, entry));
+  }
+  function answerSpot(c, p, yes) {
+    const key = c.ticker + "|" + p.id;
+    commit({
+      name: "Spot check: " + (yes ? "yes" : "no"),
+      actions: [label(c, p, "whats_new", yes ? 1 : 0, "spotcheck")],
+      apply: () => S.spotDone.add(key), revert: () => S.spotDone.delete(key), inverse: () => [],
+    });
+  }
+  function setOutcome(pr, outcome) {
+    pr.outcome = outcome;
+    if (outcome === null) {
+      pr.resolved_at = null;
+      const by = String(pr.by || "");
+      pr.status = pr._openStatus || (by < TODAY ? "overdue" : by <= L.shiftDate(TODAY, 14) ? "due" : "open");
+    } else {
+      pr.status = "resolved";
+      pr.resolved_at = new Date().toISOString().slice(0, 19) + "Z";
+    }
+  }
+  function resolvePrediction(c, pr, outcome) {
+    const before = { outcome: pr.outcome === undefined ? null : pr.outcome, status: pr.status, resolved_at: pr.resolved_at };
+    commit({
+      name: outcome === null ? "Cleared outcome" : "Resolved " + (outcome ? "yes" : "no"),
+      actions: [{ op: "resolve", ticker: c.ticker, prediction_id: pr.id, outcome }],
+      apply: () => setOutcome(pr, outcome), revert: () => Object.assign(pr, before),
+      inverse: () => [{ op: "resolve", ticker: c.ticker, prediction_id: pr.id, outcome: before.outcome }],
+    });
+  }
+  function dismissShown(c, list) {
+    const befores = list.map((p) => [p, Object.assign({}, p.triage)]);
+    S.confirm = null;
+    commit({
+      name: "Marked " + plural(list.length, "item") + " as read",
+      actions: list.map((p) => ({ op: "triage", ticker: c.ticker, passage_id: p.id, status: "dismissed" })),
+      apply: () => { for (const p of list) p.triage = Object.assign({}, p.triage, { status: "dismissed" }); },
+      revert: () => { for (const [p, t] of befores) p.triage = Object.assign({}, t); },
+      inverse: () => befores.map(([p, t]) => ({ op: "triage", ticker: c.ticker, passage_id: p.id, status: t.status, starred: t.starred })),
+    });
+  }
+
+  // ================================================================ focus and card navigation
+  const visibleCards = () => [...APP.querySelectorAll(".card")].filter((n) => n.getClientRects().length > 0);
+  function focusIndex() {
+    return visibleCards().findIndex((n) => n.dataset.key === S.focus);
+  }
+  function focusCard(node, scroll) {
+    for (const n of document.querySelectorAll(".card.focused")) n.classList.remove("focused");
+    if (!node) { S.focus = null; return; }
+    S.focus = node.dataset.key;
+    node.classList.add("focused");
+    node.focus({ preventScroll: true });
+    if (scroll) node.scrollIntoView({ block: "nearest" });
+  }
+  function refocus(index) {
+    const cards = visibleCards();
+    const same = cards.find((n) => n.dataset.key === S.focus);
+    if (same) { focusCard(same, false); return; }
+    if (index >= 0 && cards.length) focusCard(cards[Math.min(index, cards.length - 1)], true);
+  }
+  function move(delta) {
+    const cards = visibleCards();
+    if (!cards.length) return;
+    let i = cards.findIndex((n) => n.dataset.key === S.focus);
+    i = i < 0 ? (delta > 0 ? 0 : cards.length - 1) : Math.max(0, Math.min(cards.length - 1, i + delta));
+    focusCard(cards[i], true);
+  }
+  function focusedRef() {
+    return S.focus && document.querySelector('.card[data-key="' + CSS.escape(S.focus) + '"]') ? REFS.get(S.focus) : null;
+  }
+
+  // ================================================================ cards
+  function card(c, p, section, opts) {
+    opts = opts || {};
+    const key = section + "|" + c.ticker + "|" + p.id;
+    REFS.set(key, { c, p, key, spot: !!opts.spot });
+    const k = cls(p);
+    const contra = opts.contra || k.in_contradictions;
+    const classes = ["card"];
+    if (contra) classes.push("contra");
+    if (opts.spot) classes.push("spot");
+    if (S.focus === key) classes.push("focused");
+    const node = el("article", { class: classes.join(" "), tabindex: "-1", "data-key": key, "data-id": p.id,
+                                 "data-section": section, "data-ticker": c.ticker });
+    if (opts.spot) {
+      node.append(el("div", { class: "spot-head" }, "Spot check: should this have been in your feed?",
+        el("button", { class: "mini", type: "button", "aria-label": "Yes, it belongs in the feed (y)", onclick: () => answerSpot(c, p, true) }, "Yes", el("kbd", {}, "y")),
+        el("button", { class: "mini", type: "button", "aria-label": "No, it does not belong (n)", onclick: () => answerSpot(c, p, false) }, "No", el("kbd", {}, "n")),
+        el("span", { class: "muted" }, "A random passage the filter skipped; answers estimate what it misses.")));
+    }
+    node.append(el("p", { class: "quote" }, p.speaker ? el("span", { class: "speaker" }, p.speaker + ": ") : null,
+      highlight(p.text || "", opts.terms)));
+    node.append(sourceMeta(c, p), signalMeta(c, p, k));
+    if (!opts.spot) node.append(actionRow(c, p, k, key));
+    node.append(...panels(c, p, key));
+    return node;
+  }
+  function sourceMeta(c, p) {
+    const doc = c._docs.get(p.document_id);
+    const title = (p.title || (doc && doc.title) || "untitled") + (p.form ? " (" + p.form + ")" : "");
+    return el("div", { class: "meta" },
+      p.arrived_new ? el("span", { class: "dot", title: "Arrived since your last view", role: "img", "aria-label": "new since last view" }) : null,
+      el("span", {}, human(p.source_type) || "unknown source"), el("span", {}, p.date || "undated"),
+      el("span", { class: "title" }, title),
+      p.read_through ? el("span", { class: "chip acc", title: "Peer document judged against this thesis" }, "read-through: " + p.read_through) : null,
+      linkTo(p.link, p.page !== null && p.page !== undefined ? "p. " + p.page + " ↗" : "source ↗"),
+      p.status === "stale" ? el("span", { class: "chip warn", title: "Judged before your last thesis edit" }, "stale") : null,
+      p.status === "unjudged" || !p.p ? el("span", { class: "chip" }, "not judged yet") : null,
+      p.triage.status ? el("span", { class: "chip" }, p.triage.status) : null,
+      p.triage.starred ? el("span", { class: "chip acc" }, "★ starred") : null,
+      el("span", { class: "muted mono" }, "#" + p.id));
+  }
+  function signalMeta(c, p, k) {
+    if (!p.p) return el("div", { class: "meta" });
+    const j = p.p;
+    const fact = j.updates_fact && isNum(j.updates_fact_p) && j.updates_fact_p >= 0.5 ? factById(c, j.updates_fact) : null;
+    return el("div", { class: "meta" },
+      materiality(j.materiality), stance(j.stance), el("span", {}, human(j.evidence)),
+      el("span", { title: "Probability this is new relative to your known facts" }, "new " + f2(j.new_info)),
+      k.contradicts.map((id) => el("span", { class: "chip neg", title: statement(c, id) }, "✗ contradicts " + id)),
+      k.supports.map((id) => el("span", { class: "chip pos", title: statement(c, id) }, "✓ supports " + id)),
+      j.updates_fact && isNum(j.updates_fact_p) && j.updates_fact_p >= 0.5
+        ? el("span", { class: "chip acc", title: "P " + f2(j.updates_fact_p) }, "updates " + j.updates_fact + ": " + (fact ? fact.text : "(fact not found)"))
+        : null);
+  }
+  function btn(text, key, aria, onclick, on) {
+    return el("button", { class: "mini" + (on ? " on" : ""), type: "button", "aria-label": aria + (key ? " (" + key + ")" : ""),
+                          "aria-pressed": on === undefined ? null : String(!!on), onclick }, text, key ? el("kbd", {}, key) : null);
+  }
+  function toggle(key) {
+    S.open.set(key, !S.open.get(key));
+    render();
+  }
+  function actionRow(c, p, k, key) {
+    const selKey = c.ticker + "|" + p.id;
+    const select = el("input", { type: "checkbox", checked: S.selected.has(selKey), "aria-label": "Select for quote export",
+      onchange: (e) => { if (e.target.checked) S.selected.set(selKey, p); else S.selected.delete(selKey); renderActionBar(); } });
+    return el("div", { class: "actions" },
+      k.contradicts.length ? [btn("Acknowledge", "c", "Acknowledge contradiction", () => verdict(c, p, 1)),
+                              btn("False alarm", "f", "False alarm", () => verdict(c, p, 0))] : null,
+      btn("Knew it", "d", "Knew it", () => leave(c, p, "d")),
+      btn("Doesn't matter", "x", "Doesn't matter", () => leave(c, p, "x")),
+      btn("Absorb", "a", "Absorb", () => startAbsorb(c, p, key), S.absorb && S.absorb.key === key),
+      btn(p.triage.starred ? "★ Starred" : "☆ Star", "s", "Star", () => toggleStar(c, p), p.triage.starred),
+      p.triage.status ? btn("Reopen", null, "Clear triage status", () => reopen(c, p)) : null,
+      btn("Skim", "v", "Skim document", () => openSkim(c, p.document_id, p.id)),
+      btn("why?", null, "Why am I seeing this", () => toggle(key + "|why"), !!S.open.get(key + "|why")),
+      p.context ? btn("context", null, "Show previous passage", () => toggle(key + "|ctx"), !!S.open.get(key + "|ctx")) : null,
+      p.similar ? btn("similar to #" + p.similar.id + " (" + Math.round((p.similar.similarity || 0) * 100) + "%)", null,
+                      "Show word diff against the similar earlier passage", () => toggle(key + "|sim"), !!S.open.get(key + "|sim")) : null,
+      el("label", { class: "check" }, select, "select"));
+  }
+  function panels(c, p, key) {
+    const out = [];
+    if (S.open.get(key + "|why")) {
+      out.push(el("div", { class: "panel-x" }, el("ul", {}, L.whyShown(p, S.policy, TODAY).map((r) => el("li", {}, r)))));
+    }
+    if (S.open.get(key + "|ctx") && p.context) {
+      out.push(el("div", { class: "panel-x" }, el("div", { class: "muted small" }, "Previous passage (context only)"), el("p", { class: "diff" }, p.context)));
+    }
+    if (S.open.get(key + "|sim") && p.similar) {
+      out.push(el("div", { class: "panel-x" }, el("div", { class: "muted small" }, "Changes from #" + p.similar.id + ": ",
+        el("ins", {}, "added"), " ", el("del", {}, "removed")), el("p", { class: "diff" }, diffNodes(p.similar.diff))));
+    }
+    if (S.absorb && S.absorb.key === key) out.push(absorbForm(c, p));
+    return out;
+  }
+  function absorbForm(c, p) {
+    const draft = S.absorb;
+    const pillar = el("select", { "aria-label": "Pillar for the fact", onchange: (e) => { draft.pillar = e.target.value; } },
+      Object.keys(c.pillars).map((id) => el("option", { value: id }, id)));
+    pillar.value = draft.pillar;
+    const uf = p.p && p.p.updates_fact;
+    return el("form", { class: "absorb", onsubmit: (e) => {
+      e.preventDefault();
+      S.absorb = null;
+      absorb(c, p, { text: draft.text.trim(), pillar: draft.pillar, replace: uf && draft.replace ? uf : null });
+    } },
+      el("input", { type: "text", value: draft.text, placeholder: "Known fact to add (optional, your words)", "aria-label": "Known fact text",
+                    "data-fkey": "absorb-text", oninput: (e) => { draft.text = e.target.value; } }),
+      pillar,
+      uf ? el("label", { class: "check" }, el("input", { type: "checkbox", checked: draft.replace, onchange: (e) => { draft.replace = e.target.checked; } }), "replace " + uf) : null,
+      el("button", { class: "mini primary", type: "submit" }, "Absorb"),
+      el("button", { class: "mini", type: "button", onclick: () => { S.absorb = null; render(); } }, "Cancel"));
+  }
+  function refCard(c, id, section) {
+    const p = c._byId.get(id);
+    return p ? card(c, p, section) : el("p", { class: "empty" }, "Passage #" + id + " is not embedded in this file.");
+  }
+  function fold(key, summary, body, dflt, extra) {
+    const open = S.open.has(key) ? !!S.open.get(key) : !!dflt;
+    const node = el("details", { class: "fold " + (extra || ""), "data-fold": key });
+    node.open = open;
+    node.append(el("summary", {}, summary));
+    if (open) append(node, [body()]);
+    node.addEventListener("toggle", () => {
+      if (node.open === open) return;
+      S.open.set(key, node.open);
+      render();
+    });
+    return node;
+  }
+  const head = (title, count, countClass, extra) =>
+    [el("h2", {}, title), count === null ? null : el("span", { class: "count " + (countClass || "") }, String(count)), extra || null];
+
+  // ================================================================ company view
+  function feeds(c) {
+    const f = { contra: [], fresh: [], maybe: [], acked: [], starred: [] };
+    for (const p of c.passages) {
+      const k = cls(p);
+      if (k.in_contradictions) f.contra.push(p);
+      if (k.in_whats_new) f.fresh.push(p);
+      if (k.in_maybe) f.maybe.push(p);
+      if (L.isAcknowledgedContradiction(p, S.policy, TODAY)) f.acked.push(p);
+      if (p.triage.starred) f.starred.push(p);
+    }
+    for (const list of Object.values(f)) list.sort(L.byNewest);
+    return f;
+  }
+  function filtersFor(ticker) {
+    return S.filters[ticker] || (S.filters[ticker] = { source: "", evidence: "", from: "", to: "", text: "" });
+  }
+  function passes(p, f) {
+    const d = L.passageDate(p) || "";
+    if (f.source && p.source_type !== f.source) return false;
+    if (f.evidence && (!p.p || p.p.evidence !== f.evidence)) return false;
+    if (f.from && d < f.from) return false;
+    if (f.to && d > f.to) return false;
+    if (f.text && !((p.speaker || "") + " " + p.text + " " + (p.title || "")).toLowerCase().includes(f.text.toLowerCase())) return false;
+    return true;
+  }
+  function viewCompany(c) {
+    if (!c) return [el("p", { class: "empty" }, "Unknown tab.")];
+    const f = feeds(c);
+    return [
+      el("div", { class: "section-head", style: "margin-top:16px" }, el("h2", {}, c.company || c.ticker),
+        el("span", { class: "muted small" }, c.ticker + (c.peers && c.peers.length ? " · peers " + c.peers.join(", ") : ""))),
+      sectionContradictions(c, f), sectionWhatsNew(c, f),
+      fold("maybe|" + c.ticker, head("Maybe", f.maybe.filter((p) => passes(p, filtersFor(c.ticker))).length),
+        () => feedList(c, f.maybe.filter((p) => passes(p, filtersFor(c.ticker))), "maybe", [])),
+      fold("starred|" + c.ticker, head("Starred", f.starred.length), () => f.starred.map((p) => card(c, p, "starred"))),
+      sectionQuestions(c), sectionLedger(c), sectionRedlines(c), sectionPredictions(c), sectionFacts(c),
+      sectionAssumptions(c), sectionTimelines(c),
+    ];
+  }
+  function sectionContradictions(c, f) {
+    const groups = new Map();
+    for (const p of f.contra) {
+      const ids = cls(p).contradicts;
+      const a = c.assumptions.find((x) => ids.includes(x.id));
+      const id = a ? a.id : ids[0];
+      if (!groups.has(id)) groups.set(id, []);
+      groups.get(id).push(p);
+    }
+    const order = [...c.assumptions.map((a) => a.id).filter((id) => groups.has(id)), ...[...groups.keys()].filter((id) => !c.assumptions.some((a) => a.id === id))];
+    return el("section", { class: "section", id: "contradictions" },
+      el("div", { class: "section-head" }, head("⚠ Contradictions", f.contra.length, f.contra.length ? "neg" : "")),
+      f.contra.length ? null : el("p", { class: "empty" }, "No open contradictions at these thresholds."),
+      order.map((id) => el("div", { class: "contra-group", "data-assumption": id },
+        el("h3", {}, statement(c, id), " ", el("span", { class: "chip" }, id)),
+        groups.get(id).map((p) => card(c, p, "contra", { contra: true })))),
+      f.acked.length ? fold("acked|" + c.ticker, el("span", { class: "muted" }, "Acknowledged (" + f.acked.length + ")"),
+        () => f.acked.map((p) => card(c, p, "acked", { contra: true })), false, "inner") : null);
+  }
+  function spotList(c) {
+    return c.spot_checks.map((id) => c._byId.get(id)).filter((p) => {
+      if (!p || S.spotDone.has(c.ticker + "|" + p.id)) return false;
+      const k = cls(p);
+      return !k.in_whats_new && !k.in_maybe && !k.in_contradictions;
+    });
+  }
+  function byPillar(c, items) {
+    const order = Object.keys(c.pillars);
+    const rank = (p) => { const i = order.indexOf(p.p && p.p.pillar); return i < 0 ? order.length : i; };
+    return items.slice().sort((a, b) => rank(a) - rank(b) || L.byNewest(a, b));
+  }
+  function feedList(c, items, section, spots) {
+    const list = el("div", { class: "feed", "data-feed": section });
+    let pillar;
+    for (const entry of L.interleave(byPillar(c, items), spots, 10)) {
+      if (entry.spot) { list.append(card(c, entry.spot, "spot", { spot: true })); continue; }
+      const p = entry.item;
+      const pid = p.p ? p.p.pillar : "";
+      if (pid !== pillar) {
+        pillar = pid;
+        list.append(el("div", { class: "pillar-head" }, el("b", {}, pid || "no pillar"), el("span", {}, c.pillars[pid] || "")));
+      }
+      list.append(card(c, p, section));
+    }
+    if (!items.length) list.append(el("p", { class: "empty" }, "Nothing here at these thresholds and filters."));
+    return list;
+  }
+  function sectionWhatsNew(c, f) {
+    const flt = filtersFor(c.ticker);
+    const shown = f.fresh.filter((p) => passes(p, flt));
+    const pool = f.fresh.concat(f.maybe);
+    const opts = (values) => [...new Set(values.filter(Boolean))].sort();
+    const select = (name, values) => {
+      const node = el("select", { "aria-label": "Filter by " + name, onchange: (e) => { flt[name] = e.target.value; render(); } },
+        el("option", { value: "" }, "any " + name), opts(values).map((v) => el("option", { value: v }, human(v))));
+      node.value = flt[name];
+      return node;
+    };
+    const date = (name, aria) => el("input", { type: "date", value: flt[name], "aria-label": aria, "data-fkey": "flt-" + name + "|" + c.ticker,
+                                                onchange: (e) => { flt[name] = e.target.value; render(); } });
+    const active = Object.values(flt).some(Boolean);
+    const confirm = S.confirm === c.ticker
+      ? el("span", { class: "confirm" }, "Dismiss " + plural(shown.length, "shown item") + " without labels?",
+          el("button", { class: "mini primary", type: "button", onclick: () => dismissShown(c, shown) }, "Dismiss " + shown.length),
+          el("button", { class: "mini", type: "button", onclick: () => { S.confirm = null; render(); } }, "Cancel"))
+      : el("button", { class: "mini", type: "button", disabled: !shown.length, onclick: () => { S.confirm = c.ticker; render(); } }, "Mark all shown as read");
+    return el("section", { class: "section", id: "whats-new" },
+      el("div", { class: "section-head" }, el("h2", {}, "What's new"),
+        el("span", { class: "count", "data-count": "whats_new" }, String(f.fresh.length)),
+        active ? el("span", { class: "muted small" }, shown.length + " shown with filters") : null, confirm),
+      el("div", { class: "filters" },
+        select("source", pool.map((p) => p.source_type)), select("evidence", pool.map((p) => p.p && p.p.evidence)),
+        date("from", "From date"), date("to", "To date"),
+        el("input", { type: "search", placeholder: "filter text", value: flt.text, "aria-label": "Filter text", "data-fkey": "flt-text|" + c.ticker,
+                      oninput: (e) => { flt.text = e.target.value; render(); } }),
+        active ? el("button", { class: "mini", type: "button", onclick: () => { S.filters[c.ticker] = null; render(); } }, "clear filters") : null),
+      feedList(c, shown, "new", spotList(c)));
+  }
+  function sectionQuestions(c) {
+    if (!c.open_questions.length) return null;
+    const judged = c.passages.filter((p) => p.p);
+    return fold("questions|" + c.ticker, head("Open questions", c.open_questions.length), () => c.open_questions.map((q) => {
+      const items = judged.filter((p) => cls(p).questions.includes(q.id)).sort(L.byNewest);
+      return fold("q|" + c.ticker + "|" + q.id, [el("span", {}, q.text), el("span", { class: "count" }, String(items.length))],
+        () => (items.length ? items.map((p) => card(c, p, "q-" + q.id)) : el("p", { class: "empty" }, "No passages bear on this question yet.")), false, "inner");
+    }));
+  }
+  function statusChip(status) {
+    const map = { kept: ["pos", "✓ kept"], missed: ["neg", "✗ missed"], open: ["", "… open"], due: ["warn", "due"],
+                  overdue: ["neg", "overdue"], resolved: ["acc", "resolved"] };
+    const [k, text] = map[status] || ["", status || "?"];
+    return el("span", { class: "chip " + k }, text);
+  }
+  function ledgerLine(lg) {
+    return [lg.kept || 0, " kept · ", lg.missed || 0, " missed · ", lg.open || 0, " open",
+            isNum(lg.credibility) ? " · credibility " + Math.round(lg.credibility * 100) + "%" : ""].join("");
+  }
+  function sectionLedger(c) {
+    const lg = c.ledger || { items: [] };
+    const items = lg.items || [];
+    return fold("ledger|" + c.ticker, head("Guidance ledger", items.length, "", el("span", { class: "muted small" }, ledgerLine(lg))),
+      () => (items.length ? items.map((it) => el("div", { class: "promise " + it.status },
+        el("div", { class: "meta" }, statusChip(it.status), isNum(it.p) ? el("span", {}, "P " + f2(it.p)) : null, el("span", {}, "Promise")),
+        refCard(c, it.promise_id, "ledger"),
+        it.result_id !== null && it.result_id !== undefined
+          ? el("div", { class: "result" }, el("h4", {}, "Result"), refCard(c, it.result_id, "ledger-result"))
+          : el("p", { class: "empty" }, "No reported result paired yet."))) : el("p", { class: "empty" }, "No guidance promises yet.")));
+  }
+  function docLabel(c, id) {
+    const d = c._docs.get(id);
+    return d ? d.title + " (" + (d.date || "undated") + ")" : "document #" + id;
+  }
+  function sectionRedlines(c) {
+    if (!c.redlines.length) return null;
+    return fold("redlines|" + c.ticker, head("Changed language", c.redlines.length), () => c.redlines.map((r) => el("div", { class: "redline" },
+      el("h3", {}, r.form + ": " + docLabel(c, r.new_document) + " vs " + docLabel(c, r.old_document)),
+      el("h4", {}, "Changed (" + (r.changed || []).length + ")"),
+      (r.changed || []).map((ch) => el("div", { class: "change" }, el("p", { class: "diff" }, diffNodes(ch.diff)),
+        el("div", { class: "meta" }, el("span", {}, Math.round((ch.similarity || 0) * 100) + "% similar"),
+          el("span", { class: "mono" }, "#" + ch.id + " was #" + ch.old_id),
+          c._byId.has(ch.id) ? el("button", { class: "mini", type: "button", onclick: () => showPassages(c, "Passage #" + ch.id, [ch.id]) }, "card") : null))),
+      el("h4", {}, "Added (" + (r.added || []).length + ")"),
+      (r.added || []).map((id) => refCard(c, id, "added")),
+      fold("removed|" + c.ticker + "|" + r.new_document, el("span", { class: "muted" }, "Removed (" + (r.removed || []).length + ")"),
+        () => (r.removed || []).map((x) => el("div", { class: "change" }, el("p", { class: "diff" }, el("del", {}, x.text)),
+          el("div", { class: "meta" }, el("span", { class: "mono" }, "#" + x.id), x.page !== null && x.page !== undefined ? el("span", {}, "p. " + x.page) : null))),
+        false, "inner"))));
+  }
+  function sectionPredictions(c) {
+    if (!c.predictions.length) return null;
+    const score = L.brier(c.predictions);
+    return fold("predictions|" + c.ticker, head("Predictions", c.predictions.length, "",
+      el("span", { class: "muted small" }, score.brier === null ? "none resolved" : "Brier " + score.brier.toFixed(3) + " over " + score.resolved + " resolved")),
+      () => c.predictions.map((pr) => el("div", { class: "prediction", "data-prediction": pr.id },
+        el("div", {}, el("b", {}, pr.statement)),
+        el("div", { class: "meta" }, statusChip(pr.status), el("span", {}, "by " + (pr.by || "–")), el("span", {}, "your p " + f2(pr.p)),
+          pr.pillar ? el("span", {}, pr.pillar) : null,
+          pr.outcome === true || pr.outcome === false ? el("span", { class: "chip " + (pr.outcome ? "pos" : "neg") }, (pr.outcome ? "✓ happened" : "✗ did not happen") + (pr.resolved_at ? " · " + String(pr.resolved_at).slice(0, 10) : "")) : null),
+        el("div", { class: "actions" },
+          btn("Yes", null, "Resolve yes", () => resolvePrediction(c, pr, true), pr.outcome === true),
+          btn("No", null, "Resolve no", () => resolvePrediction(c, pr, false), pr.outcome === false),
+          pr.outcome === true || pr.outcome === false ? btn("Clear", null, "Clear outcome", () => resolvePrediction(c, pr, null)) : null),
+        (pr.related || []).length ? fold("pred|" + c.ticker + "|" + pr.id, el("span", { class: "muted small" }, "Related passages (" + pr.related.length + ")"),
+          () => pr.related.map((id) => refCard(c, id, "pred-" + pr.id)), false, "inner") : null)));
+  }
+  function sectionFacts(c) {
+    const total = Object.values(c.known_facts).reduce((n, list) => n + (list || []).length, 0);
+    const pillars = [...new Set([...Object.keys(c.pillars), ...Object.keys(c.known_facts)])];
+    return fold("facts|" + c.ticker, head("Known facts", total), () => pillars.map((pid) => el("div", {},
+      el("div", { class: "pillar-head" }, el("b", {}, pid), el("span", {}, c.pillars[pid] || "")),
+      (c.known_facts[pid] || []).length ? (c.known_facts[pid] || []).map((fact) => el("div", { class: "fact" }, el("div", {}, fact.text),
+        el("div", { class: "meta" }, el("span", { class: "mono" }, fact.id), fact.as_of ? el("span", {}, "as of " + fact.as_of) : null,
+          fact.source !== null && fact.source !== undefined
+            ? el("button", { class: "mini", type: "button", onclick: () => showPassages(c, "Source of " + fact.id, [fact.source]) }, "source #" + fact.source)
+            : null))) : el("p", { class: "empty" }, "No known facts yet."))));
+  }
+  function sectionAssumptions(c) {
+    if (!c.assumptions.length) return null;
+    const judged = c.passages.filter((p) => p.p);
+    return fold("assumptions|" + c.ticker, head("Assumptions", c.assumptions.length), () => c.assumptions.map((a) => {
+      const against = judged.filter((p) => cls(p).contradicts.includes(a.id)).sort(L.byNewest);
+      const support = judged.filter((p) => cls(p).supports.includes(a.id)).sort(L.byNewest);
+      return fold("asm|" + c.ticker + "|" + a.id, [el("span", {}, a.statement), el("span", { class: "chip pos" }, "▲ for " + support.length),
+        el("span", { class: "chip neg" }, "▼ against " + against.length)], () => [
+        el("h4", {}, "Against"), against.length ? against.map((p) => card(c, p, "against-" + a.id, { contra: true })) : el("p", { class: "empty" }, "None."),
+        el("h4", {}, "For"), support.length ? support.map((p) => card(c, p, "for-" + a.id)) : el("p", { class: "empty" }, "None.")], false, "inner");
+    }));
+  }
+  function sectionTimelines(c) {
+    const dated = c.passages.filter((p) => p.p && p.p.pillar && p.p.pillar !== "off_thesis" && L.passageDate(p));
+    return fold("timelines|" + c.ticker, head("Pillar timelines", null), () => {
+      if (!dated.length) return el("p", { class: "empty" }, "No dated judged passages.");
+      const times = dated.map((p) => Date.parse(L.passageDate(p)));
+      const min = Math.min(...times), span = Math.max(...times) - min || 1;
+      const detail = el("div", {});
+      return [el("p", { class: "muted small" }, "Color is stance (red ↓, gray →, green ↑), size is materiality, shape is source type. Click a mark."),
+        Object.keys(c.pillars).map((pid) => {
+          const strip = el("div", { class: "timeline", title: pid });
+          for (const p of dated.filter((q) => q.p.pillar === pid)) {
+            const size = 6 + 4 * Math.max(0, Math.min(3, p.p.materiality || 0));
+            const color = p.p.stance < 1.5 ? "var(--neg)" : p.p.stance > 2.5 ? "var(--pos)" : "var(--mid)";
+            const mark = el("button", { type: "button", class: "mark " + (SHAPES[p.source_type] || "circle"),
+              title: L.passageDate(p) + " · " + human(p.source_type) + " · " + p.title, "aria-label": "Passage " + p.id,
+              onclick: () => detail.replaceChildren(card(c, p, "timeline")) });
+            mark.style.cssText = "left:" + ((Date.parse(L.passageDate(p)) - min) / span) * 100 + "%;width:" + size + "px;height:" + size + "px;background:" + color;
+            strip.append(mark);
+          }
+          return el("div", {}, el("div", { class: "meta" }, pid), strip);
+        }), detail];
+    });
+  }
+
+  // ================================================================ overview
+  function viewOverview() {
+    if (!COMPANIES.length) return [el("p", { class: "empty" }, "No companies yet. Add a thesis file and run radar run.")];
+    return COMPANIES.map((c) => {
+      const f = feeds(c);
+      const arrived = c.passages.filter((p) => p.arrived_new && (cls(p).in_contradictions || cls(p).in_whats_new || cls(p).in_maybe)).length;
+      const stat = (n, text, k) => el("div", { class: "stat " + (k || "") }, el("b", {}, String(n)), el("span", {}, text));
+      return el("section", { class: "ov", "data-ticker": c.ticker },
+        el("div", { class: "ov-head" }, el("h2", {}, c.ticker + " · " + (c.company || "")),
+          el("button", { class: "btn", type: "button", onclick: () => switchTab(c.ticker) }, "Open " + c.ticker + " →")),
+        el("div", { class: "stats" }, stat(f.contra.length, "contradictions", f.contra.length ? "neg" : ""), stat(f.fresh.length, "what's new"),
+          stat(f.maybe.length, "maybe"), stat(arrived, "arrived since last view")),
+        el("div", { class: "ov-grid" },
+          el("div", { class: "wide" }, el("h3", {}, "Evidence by pillar and week"), heatmap(c)),
+          el("div", {}, el("h3", {}, "Assumptions: evidence balance"), assumptionRows(c)),
+          el("div", { class: "divergence" }, el("h3", {}, "Company voice vs outside voices"), divergenceRows(c)),
+          el("div", {}, el("h3", {}, "Guidance credibility"), credibility(c)),
+          el("div", {}, el("h3", {}, "Predictions"), predictionsDue(c))));
+    });
+  }
+  function heatmap(c) {
+    const hm = c.heatmap || {};
+    const weeks = hm.weeks || [];
+    const rows = hm.rows || {};
+    if (!weeks.length || !Object.keys(rows).length) return el("p", { class: "empty" }, "No dated evidence yet.");
+    let max = 1;
+    for (const cells of Object.values(rows)) for (const cell of cells || []) if (cell && cell.count > max) max = cell.count;
+    const grid = el("div", { class: "hm" });
+    grid.style.gridTemplateColumns = "auto repeat(" + weeks.length + ", 16px)";
+    grid.append(el("span", {}));
+    const label = (w) => (String(w) === L.weekStart(w) ? "week of " + w : w + " (week of " + L.weekStart(w) + ")");
+    weeks.forEach((w, i) => grid.append(el("span", { class: "wk", title: label(w) }, (weeks.length - 1 - i) % 4 === 0 ? L.weekLabel(w) : "")));
+    for (const [pillar, cells] of Object.entries(rows)) {
+      grid.append(el("span", { class: "lbl", title: c.pillars[pillar] || pillar }, pillar));
+      weeks.forEach((w, i) => {
+        const cell = (cells || [])[i];
+        if (!cell || !cell.count) { grid.append(el("span", { class: "hm-empty", "aria-hidden": "true" })); return; }
+        const [k, glyph] = cell.net > 0.05 ? ["pos", "+"] : cell.net < -0.05 ? ["neg", "−"] : ["mid", "·"];
+        const title = pillar + " · " + label(w) + " · net " + signed(cell.net, 2) + " · " + plural(cell.count, "passage");
+        const node = el("button", { type: "button", class: "hm-cell " + k, title, "aria-label": title,
+                                    onclick: () => showWeek(c, pillar, w, title) }, glyph);
+        node.style.opacity = String(0.35 + 0.65 * Math.min(1, cell.count / max));
+        grid.append(node);
+      });
+    }
+    return [el("div", { class: "hm-scroll" }, grid), el("div", { class: "legend" },
+      el("span", {}, el("i", { style: "background:var(--neg)" }), "− negative"), el("span", {}, el("i", { style: "background:var(--mid)" }), "· mixed"),
+      el("span", {}, el("i", { style: "background:var(--pos)" }), "+ positive"), el("span", {}, "net: materiality-weighted stance, −1 to +1; darker = more passages"))];
+  }
+  function showWeek(c, pillar, week, title) {
+    const start = L.weekStart(week), end = L.shiftDate(start, 7);
+    const ids = c.passages.filter((p) => p.p && p.p.pillar === pillar && (L.passageDate(p) || "") >= start && (L.passageDate(p) || "") < end)
+      .sort(L.byNewest).map((p) => p.id);
+    showPassages(c, title, ids);
+  }
+  function sparkline(values) {
+    const w = 96, h = 24, pad = 3;
+    const node = svg("svg", { class: "spark", width: w, height: h, viewBox: "0 0 " + w + " " + h, role: "img",
+                              "aria-label": "cumulative balance " + values.join(", ") });
+    if (!values.length) return node;
+    const lo = Math.min(0, ...values), hi = Math.max(0, ...values), span = hi - lo || 1;
+    const x = (i) => (values.length === 1 ? w / 2 : pad + (i * (w - 2 * pad)) / (values.length - 1));
+    const y = (v) => pad + ((hi - v) * (h - 2 * pad)) / span;
+    node.append(svg("line", { class: "spark-zero", x1: pad, x2: w - pad, y1: y(0).toFixed(1), y2: y(0).toFixed(1) }));
+    node.append(svg("polyline", { class: "spark-line", points: values.map((v, i) => x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ") }));
+    const last = values[values.length - 1];
+    node.append(svg("circle", { class: last > 0 ? "spark-pos" : last < 0 ? "spark-neg" : "spark-mid", r: 2.5,
+                                cx: x(values.length - 1).toFixed(1), cy: y(last).toFixed(1) }));
+    return node;
+  }
+  function assumptionRows(c) {
+    if (!c.assumptions.length) return el("p", { class: "empty" }, "No assumptions in this thesis.");
+    const series = c.assumption_series || {};
+    return c.assumptions.map((a) => {
+      const s = series[a.id] || [];
+      const pro = s.reduce((n, x) => n + (x.for || 0), 0), con = s.reduce((n, x) => n + (x.against || 0), 0);
+      return el("div", { class: "asm-row" }, el("span", { class: "small" }, a.statement), sparkline(s.map((x) => Number(x.balance) || 0)),
+        el("div", { class: "meta" }, el("span", { class: "chip pos" }, "▲ for " + pro), el("span", { class: "chip neg" }, "▼ against " + con),
+          el("span", { class: "mono" }, a.id)));
+    });
+  }
+  function voice(v) {
+    return v && isNum(v.stance) ? f1(v.stance) + " " + (v.stance < 1.5 ? "↓" : v.stance > 2.5 ? "↑" : "→") + " (n " + (v.n || 0) + ")" : "– (n " + ((v && v.n) || 0) + ")";
+  }
+  function divergenceRows(c) {
+    if (!c.divergence.length) return el("p", { class: "empty" }, "Not enough company and outside voices yet.");
+    return [c.divergence.map((d) => el("button", { type: "button", class: "div-row" + (d.flagged ? " flagged" : ""), "data-pillar": d.pillar,
+      onclick: () => showDivergence(c, d) },
+      el("div", { class: "meta" }, el("b", { class: "title" }, d.pillar), d.flagged ? el("span", { class: "chip warn" }, "⚑ diverges") : null,
+        el("span", {}, "gap " + signed(d.gap))),
+      el("div", { class: "small" }, "company " + voice(d.inside) + " vs outside " + voice(d.outside)))),
+      el("p", { class: "muted small" }, "Stance 0–4, materiality weighted. Click a row for the passages.")];
+  }
+  function showDivergence(c, d) {
+    showOverlay("modal", d.pillar + ": company vs outside voices", () => [
+      el("h4", {}, "Company voice · " + voice(d.inside)), ((d.inside && d.inside.ids) || []).map((id) => refCard(c, id, "div-in")),
+      el("h4", {}, "Outside voices · " + voice(d.outside)), ((d.outside && d.outside.ids) || []).map((id) => refCard(c, id, "div-out"))]);
+  }
+  function credibility(c) {
+    const lg = c.ledger || {};
+    const decided = (lg.kept || 0) + (lg.missed || 0);
+    return [el("div", { class: "small" }, ledgerLine(lg)),
+      decided ? el("div", { class: "gauge", title: "kept share of decided promises" }, el("i", { style: "width:" + Math.round(((lg.kept || 0) / decided) * 100) + "%" })) : null,
+      el("p", { class: "muted small" }, "Guidance paired with later reported results.")];
+  }
+  function predictionsDue(c) {
+    const due = c.predictions.filter((p) => p.status === "due" || p.status === "overdue");
+    const score = L.brier(c.predictions);
+    return [due.length ? el("ul", { class: "plist" }, due.map((p) => el("li", {}, el("div", { class: "small" }, p.statement),
+      el("div", { class: "meta" }, statusChip(p.status), el("span", {}, "by " + p.by), el("span", {}, "your p " + f2(p.p))))))
+      : el("p", { class: "empty" }, "Nothing due."),
+      el("p", { class: "small" }, score.brier === null ? "Your forecasts: none resolved yet."
+        : "Your Brier score " + score.brier.toFixed(3) + " over " + score.resolved + " resolved (0 is perfect, 0.25 is always saying 50%).")];
+  }
+
+  // ================================================================ unsorted, search
+  function viewUnsorted() {
+    return [el("div", { class: "section-head", style: "margin-top:16px" }, head("Unsorted", UNSORTED.length)),
+      UNSORTED.length ? null : el("p", { class: "empty" }, "Nothing unsorted."),
+      UNSORTED.map((d) => el("article", { class: "card", tabindex: "-1", "data-key": "unsorted|" + d.id },
+        el("p", { class: "quote" }, el("b", {}, d.title || "untitled")),
+        el("div", { class: "meta" }, el("span", { class: "chip warn" }, d.reason || "unsorted"), el("span", { class: "mono title" }, d.path || "")),
+        el("div", { class: "unsorted-cmd" }, el("code", {}, d.command),
+          el("button", { class: "mini", type: "button", onclick: () => copyText(d.command, "command") }, "Copy"))))];
+  }
+  let searchTimer = null;
+  function runSearch(query) {
+    const q = query.trim();
+    S.focus = null;
+    if (!q) { S.search = null; render(); return; }
+    if (!TOKEN) {
+      const needle = q.toLowerCase(), results = [];
+      outer: for (const c of COMPANIES) {
+        for (const p of c.passages.slice().sort(L.byNewest)) {
+          if (((p.speaker || "") + " " + (p.text || "")).toLowerCase().includes(needle)) results.push({ c, p });
+          if (results.length >= 100) break outer;
+        }
+      }
+      S.search = { q, terms: [q], results };
+      render();
+      return;
+    }
+    const tab = company(S.tab);
+    S.search = { q, terms: q.split(/\s+/).map((t) => t.replace(/["*()]/g, "")).filter((t) => t.length > 1), results: [], loading: true };
+    render();
+    Promise.all((tab ? [tab] : COMPANIES).map((c) =>
+      api("GET", "/api/search?q=" + encodeURIComponent(q) + "&ticker=" + encodeURIComponent(c.ticker) + "&limit=50").then((r) =>
+        ((r && r.results) || []).map((x) => {
+          const local = x.passage && c._byId.get(x.passage.id);
+          if (!local && x.passage) normalizeTriage(x.passage);
+          return { c, p: local || x.passage };
+        }))))
+      .then((lists) => { if (S.search && S.search.q === q) { S.search.results = lists.flat().filter((x) => x.p).slice(0, 100); S.search.loading = false; render(); } })
+      .catch((err) => { if (S.search && S.search.q === q) { S.search.loading = false; S.search.error = err.message; render(); } toast("Search failed: " + err.message, "error"); });
+  }
+  function viewSearch() {
+    const s = S.search;
+    return [el("div", { class: "section-head", style: "margin-top:16px" }, head("Search: “" + s.q + "”", s.loading ? null : s.results.length),
+      el("button", { class: "mini", type: "button", onclick: clearSearch }, "✕ clear search"),
+      el("span", { class: "muted small" }, TOKEN ? "full-text search of the corpus" : "embedded passages only; up to 100 results")),
+      s.loading ? el("p", { class: "empty" }, "Searching…") : null,
+      s.error ? el("p", { class: "empty" }, "Search failed: " + s.error) : null,
+      !s.loading && !s.error && !s.results.length ? el("p", { class: "empty" }, "No passages match.") : null,
+      s.results.map(({ c, p }) => card(c, p, "search", { terms: s.terms }))];
+  }
+  function clearSearch() {
+    SEARCH.value = "";
+    S.search = null;
+    render();
+  }
+
+  // ================================================================ overlays: modal, help, skim
+  function showOverlay(kind, title, build, extra) {
+    S.overlay = Object.assign({ kind, title, build }, extra || {});
+    drawOverlay();
+    OVERLAY.hidden = false;
+    document.body.classList.add("locked");
+  }
+  function drawOverlay() {
+    const o = S.overlay;
+    if (!o) return;
+    const header = o.kind === "skim" ? skimHeader(o) : [el("div", {}, el("h2", {}, o.title))];
+    const sheet = el("div", { class: "sheet " + o.kind, role: "dialog", "aria-modal": "true", "aria-label": o.title },
+      el("div", { class: "sheet-head" }, header, el("button", { class: "mini", type: "button", "aria-label": "Close (Esc)", onclick: closeOverlay }, "✕", el("kbd", {}, "Esc"))),
+      el("div", { class: "sheet-body" }, o.build()));
+    const scroll = OVERLAY.scrollTop;
+    OVERLAY.replaceChildren(sheet);
+    OVERLAY.scrollTop = scroll;
+  }
+  function closeOverlay() {
+    S.overlay = null;
+    OVERLAY.hidden = true;
+    OVERLAY.replaceChildren();
+    document.body.classList.remove("locked");
+    const node = S.focus && document.querySelector('.card[data-key="' + CSS.escape(S.focus) + '"]');
+    if (node) node.focus({ preventScroll: true });
+  }
+  function showPassages(c, title, ids) {
+    showOverlay("modal", title, () => (ids.length ? ids.map((id) => refCard(c, id, "modal")) : el("p", { class: "empty" }, "No embedded passages.")));
+  }
+  function toggleHelp() {
+    if (S.overlay && S.overlay.kind === "help") { closeOverlay(); return; }
+    const keys = [["j / k", "next / previous card"], ["d", "knew it (new info = no)"], ["x", "doesn't matter (material = no)"],
+      ["a", "absorb, optionally adding a known fact"], ["s", "star / unstar"], ["c", "acknowledge contradiction"], ["f", "false alarm (not a contradiction)"],
+      ["y / n", "answer a focused spot check"], ["u", "undo the last action"], ["o", "open the source file"], ["v", "skim the card's document (n / p jump)"],
+      ["/", "search"], ["g then o", "Overview"], ["g then 1–9", "company tab"], ["g then u", "Unsorted"], ["?", "this help"], ["Esc", "close / cancel"]];
+    showOverlay("help", "Keyboard shortcuts", () => [el("div", { class: "help-grid" }, keys.map(([k, t]) => [el("kbd", {}, k), el("span", {}, t)])),
+      el("p", { class: "muted small" }, TOKEN ? "Connected to radar serve: actions are saved as you go."
+        : "Static file: actions queue at the bottom; copy the radar apply command and run it in your workspace.")]);
+  }
+  function openSkim(c, docId, fromId) {
+    const doc = c._docs.get(docId) || { id: docId, title: "Document #" + docId, complete: false };
+    const local = c.passages.filter((p) => p.document_id === docId);
+    showOverlay("skim", doc.title, () => skimBody(), { c, doc, passages: local, cur: fromId, expanded: new Set(), loading: false });
+    if (TOKEN && !doc.complete) {
+      S.overlay.loading = true;
+      drawOverlay();
+      const mine = S.overlay;
+      api("GET", "/api/document/" + encodeURIComponent(docId) + "?ticker=" + encodeURIComponent(c.ticker))
+        .then((r) => {
+          mine.passages = ((r && r.passages) || []).map((p) => c._byId.get(p.id) || (normalizeTriage(p), p));
+          if (r && r.document) mine.doc = Object.assign({}, doc, r.document);
+        })
+        .catch((err) => toast("Could not load the full document: " + err.message, "error"))
+        .finally(() => { mine.loading = false; if (S.overlay === mine) drawOverlay(); });
+    }
+    setTimeout(() => skimScroll(false), 0);
+  }
+  function skimKind(p) {
+    if (!p.p) return "unjudged";
+    const k = cls(p);
+    if (k.in_contradictions) return "contra";
+    if (k.in_whats_new) return "hl-new";
+    if (k.in_maybe) return "hl-maybe";
+    if (p.p.boilerplate >= S.policy.boilerplate_max || !p.p.pillar || p.p.pillar === "off_thesis") return "stub";
+    return "plain";
+  }
+  function skimHeader(o) {
+    const d = o.doc;
+    const n = o.passages.length;
+    return el("div", {}, el("h2", {}, d.title || "Document"),
+      el("div", { class: "meta" }, el("span", {}, human(d.source_type)), el("span", {}, d.date || "undated"), d.form ? el("span", {}, d.form) : null,
+        el("span", {}, n + (d.passage_count ? " of " + d.passage_count : "") + " passages"), linkTo(d.link, "open file ↗"),
+        el("span", {}, el("kbd", {}, "n"), " / ", el("kbd", {}, "p"), " jump")),
+      !d.complete && !TOKEN ? el("div", { class: "skim-note" }, "Only on-thesis passages are embedded in this file; run radar serve to skim the whole document.") : null,
+      o.loading ? el("div", { class: "skim-note" }, "Loading the full document…") : null);
+  }
+  function skimBody() {
+    const o = S.overlay;
+    const list = o.passages.slice().sort((a, b) => (a.seq || 0) - (b.seq || 0));
+    if (!list.length) return el("p", { class: "empty" }, "No passages of this document are available.");
+    return list.map((p) => {
+      const kind = skimKind(p);
+      if (kind === "stub" && !o.expanded.has(p.id)) {
+        return el("button", { type: "button", class: "stub", "data-id": p.id, title: "Expand",
+          onclick: () => { o.expanded.add(p.id); drawOverlay(); } },
+          "▸ " + (p.p.boilerplate >= S.policy.boilerplate_max ? "boilerplate" : "off thesis") + (p.page !== null && p.page !== undefined ? " · p. " + p.page : "") + " · " + String(p.text).slice(0, 110));
+      }
+      const k = cls(p);
+      const tags = kind === "contra" ? "contradicts " + k.contradicts.join(", ") : kind === "hl-new" ? "What's new" : kind === "hl-maybe" ? "Maybe" : kind === "unjudged" ? "not judged yet" : "";
+      return el("div", { class: "skim-p " + kind + (o.cur === p.id ? " skim-current" : ""), "data-id": p.id, "data-kind": kind },
+        el("p", { class: "quote" }, p.speaker ? el("span", { class: "speaker" }, p.speaker + ": ") : null, p.text),
+        el("div", { class: "meta" }, p.page !== null && p.page !== undefined ? el("span", {}, "p. " + p.page) : null, tags ? el("span", { class: kind === "contra" ? "chip neg" : "chip" }, tags) : null,
+          p.p ? el("span", {}, (p.p.pillar || "") + " · material " + f1(p.p.materiality) + " · new " + f2(p.p.new_info)) : null));
+    });
+  }
+  function skimJump(delta) {
+    const o = S.overlay;
+    const list = o.passages.slice().sort((a, b) => (a.seq || 0) - (b.seq || 0));
+    const hl = (p) => ["contra", "hl-new", "hl-maybe"].includes(skimKind(p));
+    const at = list.findIndex((p) => p.id === o.cur);
+    let i = at;
+    for (;;) {
+      i = i < 0 && delta < 0 ? list.length - 1 : i + delta;
+      if (i < 0 || i >= list.length) { toast(delta > 0 ? "No more highlights below" : "No more highlights above"); return; }
+      if (hl(list[i])) break;
+    }
+    o.cur = list[i].id;
+    for (const n of OVERLAY.querySelectorAll(".skim-current")) n.classList.remove("skim-current");
+    skimScroll(true);
+  }
+  function skimScroll(smooth) {
+    const o = S.overlay;
+    if (!o || o.kind !== "skim" || o.cur === null || o.cur === undefined) return;
+    const node = OVERLAY.querySelector('.skim-p[data-id="' + CSS.escape(String(o.cur)) + '"]');
+    if (!node) return;
+    node.classList.add("skim-current");
+    node.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" });
+  }
+
+  // ================================================================ thresholds
+  const roundTo = (v, step) => { const d = String(step).includes(".") ? String(step).split(".")[1].length : 0; return Number(Number(v).toFixed(d)); };
+  function sliderText(key) {
+    const row = SLIDERS.find((r) => r[0] === key);
+    const value = Number(S.policy[key]);
+    return row && row[4] >= 1 ? String(Math.round(value)) : value.toFixed(2);
+  }
+  function buildThresholds() {
+    const sliders = SLIDERS.map(([key, text, min, max, step]) => el("label", { class: "slider" }, el("span", {}, text),
+      el("output", { "data-out": key }, sliderText(key)),
+      el("input", { type: "range", min, max, step, value: S.policy[key], "data-policy": key, "aria-label": text,
+                    oninput: (e) => setPolicy(key, roundTo(e.target.value, step)) })));
+    TH_PANEL.replaceChildren(el("div", { class: "th" },
+      el("div", { class: "section-head" }, el("h2", {}, "Thresholds"), el("span", { class: "muted small", id: "th-state" }),
+        el("span", { class: "muted small" }, "Counts are recomputed here from the embedded probabilities; nothing is sent to Jev.")),
+      el("div", { class: "th-grid" }, sliders),
+      el("div", { class: "th-counts", id: "th-counts" }),
+      el("div", { class: "row" },
+        el("button", { class: "btn", type: "button", onclick: () => setAll(S.saved) }, "Reset to saved"),
+        el("button", { class: "btn", type: "button", onclick: () => setAll(DEFAULTS) }, "Reset to defaults"),
+        el("button", { class: "btn", type: "button", onclick: () => copyText(L.policyYaml(S.policy), "policy.yaml") }, "Copy policy.yaml"),
+        TOKEN ? el("button", { class: "btn primary", type: "button", onclick: savePolicy }, "Save") : null)));
+    syncThresholds();
+  }
+  function setPolicy(key, value) {
+    S.policy[key] = value;
+    if (key === "maybe_new_info_low" && S.policy.maybe_new_info_high <= value) S.policy.maybe_new_info_high = Math.min(1, roundTo(value + 0.01, 0.01));
+    if (key === "maybe_new_info_high" && S.policy.maybe_new_info_low >= value) S.policy.maybe_new_info_low = Math.max(0, roundTo(value - 0.01, 0.01));
+    scheduleRender();
+  }
+  function setAll(values) {
+    S.policy = Object.assign({}, DEFAULTS, values);
+    render();
+  }
+  function savePolicy() {
+    const values = {};
+    for (const key of Object.keys(L.DEFAULT_POLICY)) values[key] = S.policy[key];
+    S.saved = Object.assign({}, S.policy);
+    dispatch([{ op: "policy", values }]);
+    render();
+  }
+  function syncThresholds() {
+    if (TH_PANEL.hidden) return;
+    for (const input of TH_PANEL.querySelectorAll("input[data-policy]")) {
+      const key = input.dataset.policy;
+      if (String(input.value) !== String(S.policy[key])) input.value = S.policy[key];
+      TH_PANEL.querySelector('[data-out="' + key + '"]').textContent = sliderText(key);
+    }
+    const dirty = Object.keys(L.DEFAULT_POLICY).some((k) => S.policy[k] !== S.saved[k]);
+    document.getElementById("th-state").textContent = dirty ? "changed from saved" : "at saved values";
+    document.getElementById("th-counts").replaceChildren(...COMPANIES.map((c) => {
+      const before = L.countFeeds(c.passages, S.saved, TODAY), now = L.countFeeds(c.passages, S.policy, TODAY);
+      const part = (text, key) => el("span", { class: before[key] !== now[key] ? "changed" : "", "data-live": key },
+        text + " " + before[key] + " → " + now[key]);
+      return el("div", { "data-ticker": c.ticker }, el("b", {}, c.ticker), " ", part("Contradictions", "contradictions"), " · ",
+        part("What's new", "whats_new"), " · ", part("Maybe", "maybe"));
+    }));
+  }
+  let frame = 0;
+  function scheduleRender() {
+    if (frame) return;
+    frame = requestAnimationFrame(() => { frame = 0; render(); });
+  }
+
+  // ================================================================ chrome: tabs, banner, action bar
+  function renderTabs() {
+    const tabs = [["overview", "Overview", null]].concat(COMPANIES.map((c) => [c.ticker, c.ticker, feeds(c).fresh.length]),
+      [["unsorted", "Unsorted (" + UNSORTED.length + ")", null]]);
+    NAV.replaceChildren(...tabs.map(([key, text, badge]) => el("button", {
+      class: "tab" + (S.tab === key && !S.search ? " active" : ""), type: "button", role: "tab", "data-tab": key,
+      "aria-selected": String(S.tab === key), onclick: () => switchTab(key) },
+      text, badge === null ? null : el("span", { class: "badge", title: "What's new" }, String(badge)))));
+  }
+  function switchTab(key) {
+    S.tab = key;
+    S.focus = null;
+    S.confirm = null;
+    if (S.search) { SEARCH.value = ""; S.search = null; }
+    render();
+    window.scrollTo(0, 0);
+  }
+  function renderChrome() {
+    const pending = DATA.pending || {};
+    const lines = [];
+    if (pending.stale) lines.push(el("div", {}, el("b", {}, plural(pending.stale, "stale judgment")), " shown from before your last thesis edit — run ", el("code", {}, "radar judge --all"), " to refresh."));
+    if (pending.unjudged) lines.push(el("div", {}, el("b", {}, plural(pending.unjudged, "passage")), " not judged yet — run ", el("code", {}, "radar judge"), "."));
+    if (pending.failed) lines.push(el("div", {}, el("b", {}, plural(pending.failed, "judgment")), " failed — run ", el("code", {}, "radar judge --retry-failed"), "."));
+    document.getElementById("banner").replaceChildren(...(lines.length ? [el("div", { class: "banner", role: "status" }, lines)] : []));
+    document.getElementById("meta-line").replaceChildren(el("span", {}, "generated " + stamp(DATA.generated_at)),
+      el("span", {}, "last view " + stamp(DATA.previous_view)),
+      el("span", {}, TOKEN ? "connected to radar serve: actions save as you go" : "static file: actions queue at the bottom"),
+      el("span", {}, "press ", el("kbd", {}, "?"), " for keys"));
+  }
+  function renderActionBar() {
+    const rows = S.older.map((entry) => {
+      const command = L.applyCommand(entry.actions);
+      return el("div", { class: "ab-row older" },
+        el("strong", {}, plural(entry.actions.length, "action") + " from the dashboard generated " + stamp(entry.generated) +
+          (entry.actions.length === 1 ? " was" : " were") + " never cleared"),
+        el("code", { class: "cmd" }, command),
+        el("button", { class: "mini", type: "button", onclick: () => copyText(command, "radar apply command") }, "Copy command"),
+        el("button", { class: "mini", type: "button", onclick: () => discardOlder(entry) }, "Discard"));
+    });
+    if (S.queue.length) {
+      const command = L.applyCommand(S.queue);
+      rows.push(el("div", { class: "ab-row" },
+        el("strong", { "data-queue": S.queue.length }, TOKEN ? plural(S.queue.length, "unsaved action") : plural(S.queue.length, "queued action")),
+        el("code", { class: "cmd", id: "apply-command" }, command),
+        TOKEN ? el("button", { class: "mini primary", type: "button", onclick: flush }, "Retry") : null,
+        el("button", { class: "mini", type: "button", onclick: () => copyText(command, "radar apply command") }, "Copy command"),
+        el("button", { class: "mini", type: "button", title: "Forget queued actions (after you ran the command)",
+                       onclick: () => { S.queue = []; persist(); renderActionBar(); } }, "Clear")));
+    }
+    if (S.selected.size) {
+      rows.push(el("div", { class: "ab-row" }, el("strong", {}, S.selected.size + " selected"),
+        el("button", { class: "mini primary", type: "button", onclick: () => copyText(L.markdownQuotes([...S.selected.values()]), "Markdown quotes") }, "Copy as Markdown quotes"),
+        el("button", { class: "mini", type: "button", onclick: () => { S.selected.clear(); render(); } }, "Clear selection")));
+    }
+    BAR.hidden = !rows.length;
+    BAR.replaceChildren(...rows);
+    document.body.classList.toggle("has-bar", rows.length > 0);
+  }
+
+  // ================================================================ render
+  function render() {
+    CLS = new WeakMap();
+    const active = document.activeElement;
+    const fkey = active && active.dataset && active.dataset.fkey;
+    const caret = fkey && typeof active.selectionStart === "number" ? [active.selectionStart, active.selectionEnd] : null;
+    renderTabs();
+    const view = S.search ? viewSearch() : S.tab === "overview" ? viewOverview() : S.tab === "unsorted" ? viewUnsorted() : viewCompany(company(S.tab));
+    APP.replaceChildren(...[view].flat(Infinity).filter(Boolean));
+    for (const strip of APP.querySelectorAll(".hm-scroll")) strip.scrollLeft = strip.scrollWidth;
+    renderActionBar();
+    syncThresholds();
+    if (S.overlay && S.overlay.kind !== "help") drawOverlay();
+    if (fkey && fkey !== "search") {
+      const again = document.querySelector('[data-fkey="' + CSS.escape(fkey) + '"]');
+      if (again) { again.focus(); if (caret) try { again.setSelectionRange(caret[0], caret[1]); } catch (err) { /* date inputs */ } }
+    }
+  }
+
+  // ================================================================ keyboard
+  function isTyping(t) {
+    if (!t || !t.tagName) return false;
+    if (t.isContentEditable || t.tagName === "TEXTAREA" || t.tagName === "SELECT") return true;
+    return t.tagName === "INPUT" && !["checkbox", "radio", "range", "button", "submit", "reset"].includes(t.type);
+  }
+  function escape(t, typing) {
+    if (S.absorb) { S.absorb = null; render(); refocus(focusIndex()); return; }
+    if (S.overlay) { closeOverlay(); return; }
+    if (t === SEARCH) { clearSearch(); SEARCH.blur(); return; }
+    if (typing) { t.blur(); return; }
+    if (S.confirm) { S.confirm = null; render(); return; }
+    if (S.search) clearSearch();
+  }
+  function withCard(fn, allowSpot) {
+    const ref = focusedRef();
+    if (!ref) { toast("Press j to pick a card first"); return; }
+    if (ref.spot && !allowSpot) { toast("This is a spot check: answer y or n"); return; }
+    fn(ref);
+  }
+  const KEYS = {
+    j: () => move(1), k: () => move(-1), u: undo, "?": toggleHelp,
+    "/": () => { SEARCH.focus(); SEARCH.select(); },
+    g: () => { S.g = true; setTimeout(() => { S.g = false; }, 1500); },
+    d: () => withCard((r) => leave(r.c, r.p, "d")), x: () => withCard((r) => leave(r.c, r.p, "x")),
+    a: () => withCard((r) => startAbsorb(r.c, r.p, r.key)), s: () => withCard((r) => toggleStar(r.c, r.p)),
+    c: () => withCard((r) => verdict(r.c, r.p, 1)), f: () => withCard((r) => verdict(r.c, r.p, 0)),
+    o: () => withCard((r) => openLink(r.p.link), true), v: () => withCard((r) => openSkim(r.c, r.p.document_id, r.p.id), true),
+    y: () => { const r = focusedRef(); if (r && r.spot) answerSpot(r.c, r.p, true); },
+    n: () => { const r = focusedRef(); if (r && r.spot) answerSpot(r.c, r.p, false); },
+  };
+  document.addEventListener("keydown", (e) => {
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+    const typing = isTyping(e.target);
+    if (e.key === "Escape") { escape(e.target, typing); return; }
+    if (typing) return;
+    if (S.overlay && S.overlay.kind === "skim") {
+      const fn = { n: () => skimJump(1), p: () => skimJump(-1), o: () => openLink(S.overlay.doc.link), "?": toggleHelp }[e.key];
+      if (fn) { e.preventDefault(); fn(); }
+      return;
+    }
+    if (S.overlay) { if (e.key === "?") { e.preventDefault(); toggleHelp(); } return; }
+    if (S.g) {
+      S.g = false;
+      const target = e.key === "o" ? "overview" : e.key === "u" ? "unsorted" : /^[1-9]$/.test(e.key) && COMPANIES[+e.key - 1] ? COMPANIES[+e.key - 1].ticker : null;
+      if (target) { e.preventDefault(); switchTab(target); }
+      return;
+    }
+    const fn = KEYS[e.key];
+    if (fn) { e.preventDefault(); fn(); }
+  });
+  APP.addEventListener("focusin", (e) => {
+    const node = e.target.closest && e.target.closest(".card");
+    if (!node || node.dataset.key === S.focus) return;
+    for (const n of document.querySelectorAll(".card.focused")) n.classList.remove("focused");
+    S.focus = node.dataset.key;
+    node.classList.add("focused");
+  });
+  APP.addEventListener("click", (e) => {
+    const node = e.target.closest && e.target.closest(".card");
+    if (node && !e.target.closest("button, a, input, select, label, textarea") && node.dataset.key !== S.focus) focusCard(node, false);
+  });
+  OVERLAY.addEventListener("click", (e) => { if (e.target === OVERLAY) closeOverlay(); });
+  SEARCH.addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => runSearch(SEARCH.value), 200); });
+  SEARCH.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    clearTimeout(searchTimer);
+    SEARCH.blur();
+    runSearch(SEARCH.value);
+  });
+  document.getElementById("btn-help").addEventListener("click", toggleHelp);
+  document.getElementById("btn-thresholds").addEventListener("click", (e) => {
+    TH_PANEL.hidden = !TH_PANEL.hidden;
+    e.currentTarget.setAttribute("aria-expanded", String(!TH_PANEL.hidden));
+    if (!TH_PANEL.hidden) buildThresholds();
+  });
+
+  // ================================================================ start
+  restoreQueue();
+  renderChrome();
+  render();
+})();
+</script>
+</body>
+</html>

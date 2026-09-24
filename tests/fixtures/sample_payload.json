@@ -1,0 +1,4270 @@
+{
+ "version": 2,
+ "mode": "static",
+ "generated_at": "2026-09-24T08:00:00Z",
+ "today": "2026-09-24",
+ "previous_view": "2026-09-20T08:00:00Z",
+ "policy": {
+  "metadata_min_probability": 0.6,
+  "whats_new_window_days": 30,
+  "pillar_probability_min": 0.5,
+  "boilerplate_max": 0.3,
+  "new_info_min": 0.6,
+  "materiality_min": 1.5,
+  "contradictions_window_days": 120,
+  "contradicts_min": 0.7,
+  "contradiction_materiality_min": 1.0,
+  "maybe_new_info_low": 0.4,
+  "maybe_new_info_high": 0.6,
+  "open_questions_min": 0.55,
+  "divergence_window_days": 120,
+  "divergence_min_gap": 1.0,
+  "divergence_min_passages": 3,
+  "ledger_min_probability": 0.6
+ },
+ "policy_defaults": {
+  "metadata_min_probability": 0.6,
+  "whats_new_window_days": 30,
+  "pillar_probability_min": 0.5,
+  "boilerplate_max": 0.3,
+  "new_info_min": 0.6,
+  "materiality_min": 1.5,
+  "contradictions_window_days": 120,
+  "contradicts_min": 0.7,
+  "contradiction_materiality_min": 1.0,
+  "maybe_new_info_low": 0.4,
+  "maybe_new_info_high": 0.6,
+  "open_questions_min": 0.6,
+  "divergence_window_days": 120,
+  "divergence_min_gap": 1.0,
+  "divergence_min_passages": 3,
+  "ledger_min_probability": 0.6
+ },
+ "companies": [
+  {
+   "ticker": "ACME",
+   "company": "ACME Snowmobiles",
+   "peers": [
+    "BRRR"
+   ],
+   "pillars": {
+    "dealer_inventory": "Units on dealer lots and how fast they sell through.",
+    "pricing": "List pricing, promotions, and discounting.",
+    "demand": "Retail demand for snowmobiles and off-road vehicles.",
+    "margins": "Gross margin drivers: mix, freight, promotions, and input costs.",
+    "electric": "Progress and reception of the electric snowmobile line."
+   },
+   "assumptions": [
+    {
+     "id": "inv_normalizes",
+     "pillar": "dealer_inventory",
+     "statement": "Dealer inventory returns to normal within two quarters."
+    },
+    {
+     "id": "pricing_holds",
+     "pillar": "pricing",
+     "statement": "Promotional spending stays at or below last year's level."
+    },
+    {
+     "id": "margin_recovers",
+     "pillar": "margins",
+     "statement": "Gross margin recovers above 22% by fiscal 2027."
+    },
+    {
+     "id": "ev_on_track",
+     "pillar": "electric",
+     "statement": "The electric line launches on schedule for the 2027 season."
+    }
+   ],
+   "open_questions": [
+    {
+     "id": "q4_orders",
+     "text": "Will dealers cut fourth-quarter orders?"
+    },
+    {
+     "id": "ev_reception",
+     "text": "How are dealers and customers receiving the Volt-X electric sled?"
+    }
+   ],
+   "known_facts": {
+    "dealer_inventory": [
+     {
+      "id": "dealer_inventory.0",
+      "text": "Shipments down year over year; dealer inventory still elevated.",
+      "as_of": null,
+      "source": null
+     },
+     {
+      "id": "dealer_inventory.1",
+      "text": "Dealer inventory up 18% year over year at the end of Q2.",
+      "as_of": "2026-08-05",
+      "source": 1031
+     }
+    ],
+    "pricing": [
+     {
+      "id": "pricing.0",
+      "text": "Promotions up 200 bps year over year.",
+      "as_of": "2026-08-05",
+      "source": 1032
+     }
+    ],
+    "demand": [
+     {
+      "id": "demand.0",
+      "text": "North American retail down mid-single digits in Q2.",
+      "as_of": "2026-08-05",
+      "source": null
+     }
+    ],
+    "margins": [
+     {
+      "id": "margins.0",
+      "text": "Gross margin 19.8% in Q2, down 240 bps.",
+      "as_of": "2026-08-05",
+      "source": 1034
+     }
+    ],
+    "electric": [
+     {
+      "id": "electric.0",
+      "text": "Volt-X electric sled announced for model year 2027.",
+      "as_of": null,
+      "source": null
+     }
+    ]
+   },
+   "predictions": [
+    {
+     "id": "inv_normal_by_q1",
+     "statement": "Dealer inventory is back to normal by Q1 2027.",
+     "by": "2027-03-31",
+     "p": 0.6,
+     "pillar": "dealer_inventory",
+     "outcome": null,
+     "resolved_at": null,
+     "status": "open",
+     "related": [
+      1041,
+      1061,
+      1053
+     ]
+    },
+    {
+     "id": "ev_price_announced",
+     "statement": "ACME announces Volt-X retail pricing before October 1.",
+     "by": "2026-09-30",
+     "p": 0.5,
+     "pillar": "electric",
+     "outcome": null,
+     "resolved_at": null,
+     "status": "due",
+     "related": [
+      1054,
+      1063
+     ]
+    },
+    {
+     "id": "promo_cut_q3",
+     "statement": "ACME announces a cut to promotional spending on the Q3 call.",
+     "by": "2026-09-15",
+     "p": 0.35,
+     "pillar": "pricing",
+     "outcome": null,
+     "resolved_at": null,
+     "status": "overdue",
+     "related": [
+      1055,
+      1042
+     ]
+    },
+    {
+     "id": "msrp_up_my27",
+     "statement": "ACME raises list prices for model year 2027.",
+     "by": "2026-09-30",
+     "p": 0.7,
+     "pillar": "pricing",
+     "outcome": true,
+     "resolved_at": "2026-09-16T08:00:00Z",
+     "status": "resolved",
+     "related": [
+      1055
+     ]
+    },
+    {
+     "id": "dealer_count_up",
+     "statement": "ACME's dealer count grows in fiscal 2026.",
+     "by": "2026-09-15",
+     "p": 0.4,
+     "pillar": "demand",
+     "outcome": false,
+     "resolved_at": "2026-09-16T08:05:00Z",
+     "status": "resolved",
+     "related": [
+      1059
+     ]
+    }
+   ],
+   "forecast": {
+    "resolved": 2,
+    "brier": 0.125
+   },
+   "documents": [
+    {
+     "id": 101,
+     "title": "ACME Snowmobiles 10-K fiscal 2025",
+     "date": "2026-02-20",
+     "source_type": "filing",
+     "form": "10-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-02-20_filing_acme-10-k-2025.htm",
+     "ingested_at": "2026-02-21T06:10:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": false,
+     "passage_count": 62
+    },
+    {
+     "id": 102,
+     "title": "ACME Snowmobiles 10-Q Q1 2026",
+     "date": "2026-05-06",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-05-06_filing_acme-10-q-q1.htm",
+     "ingested_at": "2026-05-07T06:05:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": false,
+     "passage_count": 51
+    },
+    {
+     "id": 103,
+     "title": "ACME Snowmobiles 10-Q Q2 2026",
+     "date": "2026-08-05",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-08-05_filing_acme-10-q-q2.htm",
+     "ingested_at": "2026-08-06T06:02:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": false,
+     "passage_count": 54
+    },
+    {
+     "id": 104,
+     "title": "ACME reports third-quarter 2026 results (Exhibit 99.1)",
+     "date": "2026-09-15",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_filing_acme-8-k-ex99.htm",
+     "ingested_at": "2026-09-15T21:30:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": true,
+     "passage_count": 6
+    },
+    {
+     "id": 105,
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": true,
+     "passage_count": 10
+    },
+    {
+     "id": 106,
+     "title": "Big North Securities: snowmobile dealer channel check",
+     "date": "2026-09-18",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-18_sell_side_big-north-channel-check.pdf",
+     "ingested_at": "2026-09-18T12:00:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": true,
+     "passage_count": 6
+    },
+    {
+     "id": 107,
+     "title": "Expert call: former Midwest dealer principal",
+     "date": "2026-09-10",
+     "source_type": "expert_call",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-10_expert_call_midwest-dealer.docx",
+     "ingested_at": "2026-09-11T09:00:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": true,
+     "passage_count": 4
+    },
+    {
+     "id": 108,
+     "title": "Dealer visit, Duluth",
+     "date": "2026-09-22",
+     "source_type": "own_note",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-22_own_note_dealer-visit-duluth.md",
+     "ingested_at": "2026-09-22T19:12:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": true,
+     "passage_count": 4
+    },
+    {
+     "id": 109,
+     "title": "Frost Capital: initiating on ACME at Underperform",
+     "date": "2026-06-15",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-06-15_sell_side_frost-initiation.pdf",
+     "ingested_at": "2026-06-16T08:30:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": false,
+     "passage_count": 7
+    },
+    {
+     "id": 110,
+     "title": "Trade press: ACME recalls 2026 trail sleds",
+     "date": "2026-09-23",
+     "source_type": "news",
+     "form": null,
+     "link": "javascript:alert('link')",
+     "ingested_at": "2026-09-24T06:00:00Z",
+     "ticker": "ACME",
+     "read_through": false,
+     "complete": true,
+     "passage_count": 2
+    },
+    {
+     "id": 201,
+     "title": "Brrr Sleds reports second-quarter results (Exhibit 99.1)",
+     "date": "2026-09-12",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_filing_brrr-8-k-ex99.htm",
+     "ingested_at": "2026-09-12T22:00:00Z",
+     "ticker": "BRRR",
+     "read_through": true,
+     "complete": true,
+     "passage_count": 3
+    }
+   ],
+   "passages": [
+    {
+     "id": 1011,
+     "document_id": 101,
+     "seq": 22,
+     "text": "We rely on a network of independent dealers, and a decline in the number or financial health of our dealers could adversely affect our sales.",
+     "page": 9,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-K fiscal 2025",
+     "date": "2026-02-20",
+     "source_type": "filing",
+     "form": "10-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-02-20_filing_acme-10-k-2025.htm",
+     "ingested_at": "2026-02-21T06:10:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.62,
+      "boilerplate": 0.55,
+      "new_info": 0.1,
+      "materiality": 1.1,
+      "stance": 1.6,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1012,
+     "document_id": 101,
+     "seq": 61,
+     "text": "Over the long term we target gross margin of 23% to 24%, supported by premium mix and our cost-reduction program.",
+     "page": 38,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-K fiscal 2025",
+     "date": "2026-02-20",
+     "source_type": "filing",
+     "form": "10-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-02-20_filing_acme-10-k-2025.htm",
+     "ingested_at": "2026-02-21T06:10:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "margins",
+      "pillar_p": 0.88,
+      "boilerplate": 0.05,
+      "new_info": 0.3,
+      "materiality": 2.0,
+      "stance": 3.2,
+      "evidence": "guidance",
+      "forward_looking": 0.95,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "margin_recovers": {
+        "supports": 0.77,
+        "contradicts": 0.03
+       },
+       "inv_normalizes": {
+        "supports": 0.05,
+        "contradicts": 0.05
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [
+       "margin_recovers"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 1021,
+     "document_id": 102,
+     "seq": 50,
+     "text": "Our dealers may be unable to obtain floorplan financing on acceptable terms.",
+     "page": 33,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q1 2026",
+     "date": "2026-05-06",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-05-06_filing_acme-10-q-q1.htm",
+     "ingested_at": "2026-05-07T06:05:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.55,
+      "boilerplate": 0.5,
+      "new_info": 0.1,
+      "materiality": 1.0,
+      "stance": 1.5,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1022,
+     "document_id": 102,
+     "seq": 28,
+     "text": "Dealer inventory rose 25% year over year, and we reduced shipments in the quarter to help dealers work through older units.",
+     "page": 20,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q1 2026",
+     "date": "2026-05-06",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-05-06_filing_acme-10-q-q1.htm",
+     "ingested_at": "2026-05-07T06:05:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.93,
+      "boilerplate": 0.05,
+      "new_info": 0.35,
+      "materiality": 2.5,
+      "stance": 0.8,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.04,
+        "contradicts": 0.78
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [
+       "inv_normalizes"
+      ],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1023,
+     "document_id": 102,
+     "seq": 29,
+     "text": "We expect promotional spending to moderate in the second half of the year as dealer inventory improves.",
+     "page": 20,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q1 2026",
+     "date": "2026-05-06",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-05-06_filing_acme-10-q-q1.htm",
+     "ingested_at": "2026-05-07T06:05:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.85,
+      "boilerplate": 0.05,
+      "new_info": 0.3,
+      "materiality": 1.9,
+      "stance": 3.0,
+      "evidence": "guidance",
+      "forward_looking": 0.93,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "pricing_holds": {
+        "supports": 0.7,
+        "contradicts": 0.05
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Dealer inventory rose 25% year over year, and we reduced shipments in the quarter to help dealers work through older units.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [
+       "pricing_holds"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 1025,
+     "document_id": 102,
+     "seq": 30,
+     "text": "We expect dealer inventory to normalize by the end of the second quarter as we continue to align shipments with retail demand.",
+     "page": 21,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q1 2026",
+     "date": "2026-05-06",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-05-06_filing_acme-10-q-q1.htm",
+     "ingested_at": "2026-05-07T06:05:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.3,
+      "materiality": 2.1,
+      "stance": 3.0,
+      "evidence": "guidance",
+      "forward_looking": 0.95,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.84,
+        "contradicts": 0.03
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "We expect promotional spending to moderate in the second half of the year as dealer inventory improves.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [
+       "inv_normalizes"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 1031,
+     "document_id": 103,
+     "seq": 14,
+     "text": "Dealer inventory at quarter end was up 18% compared with the prior-year period, reflecting lower retail sell-through in the Snowbelt region.",
+     "page": 12,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q2 2026",
+     "date": "2026-08-05",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-08-05_filing_acme-10-q-q2.htm",
+     "ingested_at": "2026-08-06T06:02:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.94,
+      "boilerplate": 0.05,
+      "new_info": 0.2,
+      "materiality": 2.3,
+      "stance": 1.0,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.03,
+        "contradicts": 0.62
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1032,
+     "document_id": 103,
+     "seq": 15,
+     "text": "Promotional costs as a percentage of sales increased approximately 200 basis points year over year.",
+     "page": 12,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q2 2026",
+     "date": "2026-08-05",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-08-05_filing_acme-10-q-q2.htm",
+     "ingested_at": "2026-08-06T06:02:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.91,
+      "boilerplate": 0.05,
+      "new_info": 0.15,
+      "materiality": 2.0,
+      "stance": 1.2,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "pricing_holds": {
+        "supports": 0.02,
+        "contradicts": 0.6
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Dealer inventory at quarter end was up 18% compared with the prior-year period, reflecting lower retail sell-through in the Snowbelt region.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1033,
+     "document_id": 103,
+     "seq": 31,
+     "text": "We expect dealer inventory to normalize by the end of the fiscal year as we continue to align shipments with retail demand.",
+     "page": 24,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q2 2026",
+     "date": "2026-08-05",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-08-05_filing_acme-10-q-q2.htm",
+     "ingested_at": "2026-08-06T06:02:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.5,
+      "materiality": 2.1,
+      "stance": 3.0,
+      "evidence": "guidance",
+      "forward_looking": 0.95,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.82,
+        "contradicts": 0.04
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [
+       "inv_normalizes"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 1034,
+     "document_id": 103,
+     "seq": 40,
+     "text": "Gross profit margin was 19.8%, down 240 basis points, driven by higher promotional spending and unfavorable product mix.",
+     "page": 29,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q2 2026",
+     "date": "2026-08-05",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-08-05_filing_acme-10-q-q2.htm",
+     "ingested_at": "2026-08-06T06:02:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "margins",
+      "pillar_p": 0.93,
+      "boilerplate": 0.05,
+      "new_info": 0.1,
+      "materiality": 2.4,
+      "stance": 1.0,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "margin_recovers": {
+        "supports": 0.02,
+        "contradicts": 0.45
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1035,
+     "document_id": 103,
+     "seq": 52,
+     "text": "Our dealers may be unable to obtain floorplan financing on acceptable terms, which could reduce their orders.",
+     "page": 35,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q2 2026",
+     "date": "2026-08-05",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-08-05_filing_acme-10-q-q2.htm",
+     "ingested_at": "2026-08-06T06:02:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.6,
+      "boilerplate": 0.45,
+      "new_info": 0.3,
+      "materiality": 1.2,
+      "stance": 1.4,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1036,
+     "document_id": 103,
+     "seq": 53,
+     "text": "Changes in the cost or availability of lithium-ion battery cells could affect the timing and profitability of our electric vehicle programs.",
+     "page": 35,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q2 2026",
+     "date": "2026-08-05",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-08-05_filing_acme-10-q-q2.htm",
+     "ingested_at": "2026-08-06T06:02:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "electric",
+      "pillar_p": 0.72,
+      "boilerplate": 0.4,
+      "new_info": 0.35,
+      "materiality": 1.3,
+      "stance": 1.5,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Our dealers may be unable to obtain floorplan financing on acceptable terms, which could reduce their orders.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1037,
+     "document_id": 103,
+     "seq": 33,
+     "text": "We expect freight and logistics costs to be a tailwind to gross margin in the second half of the year.",
+     "page": 25,
+     "speaker": null,
+     "title": "ACME Snowmobiles 10-Q Q2 2026",
+     "date": "2026-08-05",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/ACME/2026-08-05_filing_acme-10-q-q2.htm",
+     "ingested_at": "2026-08-06T06:02:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "margins",
+      "pillar_p": 0.85,
+      "boilerplate": 0.05,
+      "new_info": 0.4,
+      "materiality": 1.6,
+      "stance": 3.0,
+      "evidence": "guidance",
+      "forward_looking": 0.92,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "margin_recovers": {
+        "supports": 0.55,
+        "contradicts": 0.02
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1041,
+     "document_id": 104,
+     "seq": 0,
+     "text": "North American dealer inventory was up 22% year over year at the end of the third quarter.",
+     "page": 1,
+     "speaker": null,
+     "title": "ACME reports third-quarter 2026 results (Exhibit 99.1)",
+     "date": "2026-09-15",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_filing_acme-8-k-ex99.htm",
+     "ingested_at": "2026-09-15T21:30:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.95,
+      "boilerplate": 0.05,
+      "new_info": 0.9,
+      "materiality": 2.7,
+      "stance": 0.6,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": "dealer_inventory.1",
+      "updates_fact_p": 0.83,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.02,
+        "contradicts": 0.88
+       }
+      },
+      "questions": {
+       "q4_orders": 0.61
+      }
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": true,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [
+       "inv_normalizes"
+      ],
+      "supports": [],
+      "questions": [
+       "q4_orders"
+      ]
+     }
+    },
+    {
+     "id": 1042,
+     "document_id": 104,
+     "seq": 1,
+     "text": "Promotional spending increased to 9.5% of sales from 7.1% a year ago.",
+     "page": 1,
+     "speaker": null,
+     "title": "ACME reports third-quarter 2026 results (Exhibit 99.1)",
+     "date": "2026-09-15",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_filing_acme-8-k-ex99.htm",
+     "ingested_at": "2026-09-15T21:30:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.94,
+      "boilerplate": 0.05,
+      "new_info": 0.88,
+      "materiality": 2.5,
+      "stance": 0.8,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": "pricing.0",
+      "updates_fact_p": 0.77,
+      "assumptions": {
+       "pricing_holds": {
+        "supports": 0.01,
+        "contradicts": 0.91
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "North American dealer inventory was up 22% year over year at the end of the third quarter.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": true,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [
+       "pricing_holds"
+      ],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1043,
+     "document_id": 104,
+     "seq": 2,
+     "text": "Retail sales of snowmobiles in North America declined 6%, while off-road vehicle retail was flat.",
+     "page": 1,
+     "speaker": null,
+     "title": "ACME reports third-quarter 2026 results (Exhibit 99.1)",
+     "date": "2026-09-15",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_filing_acme-8-k-ex99.htm",
+     "ingested_at": "2026-09-15T21:30:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "demand",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.8,
+      "materiality": 2.0,
+      "stance": 1.4,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": "demand.0",
+      "updates_fact_p": 0.58,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Promotional spending increased to 9.5% of sales from 7.1% a year ago.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1044,
+     "document_id": 104,
+     "seq": 3,
+     "text": "Gross margin was 20.4%, an improvement of 60 basis points from the second quarter.",
+     "page": 2,
+     "speaker": null,
+     "title": "ACME reports third-quarter 2026 results (Exhibit 99.1)",
+     "date": "2026-09-15",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_filing_acme-8-k-ex99.htm",
+     "ingested_at": "2026-09-15T21:30:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "margins",
+      "pillar_p": 0.93,
+      "boilerplate": 0.05,
+      "new_info": 0.85,
+      "materiality": 2.2,
+      "stance": 2.8,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": "margins.0",
+      "updates_fact_p": 0.9,
+      "assumptions": {
+       "margin_recovers": {
+        "supports": 0.72,
+        "contradicts": 0.05
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Retail sales of snowmobiles in North America declined 6%, while off-road vehicle retail was flat.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [
+       "margin_recovers"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 1045,
+     "document_id": 104,
+     "seq": 4,
+     "text": "Forward-looking statements in this release are subject to risks and uncertainties that could cause actual results to differ materially.",
+     "page": 2,
+     "speaker": null,
+     "title": "ACME reports third-quarter 2026 results (Exhibit 99.1)",
+     "date": "2026-09-15",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_filing_acme-8-k-ex99.htm",
+     "ingested_at": "2026-09-15T21:30:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "off_thesis",
+      "pillar_p": 0.82,
+      "boilerplate": 0.97,
+      "new_info": 0.02,
+      "materiality": 0.1,
+      "stance": 2.0,
+      "evidence": "speculation",
+      "forward_looking": 0.6,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Gross margin was 20.4%, an improvement of 60 basis points from the second quarter.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1046,
+     "document_id": 104,
+     "seq": 5,
+     "text": "The Company now expects full-year gross margin of 20% to 21%, compared with prior guidance of 21% to 22%.",
+     "page": 2,
+     "speaker": null,
+     "title": "ACME reports third-quarter 2026 results (Exhibit 99.1)",
+     "date": "2026-09-15",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_filing_acme-8-k-ex99.htm",
+     "ingested_at": "2026-09-15T21:30:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "margins",
+      "pillar_p": 0.92,
+      "boilerplate": 0.05,
+      "new_info": 0.92,
+      "materiality": 2.6,
+      "stance": 0.9,
+      "evidence": "guidance",
+      "forward_looking": 0.95,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "margin_recovers": {
+        "supports": 0.03,
+        "contradicts": 0.73
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Forward-looking statements in this release are subject to risks and uncertainties that could cause actual results to differ materially.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": true,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [
+       "margin_recovers"
+      ],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1051,
+     "document_id": 105,
+     "seq": 0,
+     "text": "Good morning, and welcome to the ACME Snowmobiles third-quarter 2026 earnings conference call.",
+     "page": 1,
+     "speaker": "Operator",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=1",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "off_thesis",
+      "pillar_p": 0.9,
+      "boilerplate": 0.9,
+      "new_info": 0.01,
+      "materiality": 0.0,
+      "stance": 2.0,
+      "evidence": "management_commentary",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1052,
+     "document_id": 105,
+     "seq": 1,
+     "text": "Today's remarks include forward-looking statements. Actual results may differ materially from those expressed or implied.",
+     "page": 1,
+     "speaker": "Dana Whitfield - Vice President, Investor Relations",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=1",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "off_thesis",
+      "pillar_p": 0.88,
+      "boilerplate": 0.96,
+      "new_info": 0.02,
+      "materiality": 0.1,
+      "stance": 2.0,
+      "evidence": "management_commentary",
+      "forward_looking": 0.7,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Operator: Good morning, and welcome to the ACME Snowmobiles third-quarter 2026 earnings conference call.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1053,
+     "document_id": 105,
+     "seq": 2,
+     "text": "Retail was softer than we planned in September, and we have asked dealers to hold fourth-quarter orders flat until the snow comes.",
+     "page": 2,
+     "speaker": "Jane Doe - Chief Executive Officer",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=2",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.82,
+      "boilerplate": 0.05,
+      "new_info": 0.78,
+      "materiality": 2.4,
+      "stance": 1.3,
+      "evidence": "management_commentary",
+      "forward_looking": 0.7,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.1,
+        "contradicts": 0.45
+       }
+      },
+      "questions": {
+       "q4_orders": 0.83
+      }
+     },
+     "similar": null,
+     "context": "Dana Whitfield - Vice President, Investor Relations: Today's remarks include forward-looking statements. Actual results may differ materially from those expressed or implied.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": [
+       "q4_orders"
+      ]
+     }
+    },
+    {
+     "id": 1054,
+     "document_id": 105,
+     "seq": 3,
+     "text": "Our electric sled, the Volt-X, remains on schedule for dealer deliveries in January, and we have more than 1,100 retail reservations.",
+     "page": 2,
+     "speaker": "Jane Doe - Chief Executive Officer",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=2",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "electric",
+      "pillar_p": 0.92,
+      "boilerplate": 0.05,
+      "new_info": 0.88,
+      "materiality": 2.3,
+      "stance": 3.4,
+      "evidence": "management_commentary",
+      "forward_looking": 0.6,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "ev_on_track": {
+        "supports": 0.86,
+        "contradicts": 0.02
+       }
+      },
+      "questions": {
+       "ev_reception": 0.66
+      }
+     },
+     "similar": null,
+     "context": "Jane Doe - Chief Executive Officer: Retail was softer than we planned in September, and we have asked dealers to hold fourth-quarter orders flat until the snow comes.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [
+       "ev_on_track"
+      ],
+      "questions": [
+       "ev_reception"
+      ]
+     }
+    },
+    {
+     "id": 1055,
+     "document_id": 105,
+     "seq": 4,
+     "text": "We are taking list prices up 3% for model year 2027 and expect promotional spending to come down in the back half as older inventory clears.",
+     "page": 3,
+     "speaker": "John Roe - Chief Financial Officer",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=3",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.88,
+      "boilerplate": 0.05,
+      "new_info": 0.74,
+      "materiality": 2.2,
+      "stance": 3.0,
+      "evidence": "guidance",
+      "forward_looking": 0.92,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "pricing_holds": {
+        "supports": 0.71,
+        "contradicts": 0.08
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Jane Doe - Chief Executive Officer: Our electric sled, the Volt-X, remains on schedule for dealer deliveries in January, and we have more than 1,100 retail reservations.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [
+       "pricing_holds"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 1056,
+     "document_id": 105,
+     "seq": 5,
+     "text": "Freight costs were a 40 basis point tailwind in the quarter, and we expect a similar benefit in the fourth quarter.",
+     "page": 3,
+     "speaker": "John Roe - Chief Financial Officer",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=3",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "margins",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.7,
+      "materiality": 1.7,
+      "stance": 2.9,
+      "evidence": "management_commentary",
+      "forward_looking": 0.5,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "margin_recovers": {
+        "supports": 0.52,
+        "contradicts": 0.04
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "John Roe - Chief Financial Officer: We are taking list prices up 3% for model year 2027 and expect promotional spending to come down in the back half as older inventory clears.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1057,
+     "document_id": 105,
+     "seq": 6,
+     "text": "Can you talk about how much of the dealer inventory is prior-model-year units?",
+     "page": 4,
+     "speaker": "Kim Lee - Analyst, Big North Securities",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=4",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.6,
+      "boilerplate": 0.05,
+      "new_info": 0.2,
+      "materiality": 0.8,
+      "stance": 2.0,
+      "evidence": "analyst_opinion",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "John Roe - Chief Financial Officer: Freight costs were a 40 basis point tailwind in the quarter, and we expect a similar benefit in the fourth quarter.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1058,
+     "document_id": 105,
+     "seq": 7,
+     "text": "About a third of the units on dealer floors are model year 2025 or older, which is higher than we'd like, and that's where the promotions are going.",
+     "page": 4,
+     "speaker": "Jane Doe - Chief Executive Officer",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=4",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.82,
+      "materiality": 2.5,
+      "stance": 1.1,
+      "evidence": "management_commentary",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.05,
+        "contradicts": 0.64
+       },
+       "pricing_holds": {
+        "supports": 0.05,
+        "contradicts": 0.55
+       }
+      },
+      "questions": {
+       "q4_orders": 0.5
+      }
+     },
+     "similar": null,
+     "context": "Kim Lee - Analyst, Big North Securities: Can you talk about how much of the dealer inventory is prior-model-year units?",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1059,
+     "document_id": 105,
+     "seq": 8,
+     "text": "Our dealer count ended the quarter at 1,412, down 11 from a year ago.",
+     "page": 5,
+     "speaker": "John Roe - Chief Financial Officer",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=5",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "demand",
+      "pillar_p": 0.55,
+      "boilerplate": 0.05,
+      "new_info": 0.45,
+      "materiality": 1.6,
+      "stance": 1.8,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Jane Doe - Chief Executive Officer: About a third of the units on dealer floors are model year 2025 or older, which is higher than we'd like, and that's where the promotions are going.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": true,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1050,
+     "document_id": 105,
+     "seq": 9,
+     "text": "We are confident channel inventory will be back in line with retail by the end of the fiscal year.",
+     "page": 5,
+     "speaker": "John Roe - Chief Financial Officer",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=5",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.88,
+      "boilerplate": 0.05,
+      "new_info": 0.45,
+      "materiality": 2.0,
+      "stance": 3.3,
+      "evidence": "management_commentary",
+      "forward_looking": 0.9,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.66,
+        "contradicts": 0.05
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "John Roe - Chief Financial Officer: Our dealer count ended the quarter at 1,412, down 11 from a year ago.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": true,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1061,
+     "document_id": 106,
+     "seq": 0,
+     "text": "Our channel check of 42 snowmobile dealers found aged inventory rising for a third straight month, with 71% planning to cut ACME orders for the fourth quarter.",
+     "page": 1,
+     "speaker": null,
+     "title": "Big North Securities: snowmobile dealer channel check",
+     "date": "2026-09-18",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-18_sell_side_big-north-channel-check.pdf#page=1",
+     "ingested_at": "2026-09-18T12:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.93,
+      "boilerplate": 0.05,
+      "new_info": 0.8,
+      "materiality": 2.8,
+      "stance": 0.6,
+      "evidence": "channel_or_customer_data",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.02,
+        "contradicts": 0.84
+       }
+      },
+      "questions": {
+       "q4_orders": 0.91
+      }
+     },
+     "similar": {
+      "id": 1091,
+      "similarity": 0.889,
+      "diff": [
+       [
+        "=",
+        "Our channel check of "
+       ],
+       [
+        "-",
+        "38 "
+       ],
+       [
+        "+",
+        "42 "
+       ],
+       [
+        "=",
+        "snowmobile dealers found aged inventory rising for a "
+       ],
+       [
+        "-",
+        "second "
+       ],
+       [
+        "+",
+        "third "
+       ],
+       [
+        "=",
+        "straight month, with "
+       ],
+       [
+        "-",
+        "55% "
+       ],
+       [
+        "+",
+        "71% "
+       ],
+       [
+        "=",
+        "planning to cut ACME orders for the fourth quarter."
+       ]
+      ]
+     },
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": true,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [
+       "inv_normalizes"
+      ],
+      "supports": [],
+      "questions": [
+       "q4_orders"
+      ]
+     }
+    },
+    {
+     "id": 1062,
+     "document_id": 106,
+     "seq": 1,
+     "text": "Dealers report ACME's cash incentives on 2025 models now average $1,450 per unit, versus $900 in the spring.",
+     "page": 2,
+     "speaker": null,
+     "title": "Big North Securities: snowmobile dealer channel check",
+     "date": "2026-09-18",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-18_sell_side_big-north-channel-check.pdf#page=2",
+     "ingested_at": "2026-09-18T12:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.86,
+      "materiality": 2.3,
+      "stance": 0.9,
+      "evidence": "channel_or_customer_data",
+      "forward_looking": 0.2,
+      "updates_fact": "pricing.0",
+      "updates_fact_p": 0.62,
+      "assumptions": {
+       "pricing_holds": {
+        "supports": 0.03,
+        "contradicts": 0.66
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Our channel check of 42 snowmobile dealers found aged inventory rising for a third straight month, with 71% planning to cut ACME orders for the fourth quarter.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1063,
+     "document_id": 106,
+     "seq": 2,
+     "text": "Dealers were enthusiastic about the Volt-X demo units but questioned whether the $18,999 price will clear without incentives.",
+     "page": 3,
+     "speaker": null,
+     "title": "Big North Securities: snowmobile dealer channel check",
+     "date": "2026-09-18",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-18_sell_side_big-north-channel-check.pdf#page=3",
+     "ingested_at": "2026-09-18T12:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "electric",
+      "pillar_p": 0.85,
+      "boilerplate": 0.05,
+      "new_info": 0.8,
+      "materiality": 2.0,
+      "stance": 2.2,
+      "evidence": "channel_or_customer_data",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {
+       "ev_reception": 0.88
+      }
+     },
+     "similar": null,
+     "context": "Dealers report ACME's cash incentives on 2025 models now average $1,450 per unit, versus $900 in the spring.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": [
+       "ev_reception"
+      ]
+     }
+    },
+    {
+     "id": 1064,
+     "document_id": 106,
+     "seq": 3,
+     "text": "We see North American retail down 4% to 6% this winter, assuming normal snowfall.",
+     "page": 4,
+     "speaker": null,
+     "title": "Big North Securities: snowmobile dealer channel check",
+     "date": "2026-09-18",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-18_sell_side_big-north-channel-check.pdf#page=4",
+     "ingested_at": "2026-09-18T12:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "demand",
+      "pillar_p": 0.8,
+      "boilerplate": 0.05,
+      "new_info": 0.5,
+      "materiality": 1.6,
+      "stance": 1.3,
+      "evidence": "analyst_opinion",
+      "forward_looking": 0.9,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Dealers were enthusiastic about the Volt-X demo units but questioned whether the $18,999 price will clear without incentives.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": true,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1066,
+     "document_id": 106,
+     "seq": 4,
+     "text": "We cut our fiscal 2027 gross margin estimate to 21.0% from 22.3%, below consensus.",
+     "page": 5,
+     "speaker": null,
+     "title": "Big North Securities: snowmobile dealer channel check",
+     "date": "2026-09-18",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-18_sell_side_big-north-channel-check.pdf#page=5",
+     "ingested_at": "2026-09-18T12:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "margins",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.66,
+      "materiality": 2.1,
+      "stance": 1.0,
+      "evidence": "analyst_opinion",
+      "forward_looking": 0.8,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "margin_recovers": {
+        "supports": 0.04,
+        "contradicts": 0.58
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "We see North American retail down 4% to 6% this winter, assuming normal snowfall.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1065,
+     "document_id": 106,
+     "seq": 5,
+     "text": "This report has been prepared by Big North Securities for informational purposes only and is not an offer to buy or sell any security.",
+     "page": 6,
+     "speaker": null,
+     "title": "Big North Securities: snowmobile dealer channel check",
+     "date": "2026-09-18",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-18_sell_side_big-north-channel-check.pdf#page=6",
+     "ingested_at": "2026-09-18T12:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "off_thesis",
+      "pillar_p": 0.95,
+      "boilerplate": 0.98,
+      "new_info": 0.01,
+      "materiality": 0.0,
+      "stance": 2.0,
+      "evidence": "analyst_opinion",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "We cut our fiscal 2027 gross margin estimate to 21.0% from 22.3%, below consensus.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1071,
+     "document_id": 107,
+     "seq": 0,
+     "text": "Floorplan interest is killing us. Most dealers I talk to are paying 9%, and they will not take new units until the old ones are gone.",
+     "page": 1,
+     "speaker": "Expert - Former dealer principal",
+     "title": "Expert call: former Midwest dealer principal",
+     "date": "2026-09-10",
+     "source_type": "expert_call",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-10_expert_call_midwest-dealer.docx",
+     "ingested_at": "2026-09-11T09:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.88,
+      "boilerplate": 0.05,
+      "new_info": 0.72,
+      "materiality": 2.2,
+      "stance": 1.0,
+      "evidence": "expert_opinion",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.05,
+        "contradicts": 0.6
+       }
+      },
+      "questions": {
+       "q4_orders": 0.77
+      }
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": [
+       "q4_orders"
+      ]
+     }
+    },
+    {
+     "id": 1072,
+     "document_id": 107,
+     "seq": 1,
+     "text": "Honestly, the Volt-X is the only thing customers ask about when they walk in.",
+     "page": 1,
+     "speaker": "Expert - Former dealer principal",
+     "title": "Expert call: former Midwest dealer principal",
+     "date": "2026-09-10",
+     "source_type": "expert_call",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-10_expert_call_midwest-dealer.docx",
+     "ingested_at": "2026-09-11T09:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "electric",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.64,
+      "materiality": 1.8,
+      "stance": 3.5,
+      "evidence": "expert_opinion",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "ev_on_track": {
+        "supports": 0.5,
+        "contradicts": 0.02
+       }
+      },
+      "questions": {
+       "ev_reception": 0.79
+      }
+     },
+     "similar": null,
+     "context": "Expert - Former dealer principal: Floorplan interest is killing us. Most dealers I talk to are paying 9%, and they will not take new units until the old ones are gone.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": [
+       "ev_reception"
+      ]
+     }
+    },
+    {
+     "id": 1073,
+     "document_id": 107,
+     "seq": 2,
+     "text": "How do the new-model incentives compare with last year?",
+     "page": 1,
+     "speaker": "Interviewer",
+     "title": "Expert call: former Midwest dealer principal",
+     "date": "2026-09-10",
+     "source_type": "expert_call",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-10_expert_call_midwest-dealer.docx",
+     "ingested_at": "2026-09-11T09:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.52,
+      "boilerplate": 0.05,
+      "new_info": 0.1,
+      "materiality": 0.5,
+      "stance": 2.0,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Expert - Former dealer principal: Honestly, the Volt-X is the only thing customers ask about when they walk in.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1074,
+     "document_id": 107,
+     "seq": 3,
+     "text": "Incentives from ACME are richer than from Brrr this year, maybe a few hundred dollars a unit.",
+     "page": 1,
+     "speaker": "Expert - Former dealer principal",
+     "title": "Expert call: former Midwest dealer principal",
+     "date": "2026-09-10",
+     "source_type": "expert_call",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-10_expert_call_midwest-dealer.docx",
+     "ingested_at": "2026-09-11T09:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.8,
+      "boilerplate": 0.05,
+      "new_info": 0.45,
+      "materiality": 1.6,
+      "stance": 1.6,
+      "evidence": "expert_opinion",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Interviewer: How do the new-model incentives compare with last year?",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": true,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1081,
+     "document_id": 108,
+     "seq": 0,
+     "text": "Lot had 60+ sleds, maybe 20 of them MY2025 with big yellow discount tags.",
+     "page": 1,
+     "speaker": null,
+     "title": "Dealer visit, Duluth",
+     "date": "2026-09-22",
+     "source_type": "own_note",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-22_own_note_dealer-visit-duluth.md",
+     "ingested_at": "2026-09-22T19:12:00Z",
+     "arrived_new": true,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.7,
+      "materiality": 2.0,
+      "stance": 1.0,
+      "evidence": "channel_or_customer_data",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1082,
+     "document_id": 108,
+     "seq": 1,
+     "text": "</script><script>alert(1)</script>",
+     "page": 1,
+     "speaker": null,
+     "title": "Dealer visit, Duluth",
+     "date": "2026-09-22",
+     "source_type": "own_note",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-22_own_note_dealer-visit-duluth.md",
+     "ingested_at": "2026-09-22T19:12:00Z",
+     "arrived_new": true,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.6,
+      "boilerplate": 0.05,
+      "new_info": 0.7,
+      "materiality": 1.6,
+      "stance": 2.0,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Lot had 60+ sleds, maybe 20 of them MY2025 with big yellow discount tags.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1083,
+     "document_id": 108,
+     "seq": 2,
+     "text": "Sales manager said Volt-X preorders are \"real money\": deposits are $500 and non-refundable.",
+     "page": 1,
+     "speaker": null,
+     "title": "Dealer visit, Duluth",
+     "date": "2026-09-22",
+     "source_type": "own_note",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-22_own_note_dealer-visit-duluth.md",
+     "ingested_at": "2026-09-22T19:12:00Z",
+     "arrived_new": true,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "electric",
+      "pillar_p": 0.87,
+      "boilerplate": 0.05,
+      "new_info": 0.76,
+      "materiality": 1.9,
+      "stance": 3.2,
+      "evidence": "channel_or_customer_data",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {
+       "ev_reception": 0.84
+      }
+     },
+     "similar": null,
+     "context": "</script><script>alert(1)</script>",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": [
+       "ev_reception"
+      ]
+     }
+    },
+    {
+     "id": 1084,
+     "document_id": 108,
+     "seq": 3,
+     "text": "Weather: 14 inches of snow forecast for next week.",
+     "page": 1,
+     "speaker": null,
+     "title": "Dealer visit, Duluth",
+     "date": "2026-09-22",
+     "source_type": "own_note",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-22_own_note_dealer-visit-duluth.md",
+     "ingested_at": "2026-09-22T19:12:00Z",
+     "arrived_new": true,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "off_thesis",
+      "pillar_p": 0.7,
+      "boilerplate": 0.05,
+      "new_info": 0.3,
+      "materiality": 0.4,
+      "stance": 2.5,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Sales manager said Volt-X preorders are \"real money\": deposits are $500 and non-refundable.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1091,
+     "document_id": 109,
+     "seq": 4,
+     "text": "Our channel check of 38 snowmobile dealers found aged inventory rising for a second straight month, with 55% planning to cut ACME orders for the fourth quarter.",
+     "page": 3,
+     "speaker": null,
+     "title": "Frost Capital: initiating on ACME at Underperform",
+     "date": "2026-06-15",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-06-15_sell_side_frost-initiation.pdf#page=3",
+     "ingested_at": "2026-06-16T08:30:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.7,
+      "materiality": 2.6,
+      "stance": 0.7,
+      "evidence": "channel_or_customer_data",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.03,
+        "contradicts": 0.81
+       }
+      },
+      "questions": {
+       "q4_orders": 0.72
+      }
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": "acknowledged",
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [
+       "inv_normalizes"
+      ],
+      "supports": [],
+      "questions": [
+       "q4_orders"
+      ]
+     }
+    },
+    {
+     "id": 1092,
+     "document_id": 109,
+     "seq": 6,
+     "text": "We model promotional intensity easing by 100 bps in fiscal 2027 as industry inventory clears.",
+     "page": 5,
+     "speaker": null,
+     "title": "Frost Capital: initiating on ACME at Underperform",
+     "date": "2026-06-15",
+     "source_type": "sell_side",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-06-15_sell_side_frost-initiation.pdf#page=5",
+     "ingested_at": "2026-06-16T08:30:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.86,
+      "boilerplate": 0.05,
+      "new_info": 0.55,
+      "materiality": 1.8,
+      "stance": 3.0,
+      "evidence": "analyst_opinion",
+      "forward_looking": 0.9,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "pricing_holds": {
+        "supports": 0.74,
+        "contradicts": 0.04
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": true
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [
+       "pricing_holds"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 1101,
+     "document_id": 110,
+     "seq": 0,
+     "text": "ACME Snowmobiles recalled about 3,200 model year 2026 trail sleds over a throttle cable issue, according to a regulatory notice.",
+     "page": 1,
+     "speaker": null,
+     "title": "Trade press: ACME recalls 2026 trail sleds",
+     "date": "2026-09-23",
+     "source_type": "news",
+     "form": null,
+     "link": "javascript:alert('link')",
+     "ingested_at": "2026-09-24T06:00:00Z",
+     "arrived_new": true,
+     "read_through": null,
+     "status": "unjudged",
+     "p": null,
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 1102,
+     "document_id": 110,
+     "seq": 1,
+     "text": "The company said dealers would perform the repair at no cost to owners.",
+     "page": 1,
+     "speaker": null,
+     "title": "Trade press: ACME recalls 2026 trail sleds",
+     "date": "2026-09-23",
+     "source_type": "news",
+     "form": null,
+     "link": "javascript:alert('link')",
+     "ingested_at": "2026-09-24T06:00:00Z",
+     "arrived_new": true,
+     "read_through": null,
+     "status": "unjudged",
+     "p": null,
+     "similar": null,
+     "context": "ACME Snowmobiles recalled about 3,200 model year 2026 trail sleds over a throttle cable issue, according to a regulatory notice.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2011,
+     "document_id": 201,
+     "seq": 0,
+     "text": "Brrr Sleds dealer inventory declined 9% year over year as the company cut shipments in the first half.",
+     "page": 1,
+     "speaker": null,
+     "title": "Brrr Sleds reports second-quarter results (Exhibit 99.1)",
+     "date": "2026-09-12",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_filing_brrr-8-k-ex99.htm",
+     "ingested_at": "2026-09-12T22:00:00Z",
+     "arrived_new": false,
+     "read_through": "BRRR",
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.7,
+      "boilerplate": 0.05,
+      "new_info": 0.74,
+      "materiality": 1.8,
+      "stance": 2.6,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.35,
+        "contradicts": 0.1
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2012,
+     "document_id": 201,
+     "seq": 1,
+     "text": "Industry snowmobile retail was down mid-single digits in the quarter, according to Brrr's estimates.",
+     "page": 1,
+     "speaker": null,
+     "title": "Brrr Sleds reports second-quarter results (Exhibit 99.1)",
+     "date": "2026-09-12",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_filing_brrr-8-k-ex99.htm",
+     "ingested_at": "2026-09-12T22:00:00Z",
+     "arrived_new": false,
+     "read_through": "BRRR",
+     "status": "current",
+     "p": {
+      "pillar": "demand",
+      "pillar_p": 0.8,
+      "boilerplate": 0.05,
+      "new_info": 0.62,
+      "materiality": 1.7,
+      "stance": 1.5,
+      "evidence": "channel_or_customer_data",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Brrr Sleds dealer inventory declined 9% year over year as the company cut shipments in the first half.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2013,
+     "document_id": 201,
+     "seq": 2,
+     "text": "Brrr Sleds will hold its investor day on November 4.",
+     "page": 1,
+     "speaker": null,
+     "title": "Brrr Sleds reports second-quarter results (Exhibit 99.1)",
+     "date": "2026-09-12",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_filing_brrr-8-k-ex99.htm",
+     "ingested_at": "2026-09-12T22:00:00Z",
+     "arrived_new": false,
+     "read_through": "BRRR",
+     "status": "current",
+     "p": {
+      "pillar": "off_thesis",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.4,
+      "materiality": 0.3,
+      "stance": 2.0,
+      "evidence": "management_commentary",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Industry snowmobile retail was down mid-single digits in the quarter, according to Brrr's estimates.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    }
+   ],
+   "spot_checks": [
+    1073,
+    1084,
+    1057,
+    2013
+   ],
+   "heatmap": {
+    "weeks": [
+     "2026-W14",
+     "2026-W15",
+     "2026-W16",
+     "2026-W17",
+     "2026-W18",
+     "2026-W19",
+     "2026-W20",
+     "2026-W21",
+     "2026-W22",
+     "2026-W23",
+     "2026-W24",
+     "2026-W25",
+     "2026-W26",
+     "2026-W27",
+     "2026-W28",
+     "2026-W29",
+     "2026-W30",
+     "2026-W31",
+     "2026-W32",
+     "2026-W33",
+     "2026-W34",
+     "2026-W35",
+     "2026-W36",
+     "2026-W37",
+     "2026-W38",
+     "2026-W39"
+    ],
+    "rows": {
+     "dealer_inventory": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.096,
+       "count": 2
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.65,
+       "count": 1
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.083,
+       "count": 3
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.138,
+       "count": 2
+      },
+      {
+       "net": -0.338,
+       "count": 6
+      },
+      {
+       "net": -0.5,
+       "count": 1
+      }
+     ],
+     "pricing": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.5,
+       "count": 1
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.5,
+       "count": 1
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.4,
+       "count": 1
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.148,
+       "count": 2
+      },
+      {
+       "net": -0.237,
+       "count": 3
+      },
+      {
+       "net": 0.0,
+       "count": 1
+      }
+     ],
+     "demand": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.25,
+       "count": 1
+      },
+      {
+       "net": -0.254,
+       "count": 3
+      },
+      null
+     ],
+     "margins": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.095,
+       "count": 2
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.095,
+       "count": 4
+      },
+      null
+     ],
+     "electric": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.25,
+       "count": 1
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.75,
+       "count": 1
+      },
+      {
+       "net": 0.42,
+       "count": 2
+      },
+      {
+       "net": 0.6,
+       "count": 1
+      }
+     ]
+    }
+   },
+   "assumption_series": {
+    "inv_normalizes": [
+     {
+      "month": "2026-05",
+      "for": 1,
+      "against": 1,
+      "balance": -0.163
+     },
+     {
+      "month": "2026-06",
+      "for": 0,
+      "against": 1,
+      "balance": -0.704
+     },
+     {
+      "month": "2026-07",
+      "for": 0,
+      "against": 0,
+      "balance": -0.704
+     },
+     {
+      "month": "2026-08",
+      "for": 1,
+      "against": 0,
+      "balance": -0.719
+     },
+     {
+      "month": "2026-09",
+      "for": 0,
+      "against": 2,
+      "balance": -2.399
+     }
+    ],
+    "pricing_holds": [
+     {
+      "month": "2026-05",
+      "for": 1,
+      "against": 0,
+      "balance": 0.329
+     },
+     {
+      "month": "2026-06",
+      "for": 1,
+      "against": 0,
+      "balance": 0.539
+     },
+     {
+      "month": "2026-07",
+      "for": 0,
+      "against": 0,
+      "balance": 0.539
+     },
+     {
+      "month": "2026-08",
+      "for": 0,
+      "against": 0,
+      "balance": 0.153
+     },
+     {
+      "month": "2026-09",
+      "for": 1,
+      "against": 1,
+      "balance": -0.864
+     }
+    ],
+    "margin_recovers": [
+     {
+      "month": "2026-02",
+      "for": 1,
+      "against": 0,
+      "balance": 0.395
+     },
+     {
+      "month": "2026-03",
+      "for": 0,
+      "against": 0,
+      "balance": 0.395
+     },
+     {
+      "month": "2026-04",
+      "for": 0,
+      "against": 0,
+      "balance": 0.395
+     },
+     {
+      "month": "2026-05",
+      "for": 0,
+      "against": 0,
+      "balance": 0.395
+     },
+     {
+      "month": "2026-06",
+      "for": 0,
+      "against": 0,
+      "balance": 0.395
+     },
+     {
+      "month": "2026-07",
+      "for": 0,
+      "against": 0,
+      "balance": 0.395
+     },
+     {
+      "month": "2026-08",
+      "for": 0,
+      "against": 0,
+      "balance": 0.621
+     },
+     {
+      "month": "2026-09",
+      "for": 1,
+      "against": 1,
+      "balance": 0.601
+     }
+    ],
+    "ev_on_track": [
+     {
+      "month": "2026-09",
+      "for": 1,
+      "against": 0,
+      "balance": 0.559
+     }
+    ]
+   },
+   "divergence": [
+    {
+     "pillar": "dealer_inventory",
+     "inside": {
+      "stance": 2.089,
+      "n": 4,
+      "ids": [
+       1058,
+       1053,
+       1033
+      ]
+     },
+     "outside": {
+      "stance": 0.803,
+      "n": 4,
+      "ids": [
+       1061,
+       1091,
+       1071
+      ]
+     },
+     "gap": 1.286,
+     "flagged": true
+    },
+    {
+     "pillar": "pricing",
+     "inside": {
+      "stance": 3.0,
+      "n": 1,
+      "ids": [
+       1055
+      ]
+     },
+     "outside": {
+      "stance": 1.19,
+      "n": 2,
+      "ids": [
+       1062,
+       1074
+      ]
+     },
+     "gap": 1.81,
+     "flagged": false
+    },
+    {
+     "pillar": "electric",
+     "inside": {
+      "stance": 3.4,
+      "n": 1,
+      "ids": [
+       1054
+      ]
+     },
+     "outside": {
+      "stance": 2.945,
+      "n": 3,
+      "ids": [
+       1063,
+       1083,
+       1072
+      ]
+     },
+     "gap": 0.455,
+     "flagged": false
+    }
+   ],
+   "ledger": {
+    "items": [
+     {
+      "promise_id": 1033,
+      "status": "missed",
+      "result_id": 1041,
+      "p": 0.81
+     },
+     {
+      "promise_id": 1023,
+      "status": "missed",
+      "result_id": 1042,
+      "p": 0.88
+     },
+     {
+      "promise_id": 1037,
+      "status": "kept",
+      "result_id": 1056,
+      "p": 0.84
+     },
+     {
+      "promise_id": 1055,
+      "status": "open",
+      "result_id": null,
+      "p": null
+     },
+     {
+      "promise_id": 1012,
+      "status": "open",
+      "result_id": null,
+      "p": null
+     }
+    ],
+    "kept": 1,
+    "missed": 2,
+    "open": 2,
+    "credibility": 0.33
+   },
+   "redlines": [
+    {
+     "form": "10-Q",
+     "new_document": 103,
+     "old_document": 102,
+     "changed": [
+      {
+       "id": 1035,
+       "old_id": 1021,
+       "similarity": 0.828,
+       "diff": [
+        [
+         "=",
+         "Our dealers may be unable to obtain floorplan financing on acceptable "
+        ],
+        [
+         "-",
+         "terms."
+        ],
+        [
+         "+",
+         "terms, which could reduce their orders."
+        ]
+       ]
+      },
+      {
+       "id": 1033,
+       "old_id": 1025,
+       "similarity": 0.909,
+       "diff": [
+        [
+         "=",
+         "We expect dealer inventory to normalize by the end of the "
+        ],
+        [
+         "-",
+         "second quarter "
+        ],
+        [
+         "+",
+         "fiscal year "
+        ],
+        [
+         "=",
+         "as we continue to align shipments with retail demand."
+        ]
+       ]
+      }
+     ],
+     "added": [
+      1036,
+      1037
+     ],
+     "removed": [
+      {
+       "id": 1026,
+       "text": "We do not currently expect lithium-ion cell supply to limit production of our planned electric vehicles.",
+       "page": 34
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ticker": "BRRR",
+   "company": "Brrr Sleds",
+   "peers": [],
+   "pillars": {
+    "shipments": "Wholesale shipments to dealers and channel inventory.",
+    "pricing": "Pricing and promotions.",
+    "share": "Market share against ACME and other peers."
+   },
+   "assumptions": [
+    {
+     "id": "share_gains",
+     "pillar": "share",
+     "statement": "Brrr gains North American share in the 2027 season."
+    },
+    {
+     "id": "lean_channel",
+     "pillar": "shipments",
+     "statement": "Brrr's dealer inventory stays below last year's level."
+    }
+   ],
+   "open_questions": [],
+   "known_facts": {
+    "shipments": [
+     {
+      "id": "shipments.0",
+      "text": "Brrr cut first-half shipments to reduce dealer inventory.",
+      "as_of": "2026-06-10",
+      "source": 2031
+     }
+    ],
+    "pricing": [],
+    "share": []
+   },
+   "predictions": [
+    {
+     "id": "share_2pts",
+     "statement": "Brrr reports at least two points of share gain for the season.",
+     "by": "2027-04-30",
+     "p": 0.45,
+     "pillar": "share",
+     "outcome": null,
+     "resolved_at": null,
+     "status": "open",
+     "related": [
+      2021
+     ]
+    }
+   ],
+   "forecast": {
+    "resolved": 0,
+    "brier": null
+   },
+   "documents": [
+    {
+     "id": 201,
+     "title": "Brrr Sleds reports second-quarter results (Exhibit 99.1)",
+     "date": "2026-09-12",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_filing_brrr-8-k-ex99.htm",
+     "ingested_at": "2026-09-12T22:00:00Z",
+     "ticker": "BRRR",
+     "read_through": false,
+     "complete": true,
+     "passage_count": 3
+    },
+    {
+     "id": 202,
+     "title": "Brrr Sleds Q2 2026 earnings call",
+     "date": "2026-09-12",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_earnings_transcript_brrr-q2-call.pdf",
+     "ingested_at": "2026-09-13T07:00:00Z",
+     "ticker": "BRRR",
+     "read_through": false,
+     "complete": true,
+     "passage_count": 4
+    },
+    {
+     "id": 203,
+     "title": "Brrr Sleds 10-Q Q1 2026",
+     "date": "2026-06-10",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/BRRR/2026-06-10_filing_brrr-10-q-q1.htm",
+     "ingested_at": "2026-06-11T06:00:00Z",
+     "ticker": "BRRR",
+     "read_through": false,
+     "complete": false,
+     "passage_count": 41
+    },
+    {
+     "id": 204,
+     "title": "Brrr Sleds 10-Q Q4 2025 transition period",
+     "date": "2026-03-11",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/BRRR/2026-03-11_filing_brrr-10-q-t.htm",
+     "ingested_at": "2026-03-12T06:00:00Z",
+     "ticker": "BRRR",
+     "read_through": false,
+     "complete": false,
+     "passage_count": 39
+    }
+   ],
+   "passages": [
+    {
+     "id": 2011,
+     "document_id": 201,
+     "seq": 0,
+     "text": "Brrr Sleds dealer inventory declined 9% year over year as the company cut shipments in the first half.",
+     "page": 1,
+     "speaker": null,
+     "title": "Brrr Sleds reports second-quarter results (Exhibit 99.1)",
+     "date": "2026-09-12",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_filing_brrr-8-k-ex99.htm",
+     "ingested_at": "2026-09-12T22:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "shipments",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.6,
+      "materiality": 2.2,
+      "stance": 3.1,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "lean_channel": {
+        "supports": 0.88,
+        "contradicts": 0.02
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [
+       "lean_channel"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 2012,
+     "document_id": 201,
+     "seq": 1,
+     "text": "Industry snowmobile retail was down mid-single digits in the quarter, according to Brrr's estimates.",
+     "page": 1,
+     "speaker": null,
+     "title": "Brrr Sleds reports second-quarter results (Exhibit 99.1)",
+     "date": "2026-09-12",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_filing_brrr-8-k-ex99.htm",
+     "ingested_at": "2026-09-12T22:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "share",
+      "pillar_p": 0.55,
+      "boilerplate": 0.05,
+      "new_info": 0.5,
+      "materiality": 1.5,
+      "stance": 1.8,
+      "evidence": "channel_or_customer_data",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Brrr Sleds dealer inventory declined 9% year over year as the company cut shipments in the first half.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": true,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2013,
+     "document_id": 201,
+     "seq": 2,
+     "text": "Brrr Sleds will hold its investor day on November 4.",
+     "page": 1,
+     "speaker": null,
+     "title": "Brrr Sleds reports second-quarter results (Exhibit 99.1)",
+     "date": "2026-09-12",
+     "source_type": "filing",
+     "form": "8-K",
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_filing_brrr-8-k-ex99.htm",
+     "ingested_at": "2026-09-12T22:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "off_thesis",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.4,
+      "materiality": 0.3,
+      "stance": 2.0,
+      "evidence": "management_commentary",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Industry snowmobile retail was down mid-single digits in the quarter, according to Brrr's estimates.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2021,
+     "document_id": 202,
+     "seq": 0,
+     "text": "We gained roughly two points of share in the dealer channel this fall, mostly from ACME.",
+     "page": 2,
+     "speaker": "Tom Frost - Chief Executive Officer",
+     "title": "Brrr Sleds Q2 2026 earnings call",
+     "date": "2026-09-12",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_earnings_transcript_brrr-q2-call.pdf#page=2",
+     "ingested_at": "2026-09-13T07:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "share",
+      "pillar_p": 0.9,
+      "boilerplate": 0.05,
+      "new_info": 0.8,
+      "materiality": 2.5,
+      "stance": 3.4,
+      "evidence": "management_commentary",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "share_gains": {
+        "supports": 0.9,
+        "contradicts": 0.02
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [
+       "share_gains"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 2022,
+     "document_id": 202,
+     "seq": 1,
+     "text": "We will not chase volume with incentives; our promotional spend is flat year over year.",
+     "page": 2,
+     "speaker": "Ana Ruiz - Chief Financial Officer",
+     "title": "Brrr Sleds Q2 2026 earnings call",
+     "date": "2026-09-12",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_earnings_transcript_brrr-q2-call.pdf#page=2",
+     "ingested_at": "2026-09-13T07:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.88,
+      "boilerplate": 0.05,
+      "new_info": 0.7,
+      "materiality": 2.0,
+      "stance": 3.0,
+      "evidence": "management_commentary",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Tom Frost - Chief Executive Officer: We gained roughly two points of share in the dealer channel this fall, mostly from ACME.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": true,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2023,
+     "document_id": 202,
+     "seq": 2,
+     "text": "Are dealers asking you for more incentives this season?",
+     "page": 3,
+     "speaker": "Raj Patel - Analyst, Frost Capital",
+     "title": "Brrr Sleds Q2 2026 earnings call",
+     "date": "2026-09-12",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_earnings_transcript_brrr-q2-call.pdf#page=3",
+     "ingested_at": "2026-09-13T07:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "pricing",
+      "pillar_p": 0.55,
+      "boilerplate": 0.05,
+      "new_info": 0.1,
+      "materiality": 0.6,
+      "stance": 2.0,
+      "evidence": "analyst_opinion",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Ana Ruiz - Chief Financial Officer: We will not chase volume with incentives; our promotional spend is flat year over year.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2024,
+     "document_id": 202,
+     "seq": 3,
+     "text": "Some dealers in Canada are carrying more aged units than we would like.",
+     "page": 3,
+     "speaker": "Tom Frost - Chief Executive Officer",
+     "title": "Brrr Sleds Q2 2026 earnings call",
+     "date": "2026-09-12",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/BRRR/2026-09-12_earnings_transcript_brrr-q2-call.pdf#page=3",
+     "ingested_at": "2026-09-13T07:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "shipments",
+      "pillar_p": 0.8,
+      "boilerplate": 0.05,
+      "new_info": 0.7,
+      "materiality": 1.9,
+      "stance": 1.2,
+      "evidence": "management_commentary",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "lean_channel": {
+        "supports": 0.04,
+        "contradicts": 0.76
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "Raj Patel - Analyst, Frost Capital: Are dealers asking you for more incentives this season?",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": true,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": true,
+      "contradicts": [
+       "lean_channel"
+      ],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2031,
+     "document_id": 203,
+     "seq": 12,
+     "text": "Dealer inventory decreased 11% year over year at the end of the quarter.",
+     "page": 9,
+     "speaker": null,
+     "title": "Brrr Sleds 10-Q Q1 2026",
+     "date": "2026-06-10",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/BRRR/2026-06-10_filing_brrr-10-q-q1.htm",
+     "ingested_at": "2026-06-11T06:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "shipments",
+      "pillar_p": 0.92,
+      "boilerplate": 0.05,
+      "new_info": 0.3,
+      "materiality": 2.0,
+      "stance": 3.0,
+      "evidence": "reported_result",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "lean_channel": {
+        "supports": 0.8,
+        "contradicts": 0.03
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [
+       "lean_channel"
+      ],
+      "questions": []
+     }
+    },
+    {
+     "id": 2032,
+     "document_id": 203,
+     "seq": 40,
+     "text": "We may not be able to maintain or grow our dealer network.",
+     "page": 22,
+     "speaker": null,
+     "title": "Brrr Sleds 10-Q Q1 2026",
+     "date": "2026-06-10",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/BRRR/2026-06-10_filing_brrr-10-q-q1.htm",
+     "ingested_at": "2026-06-11T06:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "shipments",
+      "pillar_p": 0.6,
+      "boilerplate": 0.6,
+      "new_info": 0.1,
+      "materiality": 1.0,
+      "stance": 1.6,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
+     "id": 2041,
+     "document_id": 204,
+     "seq": 38,
+     "text": "We may not be able to maintain our dealer network.",
+     "page": 21,
+     "speaker": null,
+     "title": "Brrr Sleds 10-Q Q4 2025 transition period",
+     "date": "2026-03-11",
+     "source_type": "filing",
+     "form": "10-Q",
+     "link": "file:///home/jev/research/archive/BRRR/2026-03-11_filing_brrr-10-q-t.htm",
+     "ingested_at": "2026-03-12T06:00:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "stale",
+     "p": {
+      "pillar": "shipments",
+      "pillar_p": 0.6,
+      "boilerplate": 0.6,
+      "new_info": 0.1,
+      "materiality": 1.0,
+      "stance": 1.6,
+      "evidence": "speculation",
+      "forward_looking": 0.2,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {},
+      "questions": {}
+     },
+     "similar": null,
+     "context": null,
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": false,
+      "flagged": false,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    }
+   ],
+   "spot_checks": [
+    2023
+   ],
+   "heatmap": {
+    "weeks": [
+     "2026-W14",
+     "2026-W15",
+     "2026-W16",
+     "2026-W17",
+     "2026-W18",
+     "2026-W19",
+     "2026-W20",
+     "2026-W21",
+     "2026-W22",
+     "2026-W23",
+     "2026-W24",
+     "2026-W25",
+     "2026-W26",
+     "2026-W27",
+     "2026-W28",
+     "2026-W29",
+     "2026-W30",
+     "2026-W31",
+     "2026-W32",
+     "2026-W33",
+     "2026-W34",
+     "2026-W35",
+     "2026-W36",
+     "2026-W37",
+     "2026-W38",
+     "2026-W39"
+    ],
+    "rows": {
+     "shipments": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.5,
+       "count": 1
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.108,
+       "count": 2
+      },
+      null,
+      null
+     ],
+     "pricing": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.375,
+       "count": 2
+      },
+      null,
+      null
+     ],
+     "share": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.395,
+       "count": 2
+      },
+      null,
+      null
+     ]
+    }
+   },
+   "assumption_series": {
+    "share_gains": [
+     {
+      "month": "2026-09",
+      "for": 1,
+      "against": 0,
+      "balance": 0.44
+     }
+    ],
+    "lean_channel": [
+     {
+      "month": "2026-06",
+      "for": 1,
+      "against": 0,
+      "balance": 0.513
+     },
+     {
+      "month": "2026-07",
+      "for": 0,
+      "against": 0,
+      "balance": 0.513
+     },
+     {
+      "month": "2026-08",
+      "for": 0,
+      "against": 0,
+      "balance": 0.513
+     },
+     {
+      "month": "2026-09",
+      "for": 1,
+      "against": 1,
+      "balance": 0.87
+     }
+    ]
+   },
+   "divergence": [
+    {
+     "pillar": "share",
+     "inside": {
+      "stance": 3.4,
+      "n": 1,
+      "ids": [
+       2021
+      ]
+     },
+     "outside": {
+      "stance": 1.8,
+      "n": 1,
+      "ids": [
+       2012
+      ]
+     },
+     "gap": 1.6,
+     "flagged": false
+    }
+   ],
+   "ledger": {
+    "items": [],
+    "kept": 0,
+    "missed": 0,
+    "open": 0,
+    "credibility": null
+   },
+   "redlines": [
+    {
+     "form": "10-Q",
+     "new_document": 203,
+     "old_document": 204,
+     "changed": [
+      {
+       "id": 2032,
+       "old_id": 2041,
+       "similarity": 0.909,
+       "diff": [
+        [
+         "=",
+         "We may not be able to maintain "
+        ],
+        [
+         "+",
+         "or grow "
+        ],
+        [
+         "=",
+         "our dealer network."
+        ]
+       ]
+      }
+     ],
+     "added": [
+      2031
+     ],
+     "removed": []
+    }
+   ]
+  }
+ ],
+ "unsorted": [
+  {
+   "id": 301,
+   "title": "Scan_0042.pdf",
+   "path": "archive/_unsorted/Scan_0042.pdf",
+   "reason": "needs OCR",
+   "ticker": null,
+   "source_type": null,
+   "date": null,
+   "command": "radar tag 301 --ticker TICKER --source SOURCE --date YYYY-MM-DD"
+  },
+  {
+   "id": 302,
+   "title": "Weekly snow report",
+   "path": "archive/_unsorted/2026-09-19_news_weekly-snow.txt",
+   "reason": "no matching company",
+   "ticker": null,
+   "source_type": "news",
+   "date": "2026-09-19",
+   "command": "radar tag 302 --ticker TICKER --source news --date 2026-09-19"
+  }
+ ],
+ "pending": {
+  "unjudged": 2,
+  "failed": 1,
+  "stale": 10
+ },
+ "serve": null
+}
