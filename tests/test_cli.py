@@ -1,4 +1,5 @@
 import io
+import json
 from datetime import date
 from pathlib import Path
 
@@ -212,3 +213,60 @@ def test_label_records_weighted_keyed_labels(ws):
 
 def test_usage_errors_exit_1(ws):
     assert radar(ws, "frobnicate")[0] == 1
+
+
+PREDICTIONS = ACME_THESIS.replace(
+    "known_facts:",
+    'predictions:\n  inv_back: {statement: "Inventory is normal by Q1.", by: 2027-03-31, p: 0.7}\nknown_facts:',
+)
+
+
+def test_fact_resolve_and_apply_write_back(ws):
+    write_thesis(ws / "thesis", text=PREDICTIONS)
+    radar(ws, "run")
+    new_id = find(dashboard_payload(ws), "[new]")["id"]
+    code, out, err = radar(ws, "fact", "ACME", "pricing", "Promotions cut sharply in September.", "--source", str(new_id))
+    assert code == 0, err
+    assert "added pricing.0" in out
+    thesis_text = (ws / "thesis" / "ACME.yaml").read_text(encoding="utf-8")
+    assert "Promotions cut sharply in September." in thesis_text and "2026-09-15" in thesis_text
+    assert radar(ws, "resolve", "ACME", "inv_back", "no")[0] == 0
+    code, _, err = radar(ws, "resolve", "ACME", "nope", "yes")
+    assert code == 2 and "nope" in err
+    actions = f'[{{"op": "triage", "ticker": "ACME", "passage_id": {new_id}, "status": "dismissed"}}]'
+    code, out, _ = radar(ws, "apply", actions)
+    assert code == 0 and "apply: 1 triage" in out
+    label = json.dumps([{"op": "label", "ticker": "ACME", "passage_id": new_id, "question": "whats_new", "value": 0}])
+    code, out, _ = radar(ws, "apply", "-", stdin=label)
+    assert code == 0 and "1 label" in out
+    radar(ws, "run")
+    payload = dashboard_payload(ws)
+    passage = find(payload, "[new]")
+    assert passage["triage"]["status"] == "dismissed" and not passage["classified"]["in_whats_new"]
+    prediction = payload["companies"][0]["predictions"][0]
+    assert prediction["outcome"] is False and payload["companies"][0]["forecast"]["resolved"] == 1
+    assert radar(ws, "apply", '[{"op": "explode"}]')[0] == 2
+
+
+def test_search_and_quote(ws):
+    radar(ws, "run")
+    code, out, _ = radar(ws, "search", "promotions")
+    assert code == 0 and "We cut [promotions]" in out and "p.1" in out
+    new_id = find(dashboard_payload(ws), "[new]")["id"]
+    code, out, _ = radar(ws, "quote", str(new_id))
+    assert code == 0 and out.startswith("> John Roe - CEO: We cut promotions sharply") and "[source](file://" in out
+    assert "search: no matches" in radar(ws, "search", "zeppelin")[1]
+
+
+def test_mcp_speaks_json_rpc(ws):
+    radar(ws, "run")
+    requests = "\n".join(json.dumps(m) for m in [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "t", "version": "1"}}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "whats_new", "arguments": {"ticker": "ACME"}}},
+    ]) + "\n"
+    code, out, _ = radar(ws, "mcp", stdin=requests)
+    replies = [json.loads(line) for line in out.splitlines()]
+    assert code == 0 and [r["id"] for r in replies] == [1, 2]
+    result = replies[1]["result"]["structuredContent"]
+    assert any("We cut promotions" in p["text"] for p in result["passages"])
