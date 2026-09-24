@@ -11,41 +11,57 @@ yes/no.
 ## Quick start on a Mac: Apple (AAPL)
 
 A complete first run with a real company. It fetches Apple's last year of SEC filings from EDGAR,
-has Jev judge them against a sample thesis, and opens the dashboard. Paste each block into
-Terminal. The blocks carry no `#` comments on purpose: zsh on macOS does not treat `#` as a comment
-at the prompt.
+has Jev judge them against a sample thesis, and opens the dashboard. Everything is a Terminal
+command: copy each block, paste it into Terminal, and press Return. You only type two things when
+asked, your email and your TypeSafe API key. The blocks carry no `#` comments on purpose: zsh on
+macOS does not treat `#` as a comment at the prompt.
 
-**1. Install git and uv** (skip what you already have). `xcode-select --install` provides git.
-If you use Homebrew, `brew install uv` works instead of the installer script.
+**1. Install uv**, which installs Python and `radar`. Skip this if `uv --version` already works.
 
 ```bash
-xcode-select --install
 curl -LsSf https://astral.sh/uv/install.sh | sh
+source "$HOME/.local/bin/env"
 ```
 
-**2. Get the code and install `radar`.** uv fetches Python 3.11+ itself if you don't have it.
-After `uv tool update-shell`, open a new Terminal window so `radar` is on your PATH.
+**2. Get the code and install `radar`.** If macOS asks to install the command line developer tools
+(they provide `git`), click Install, wait for it to finish, and paste the block again.
 
 ```bash
 git clone https://github.com/alankarchmer/thesis-radar.git ~/thesis-radar
 cd ~/thesis-radar
 uv tool install --editable .
 uv tool update-shell
+export PATH="$HOME/.local/bin:$PATH"
+radar --version
 ```
 
-**3. In a new Terminal window, set your key and create the workspace.** Replace the key and the
-email with your own. SEC EDGAR requires a contact email on every request. The workspace lives
-outside the repository, since filings and judgments never belong in git.
+**3. Create the workspace.** It lives outside the repository, since filings and judgments never
+belong in git.
 
 ```bash
-radar --version
-export TYPESAFE_API_KEY="paste-your-typesafe-key-here"
 export RADAR_HOME=~/radar-aapl
 radar init
-echo "edgar_email: you@example.com" >> "$RADAR_HOME/config.yaml"
 ```
 
-To keep these settings for future Terminal windows, append the two `export` lines to `~/.zshrc`.
+Paste the next two lines one at a time, since each one waits for you to type something. The first
+asks for your email, which SEC EDGAR requires as a contact on every request. The second asks for
+your TypeSafe API key, which stays hidden as you type or paste it.
+
+```bash
+printf 'Email address for SEC EDGAR: '; read -r EDGAR_EMAIL; echo "edgar_email: $EDGAR_EMAIL" >> "$RADAR_HOME/config.yaml"
+```
+
+```bash
+printf 'TypeSafe API key (hidden): '; read -rs TYPESAFE_API_KEY; echo; export TYPESAFE_API_KEY
+```
+
+Optional: keep the workspace and key for future Terminal windows. This saves the key in plain text
+in `~/.zshrc`.
+
+```bash
+echo 'export RADAR_HOME=~/radar-aapl' >> ~/.zshrc
+echo "export TYPESAFE_API_KEY='$TYPESAFE_API_KEY'" >> ~/.zshrc
+```
 
 **4. Write the thesis.** This is a sample thesis to edit, not investment advice. The assumptions,
 open questions, and predictions are opinions to replace with your own. The known facts are
@@ -132,8 +148,8 @@ radar judge
 ```
 
 - **Over the cost cap:** if the estimate exceeds `max_cost_per_run` ($2.00 by default), `radar judge`
-  stops without sending anything. Run `radar judge --yes` to go ahead, or raise `max_cost_per_run`
-  in `$RADAR_HOME/config.yaml`.
+  stops without sending anything. Run `radar judge --yes` to go ahead once, or raise the cap for
+  every run (to $10 here): `echo "max_cost_per_run: 10.0" >> "$RADAR_HOME/config.yaml"`.
 - **Metrics show 0 in the dry run:** that's expected. Numbers are asked about only for passages
   already judged, so `radar judge` handles them after the passages. The guidance ledger follow-ups
   work the same way.
@@ -155,36 +171,62 @@ radar view
 open "$RADAR_HOME/dashboard.html"
 ```
 
-**Every day after that.** `radar run` fetches new filings, ingests anything you dropped into
-`inbox/` (sell-side PDFs, transcripts, notes), judges, and rewrites the dashboard. Then serve it:
+**Every day after that.** To add your own research (sell-side PDFs, transcripts, notes), open the
+inbox in Finder and drag the files in:
+
+```bash
+open ~/radar-aapl/inbox
+```
+
+Then `radar run` fetches new filings, ingests the inbox, judges, and rewrites the dashboard, and
+`radar serve` opens it. In a new Terminal window without the optional `~/.zshrc` lines above,
+paste the key line from step 3 first.
 
 ```bash
 export RADAR_HOME=~/radar-aapl
-cp ~/Downloads/some-apple-report.pdf "$RADAR_HOME/inbox/"
 radar run
 radar serve
 ```
 
 ## Install
 
+From a clone of this repository:
+
 ```bash
 uv tool install --editable .
-export TYPESAFE_API_KEY=...        # ingest and judge need it; everything else works offline
+```
+
+`ingest` and `judge` need a TypeSafe API key; everything else works offline. Paste this line on
+its own; it asks for the key and keeps it hidden:
+
+```bash
+printf 'TypeSafe API key (hidden): '; read -rs TYPESAFE_API_KEY; echo; export TYPESAFE_API_KEY
 ```
 
 ## Set up a workspace
 
 Keep your research outside this repository (it is licensed material and never belongs in
-git). Point `radar` at a folder with `--workspace ~/research` or
-`export RADAR_HOME=~/research`, then:
+git). These commands create a workspace in `~/research` with `inbox/`, `archive/`, `thesis/`,
+`config.yaml`, and `policy.yaml`. Any other folder works: pass `--workspace DIR` or set
+`RADAR_HOME`.
 
 ```bash
-radar init          # creates inbox/, archive/, thesis/, config.yaml, and policy.yaml
+export RADAR_HOME=~/research
+radar init
 ```
 
-Write one thesis file per company, named after its ticker, for example `thesis/PII.yaml`:
+To fetch from SEC EDGAR, `radar` needs a contact email, which SEC asks every client for. Paste this
+line on its own; it asks for your address:
 
-```yaml
+```bash
+printf 'Email address for SEC EDGAR: '; read -r EDGAR_EMAIL; echo "edgar_email: $EDGAR_EMAIL" >> "$RADAR_HOME/config.yaml"
+```
+
+Write one thesis file per company, named after its ticker. This writes `thesis/PII.yaml` for
+Polaris and checks that it loads:
+
+```bash
+cat > "$RADAR_HOME/thesis/PII.yaml" <<'EOF'
 ticker: PII
 company: Polaris Inc.
 aliases: [Polaris, "Polaris Industries"]
@@ -201,13 +243,19 @@ predictions:                      # optional: your own forecasts, scored when yo
 known_facts:                      # what you already know; novelty is judged against it
   dealer_inventory:
     - "Shipments down year over year; dealer inventory still elevated."
-    - {text: "Promotions up 200 bps year over year.", as_of: 2026-08-05, source: 1234}
+    - {text: "Promotions up 200 bps year over year.", as_of: 2026-08-05}
+EOF
+radar status
 ```
+
+`radar status` should list the ticker under `theses:`. A fact can also carry `source:` with the id of
+the passage it came from. `radar fact --source` and the dashboard's Absorb action fill that in for
+you.
 
 Limits: 1-12 pillars, 10 assumptions, 5 open questions, 10 predictions, 5 peers, 12 metrics, 20 facts
 per pillar. Quote any key YAML might read as a boolean (`yes`, `no`, `on`, `off`).
 
-`config.yaml` (every key optional):
+`config.yaml` takes these keys, all optional. `radar init` writes the defaults:
 
 ```yaml
 edgar_email: you@example.com   # enables SEC EDGAR fetching (SEC asks for a contact)
@@ -221,17 +269,27 @@ peer_forms: [8-K, 6-K]         # peers: exhibit 99 (earnings releases) only
 serve_port: 8765
 ```
 
+To change a setting, append it. When a key appears twice, the last one wins:
+
+```bash
+echo "max_cost_per_run: 5.0" >> "$RADAR_HOME/config.yaml"
+```
+
 `policy.yaml` holds the dashboard thresholds (`radar init` writes the defaults; the
 dashboard's threshold panel can write it for you). Changing policy never calls Jev.
 
 ## Daily use
 
+`radar run` fetches filings, ingests `inbox/`, judges, and writes `dashboard.html`. `radar serve`
+opens the dashboard on localhost with write-back, which is the recommended way to use it:
+
 ```bash
-radar run      # fetch filings, ingest inbox/, judge, write dashboard.html
-radar serve    # open the dashboard on localhost with write-back (recommended)
+radar run
+radar serve
 ```
 
-Drop downloaded files (PDF, HTML, DOCX, TXT, MD) into `inbox/`. Files Jev cannot place
+Drop downloaded files (PDF, HTML, DOCX, TXT, MD) into `inbox/`; `open "$RADAR_HOME/inbox"` opens it
+in Finder. Files Jev cannot place
 confidently appear under **Unsorted** with a `radar tag` command to copy.
 
 The dashboard opens on an **Overview**: per company, a verdict on each assumption (holding,
@@ -358,12 +416,20 @@ claude mcp add thesis-radar -- radar --workspace ~/research mcp
 
 ## Development
 
+The tests run offline and never need an API key:
+
 ```bash
 uv sync
-uv run pytest            # offline; never needs an API key
-uv run pytest -m ui      # dashboard in headless Chromium (needs playwright browsers)
-uv run pytest -m live -s # one real Jev call; needs TYPESAFE_API_KEY
+uv run pytest
 uv run ruff check .
+```
+
+The dashboard tests drive headless Chromium and need Playwright's browsers. The live test makes one
+real Jev call and needs `TYPESAFE_API_KEY`:
+
+```bash
+uv run pytest -m ui
+uv run pytest -m live -s
 ```
 
 Design: `docs/superpowers/specs/2026-09-21-thesis-radar-design.md` (v1) and
