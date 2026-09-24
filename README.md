@@ -77,11 +77,23 @@ radar serve    # open the dashboard on localhost with write-back (recommended)
 Drop downloaded files (PDF, HTML, DOCX, TXT, MD) into `inbox/`. Files Jev cannot place
 confidently appear under **Unsorted** with a `radar tag` command to copy.
 
-The dashboard has an **Overview** (heat map of stance by pillar and week, evidence balance
-per assumption, management-versus-outside divergence, guidance credibility, predictions
-due) and a tab per company: **Contradictions** (grouped by assumption), **What's new**,
-**Maybe**, **Open questions**, **Guidance ledger**, **Changed language** (filing-to-filing
-redlines), **Predictions**, and **Known facts**.
+The dashboard opens on an **Overview**: per company, a verdict on each assumption (holding,
+contradicted, mixed, turning, or quiet: the last six months of evidence against the six
+before, with a 12-month chart), what to read next, a line per tracked metric, and signals
+in plain sentences (where management and outside sources disagree, guidance hit rate,
+predictions due). Each company has five sections:
+
+- **Read**: contradictions grouped by assumption, then what's new by pillar, maybe-new,
+  and starred.
+- **Thesis**: the assumption scorecard with the evidence for and against each, open
+  questions and the passages bearing on them, predictions, and known facts.
+- **Metrics**: each tracked number by period (see *Track the numbers*).
+- **Signals**: tone by pillar and month, management versus outside sources, and the
+  guidance ledger.
+- **Filings**: filing-to-filing redlines of changed language.
+
+A chip in the header counts what needs attention (stale, unjudged, or failed passages).
+Blue means supports your thesis, red means contradicts it.
 
 Triage from the keyboard; every action also teaches the calibration report:
 
@@ -96,6 +108,7 @@ Triage from the keyboard; every action also teaches the calibration report:
 | `v` | skim the whole document, `n` / `p` to jump between highlights |
 | `o` | open the source at its page |
 | `u` | undo |
+| `g` then `r` `t` `m` `s` `f` | Read, Thesis, Metrics, Signals, Filings (`g o` Overview, `g 1`-`9` company) |
 | `/` | search |
 | `?` | all shortcuts |
 
