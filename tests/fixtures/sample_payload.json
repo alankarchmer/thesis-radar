@@ -273,7 +273,7 @@
      "ticker": "ACME",
      "read_through": false,
      "complete": true,
-     "passage_count": 9
+     "passage_count": 10
     },
     {
      "id": 106,
@@ -1815,6 +1815,57 @@
      }
     },
     {
+     "id": 1050,
+     "document_id": 105,
+     "seq": 9,
+     "text": "We are confident channel inventory will be back in line with retail by the end of the fiscal year.",
+     "page": 5,
+     "speaker": "John Roe - Chief Financial Officer",
+     "title": "ACME Snowmobiles Q3 2026 earnings call",
+     "date": "2026-09-15",
+     "source_type": "earnings_transcript",
+     "form": null,
+     "link": "file:///home/jev/research/archive/ACME/2026-09-15_earnings_transcript_q3-call.pdf#page=5",
+     "ingested_at": "2026-09-16T07:45:00Z",
+     "arrived_new": false,
+     "read_through": null,
+     "status": "current",
+     "p": {
+      "pillar": "dealer_inventory",
+      "pillar_p": 0.88,
+      "boilerplate": 0.05,
+      "new_info": 0.45,
+      "materiality": 2.0,
+      "stance": 3.3,
+      "evidence": "management_commentary",
+      "forward_looking": 0.9,
+      "updates_fact": null,
+      "updates_fact_p": 0.0,
+      "assumptions": {
+       "inv_normalizes": {
+        "supports": 0.66,
+        "contradicts": 0.05
+       }
+      },
+      "questions": {}
+     },
+     "similar": null,
+     "context": "John Roe - Chief Financial Officer: Our dealer count ended the quarter at 1,412, down 11 from a year ago.",
+     "triage": {
+      "status": null,
+      "starred": false
+     },
+     "classified": {
+      "in_contradictions": false,
+      "in_whats_new": false,
+      "in_maybe": true,
+      "flagged": true,
+      "contradicts": [],
+      "supports": [],
+      "questions": []
+     }
+    },
+    {
      "id": 1061,
      "document_id": 106,
      "seq": 0,
@@ -2874,28 +2925,51 @@
    ],
    "heatmap": {
     "weeks": [
-     "2026-06-08",
-     "2026-06-15",
-     "2026-06-22",
-     "2026-06-29",
-     "2026-07-06",
-     "2026-07-13",
-     "2026-07-20",
-     "2026-07-27",
-     "2026-08-03",
-     "2026-08-10",
-     "2026-08-17",
-     "2026-08-24",
-     "2026-08-31",
-     "2026-09-07",
-     "2026-09-14",
-     "2026-09-21"
+     "2026-W14",
+     "2026-W15",
+     "2026-W16",
+     "2026-W17",
+     "2026-W18",
+     "2026-W19",
+     "2026-W20",
+     "2026-W21",
+     "2026-W22",
+     "2026-W23",
+     "2026-W24",
+     "2026-W25",
+     "2026-W26",
+     "2026-W27",
+     "2026-W28",
+     "2026-W29",
+     "2026-W30",
+     "2026-W31",
+     "2026-W32",
+     "2026-W33",
+     "2026-W34",
+     "2026-W35",
+     "2026-W36",
+     "2026-W37",
+     "2026-W38",
+     "2026-W39"
     ],
     "rows": {
      "dealer_inventory": [
       null,
+      null,
+      null,
+      null,
+      null,
       {
-       "net": -1.69,
+       "net": -0.096,
+       "count": 2
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.65,
        "count": 1
       },
       null,
@@ -2905,30 +2979,43 @@
       null,
       null,
       {
-       "net": -0.1,
+       "net": -0.083,
+       "count": 3
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": -0.138,
        "count": 2
       },
-      null,
-      null,
-      null,
-      null,
       {
-       "net": -0.56,
-       "count": 2
+       "net": -0.338,
+       "count": 6
       },
       {
-       "net": -5.81,
-       "count": 5
-      },
-      {
-       "net": -1.0,
+       "net": -0.5,
        "count": 1
       }
      ],
      "pricing": [
       null,
+      null,
+      null,
+      null,
+      null,
       {
-       "net": 0.9,
+       "net": 0.5,
+       "count": 1
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.5,
        "count": 1
       },
       null,
@@ -2938,7 +3025,7 @@
       null,
       null,
       {
-       "net": -0.8,
+       "net": -0.4,
        "count": 1
       },
       null,
@@ -2946,11 +3033,11 @@
       null,
       null,
       {
-       "net": -0.32,
+       "net": -0.148,
        "count": 2
       },
       {
-       "net": -1.66,
+       "net": -0.237,
        "count": 3
       },
       {
@@ -2972,12 +3059,22 @@
       null,
       null,
       null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       {
-       "net": -0.42,
+       "net": -0.25,
        "count": 1
       },
       {
-       "net": -1.32,
+       "net": -0.254,
        "count": 3
       },
       null
@@ -2991,8 +3088,18 @@
       null,
       null,
       null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       {
-       "net": -0.4,
+       "net": -0.095,
        "count": 2
       },
       null,
@@ -3001,7 +3108,7 @@
       null,
       null,
       {
-       "net": -0.84,
+       "net": -0.095,
        "count": 4
       },
       null
@@ -3020,16 +3127,29 @@
       null,
       null,
       null,
+      null,
+      null,
+      null,
+      null,
+      null,
       {
-       "net": 1.35,
+       "net": -0.25,
+       "count": 1
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+       "net": 0.75,
        "count": 1
       },
       {
-       "net": 1.81,
+       "net": 0.42,
        "count": 2
       },
       {
-       "net": 1.14,
+       "net": 0.6,
        "count": 1
       }
      ]
@@ -3038,102 +3158,66 @@
    "assumption_series": {
     "inv_normalizes": [
      {
-      "month": "2026-02",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-03",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-04",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
       "month": "2026-05",
       "for": 1,
       "against": 1,
-      "balance": 0
+      "balance": -0.163
      },
      {
       "month": "2026-06",
       "for": 0,
       "against": 1,
-      "balance": -1
+      "balance": -0.704
      },
      {
       "month": "2026-07",
       "for": 0,
       "against": 0,
-      "balance": -1
+      "balance": -0.704
      },
      {
       "month": "2026-08",
       "for": 1,
       "against": 0,
-      "balance": 0
+      "balance": -0.719
      },
      {
       "month": "2026-09",
       "for": 0,
       "against": 2,
-      "balance": -2
+      "balance": -2.399
      }
     ],
     "pricing_holds": [
      {
-      "month": "2026-02",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-03",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-04",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
       "month": "2026-05",
       "for": 1,
       "against": 0,
-      "balance": 1
+      "balance": 0.329
      },
      {
       "month": "2026-06",
       "for": 1,
       "against": 0,
-      "balance": 2
+      "balance": 0.539
      },
      {
       "month": "2026-07",
       "for": 0,
       "against": 0,
-      "balance": 2
+      "balance": 0.539
      },
      {
       "month": "2026-08",
       "for": 0,
       "against": 0,
-      "balance": 2
+      "balance": 0.153
      },
      {
       "month": "2026-09",
       "for": 1,
       "against": 1,
-      "balance": 2
+      "balance": -0.864
      }
     ],
     "margin_recovers": [
@@ -3141,149 +3225,102 @@
       "month": "2026-02",
       "for": 1,
       "against": 0,
-      "balance": 1
+      "balance": 0.395
      },
      {
       "month": "2026-03",
       "for": 0,
       "against": 0,
-      "balance": 1
+      "balance": 0.395
      },
      {
       "month": "2026-04",
       "for": 0,
       "against": 0,
-      "balance": 1
+      "balance": 0.395
      },
      {
       "month": "2026-05",
       "for": 0,
       "against": 0,
-      "balance": 1
+      "balance": 0.395
      },
      {
       "month": "2026-06",
       "for": 0,
       "against": 0,
-      "balance": 1
+      "balance": 0.395
      },
      {
       "month": "2026-07",
       "for": 0,
       "against": 0,
-      "balance": 1
+      "balance": 0.395
      },
      {
       "month": "2026-08",
       "for": 0,
       "against": 0,
-      "balance": 1
+      "balance": 0.621
      },
      {
       "month": "2026-09",
       "for": 1,
       "against": 1,
-      "balance": 1
+      "balance": 0.601
      }
     ],
     "ev_on_track": [
      {
-      "month": "2026-02",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-03",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-04",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-05",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-06",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-07",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-08",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
       "month": "2026-09",
       "for": 1,
       "against": 0,
-      "balance": 1
+      "balance": 0.559
      }
     ]
    },
    "divergence": [
     {
-     "pillar": "pricing",
+     "pillar": "dealer_inventory",
      "inside": {
-      "stance": 2.9,
-      "n": 3,
+      "stance": 2.089,
+      "n": 4,
       "ids": [
-       1055,
-       1023,
-       1058
+       1058,
+       1053,
+       1033
       ]
      },
      "outside": {
-      "stance": 1.3,
+      "stance": 0.803,
       "n": 4,
       "ids": [
-       1062,
-       1074,
-       1082,
-       1092
+       1061,
+       1091,
+       1071
       ]
      },
-     "gap": 1.6,
+     "gap": 1.286,
      "flagged": true
     },
     {
-     "pillar": "dealer_inventory",
+     "pillar": "pricing",
      "inside": {
-      "stance": 1.9,
-      "n": 4,
+      "stance": 3.0,
+      "n": 1,
       "ids": [
-       1033,
-       1053,
-       1058,
-       1041
+       1055
       ]
      },
      "outside": {
-      "stance": 1.1,
-      "n": 3,
+      "stance": 1.19,
+      "n": 2,
       "ids": [
-       1061,
-       1071,
-       1081
+       1062,
+       1074
       ]
      },
-     "gap": 0.8,
+     "gap": 1.81,
      "flagged": false
     },
     {
@@ -3296,15 +3333,15 @@
       ]
      },
      "outside": {
-      "stance": 3.2,
+      "stance": 2.945,
       "n": 3,
       "ids": [
        1063,
-       1072,
-       1083
+       1083,
+       1072
       ]
      },
-     "gap": 0.2,
+     "gap": 0.455,
      "flagged": false
     }
    ],
@@ -4011,27 +4048,47 @@
    ],
    "heatmap": {
     "weeks": [
-     "2026-06-08",
-     "2026-06-15",
-     "2026-06-22",
-     "2026-06-29",
-     "2026-07-06",
-     "2026-07-13",
-     "2026-07-20",
-     "2026-07-27",
-     "2026-08-03",
-     "2026-08-10",
-     "2026-08-17",
-     "2026-08-24",
-     "2026-08-31",
-     "2026-09-07",
-     "2026-09-14",
-     "2026-09-21"
+     "2026-W14",
+     "2026-W15",
+     "2026-W16",
+     "2026-W17",
+     "2026-W18",
+     "2026-W19",
+     "2026-W20",
+     "2026-W21",
+     "2026-W22",
+     "2026-W23",
+     "2026-W24",
+     "2026-W25",
+     "2026-W26",
+     "2026-W27",
+     "2026-W28",
+     "2026-W29",
+     "2026-W30",
+     "2026-W31",
+     "2026-W32",
+     "2026-W33",
+     "2026-W34",
+     "2026-W35",
+     "2026-W36",
+     "2026-W37",
+     "2026-W38",
+     "2026-W39"
     ],
     "rows": {
      "shipments": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       {
-       "net": 1.0,
+       "net": 0.5,
        "count": 1
       },
       null,
@@ -4047,7 +4104,7 @@
       null,
       null,
       {
-       "net": 0.45,
+       "net": 0.108,
        "count": 2
       },
       null,
@@ -4067,8 +4124,18 @@
       null,
       null,
       null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       {
-       "net": 1.0,
+       "net": 0.375,
        "count": 2
       },
       null,
@@ -4088,8 +4155,18 @@
       null,
       null,
       null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       {
-       "net": 1.6,
+       "net": 0.395,
        "count": 2
       },
       null,
@@ -4100,122 +4177,57 @@
    "assumption_series": {
     "share_gains": [
      {
-      "month": "2026-02",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-03",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-04",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-05",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-06",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-07",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-08",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
       "month": "2026-09",
       "for": 1,
       "against": 0,
-      "balance": 1
+      "balance": 0.44
      }
     ],
     "lean_channel": [
      {
-      "month": "2026-02",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-03",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-04",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
-      "month": "2026-05",
-      "for": 0,
-      "against": 0,
-      "balance": 0
-     },
-     {
       "month": "2026-06",
       "for": 1,
       "against": 0,
-      "balance": 1
+      "balance": 0.513
      },
      {
       "month": "2026-07",
       "for": 0,
       "against": 0,
-      "balance": 1
+      "balance": 0.513
      },
      {
       "month": "2026-08",
       "for": 0,
       "against": 0,
-      "balance": 1
+      "balance": 0.513
      },
      {
       "month": "2026-09",
       "for": 1,
       "against": 1,
-      "balance": 1
+      "balance": 0.87
      }
     ]
    },
    "divergence": [
     {
-     "pillar": "shipments",
+     "pillar": "share",
      "inside": {
-      "stance": 2.2,
-      "n": 2,
+      "stance": 3.4,
+      "n": 1,
       "ids": [
-       2024,
-       2011
+       2021
       ]
      },
      "outside": {
-      "stance": null,
-      "n": 0,
-      "ids": []
+      "stance": 1.8,
+      "n": 1,
+      "ids": [
+       2012
+      ]
      },
-     "gap": null,
+     "gap": 1.6,
      "flagged": false
     }
    ],

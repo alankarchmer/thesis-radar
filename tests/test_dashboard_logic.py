@@ -152,9 +152,11 @@ def test_recent_and_acknowledged_helpers(tmp_path):
             assumptions: {a: {supports: 0, contradicts: 0.9}}, questions: {}}};
       return [L.recent(base, 4, "2026-09-24"), L.recent(base, 3, "2026-09-24"), L.passageDate(base),
               L.isAcknowledgedContradiction(contra, L.DEFAULT_POLICY, "2026-09-24"),
-              L.weekStart("2026-W38"), L.weekStart("2026-09-14")];
+              L.weekStart("2026-W38"), L.weekStart("2026-09-14"), L.weekStart("2021-W01"), L.weekLabel("2026-W09"),
+              L.recent(base, 4.9, "2026-09-24")];
     """
-    assert run_logic(tmp_path, body, None) == [True, False, "2026-09-20", True, "2026-09-14", "2026-09-14"]
+    assert run_logic(tmp_path, body, None) == [
+        True, False, "2026-09-20", True, "2026-09-14", "2026-09-14", "2021-01-04", "W09", True]
 
 
 @needs_node

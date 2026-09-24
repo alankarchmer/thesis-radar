@@ -139,6 +139,12 @@ def goto_tab(page, key):
     page.wait_for_selector(f'nav#tabs [data-tab="{key}"].active')
 
 
+def open_fold(page, key):
+    page.click(f'[data-fold="{key}"] > summary')
+    page.locator(f'[data-fold="{key}"][open] > :not(summary)').first.wait_for()
+    return page.locator(f'[data-fold="{key}"]')
+
+
 def focus_first(page, section):
     for _ in range(80):
         page.keyboard.press("j")
@@ -189,14 +195,17 @@ def test_overview_heatmap_sparklines_and_flagged_divergence(open_page):
     cells = [cell for row in company("ACME")["heatmap"]["rows"].values() for cell in row if cell and cell["count"]]
     assert acme.locator(".hm-cell").count() == len(cells) > 0
     title = acme.locator(".hm-cell").first.get_attribute("title")
-    assert "week of" in title and "net" in title and "passage" in title
+    assert re.search(r"· 2026-W\d\d \(week of 2026-\d\d-\d\d\) · net [+−]?\d\.\d\d · \d+ passages?$", title), title
+    labels = [t for t in acme.locator(".hm .wk").all_text_contents() if t]
+    weeks = company("ACME")["heatmap"]["weeks"]
+    assert labels == ["W" + w[-2:] for w in weeks[(len(weeks) - 1) % 4::4]] and labels[-1] == "W39"
     assert acme.locator("svg.spark").count() == len(company("ACME")["assumptions"])
     assert acme.locator("svg.spark polyline").count() == len(company("ACME")["assumptions"])
-    flagged = acme.locator(".divergence .div-row.flagged")
-    assert flagged.count() == 1 and flagged.get_attribute("data-pillar") == "pricing"
-    assert "diverges" in flagged.text_content()
-    flagged.click()
     [d] = [d for d in company("ACME")["divergence"] if d["flagged"]]
+    flagged = acme.locator(".divergence .div-row.flagged")
+    assert flagged.count() == 1 and flagged.get_attribute("data-pillar") == d["pillar"]
+    assert "diverges" in flagged.text_content() and f"gap +{d['gap']:.1f}" in flagged.text_content()
+    flagged.click()
     shown = page.locator(".sheet .card").evaluate_all("nodes => nodes.map(n => Number(n.dataset.id))")
     assert shown == d["inside"]["ids"] + d["outside"]["ids"]
     page.keyboard.press("Escape")
@@ -339,8 +348,9 @@ def test_star_contradiction_and_absorb_actions(open_page):
          "source": 1044, "replace": "margins.0"},
     ]
     assert page.locator('.card[data-section="new"][data-id="1044"]').count() == 0
-    page.click('[data-fold="facts|ACME"] > summary')
-    assert "Gross margin 20.4% in Q3, up 60 bps sequentially." in page.locator('[data-fold="facts|ACME"]').text_content()
+    facts = open_fold(page, "facts|ACME")
+    assert "Gross margin 20.4% in Q3, up 60 bps sequentially." in facts.text_content()
+    assert "Gross margin 19.8% in Q2, down 240 bps." not in facts.text_content()
 
 
 def test_mark_all_shown_as_read_asks_first_and_sends_no_labels(open_page):
@@ -436,7 +446,7 @@ def test_predictions_resolve_and_quotes_copy(open_page):
     page = open_page(init_script="window.__copied = []; Object.defineProperty(navigator, 'clipboard', {configurable: true, "
                                  "value: {writeText: (t) => { window.__copied.push(t); return Promise.resolve(); }}});").page
     goto_tab(page, "ACME")
-    page.click('[data-fold="predictions|ACME"] > summary')
+    open_fold(page, "predictions|ACME")
     page.click('[data-prediction="inv_normal_by_q1"] >> button[aria-label="Resolve yes"]')
     assert queued(page) == [{"op": "resolve", "ticker": "ACME", "prediction_id": "inv_normal_by_q1", "outcome": True}]
     assert "Brier 0.117 over 3 resolved" in page.locator('[data-fold="predictions|ACME"]').text_content()

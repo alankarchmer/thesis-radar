@@ -160,6 +160,7 @@ form.absorb select { border: 1px solid var(--line); border-radius: 6px; padding:
 .hm { display: grid; gap: 3px; align-items: center; font-size: 11px; width: max-content; }
 .hm .lbl { color: var(--muted); padding-right: 8px; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
 .hm .wk { color: var(--faint); font-size: 10px; white-space: nowrap; overflow: visible; width: 16px; }
+.hm .wk:not(:empty) { position: relative; }
 .hm-cell { width: 16px; height: 16px; border-radius: 3px; border: 0; padding: 0; color: #fff; font-size: 11px; line-height: 16px; font-weight: 700; text-align: center; }
 .hm-cell.neg { background: var(--neg); } .hm-cell.pos { background: var(--pos); } .hm-cell.mid { background: var(--mid); }
 .hm-empty { width: 16px; height: 16px; border-radius: 3px; background: var(--panel-2); }
@@ -273,7 +274,11 @@ const RadarLogic = (() => {
   }
   function recent(passage, days, today) {
     const d = passageDate(passage);
-    return d !== null && d >= shiftDate(today, -days);
+    return d !== null && d >= shiftDate(today, -Math.trunc(days));
+  }
+  function weekLabel(week) {
+    const iso = /^\d{4}-W(\d{1,2})$/.exec(String(week || ""));
+    return iso ? "W" + iso[1] : String(week || "").slice(5, 10);
   }
   function weekStart(week) {
     const s = String(week || "");
@@ -455,7 +460,7 @@ const RadarLogic = (() => {
     return { resolved: done.length, brier: sum / done.length };
   }
 
-  return { DEFAULT_POLICY, passageDate, shiftDate, recent, weekStart, byNewest, triageStatus, classify,
+  return { DEFAULT_POLICY, passageDate, shiftDate, recent, weekLabel, weekStart, byNewest, triageStatus, classify,
            isAcknowledgedContradiction, countFeeds, whyShown, interleave, shellQuote, applyCommand, policyYaml,
            markdownQuotes, brier };
 })();
@@ -551,7 +556,7 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
   const isNum = (v) => typeof v === "number" && Number.isFinite(v);
   const f2 = (v) => (isNum(v) ? v.toFixed(2) : "–");
   const f1 = (v) => (isNum(v) ? v.toFixed(1) : "–");
-  const signed = (v) => (isNum(v) ? (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) : "–");
+  const signed = (v, digits) => (isNum(v) ? (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(digits || 1) : "–");
   const human = (s) => (s ? String(s).replace(/_/g, " ") : "");
   const stamp = (iso) => (iso ? String(iso).replace("T", " ").replace(/(:\d\d)?(\.\d+)?Z$/, " UTC") : "never");
   const plural = (n, word) => n + " " + word + (n === 1 ? "" : "s");
@@ -1234,14 +1239,15 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
     const grid = el("div", { class: "hm" });
     grid.style.gridTemplateColumns = "auto repeat(" + weeks.length + ", 16px)";
     grid.append(el("span", {}));
-    weeks.forEach((w, i) => grid.append(el("span", { class: "wk", title: "week of " + L.weekStart(w) }, i % 4 === 0 ? L.weekStart(w).slice(5) : "")));
+    const label = (w) => (String(w) === L.weekStart(w) ? "week of " + w : w + " (week of " + L.weekStart(w) + ")");
+    weeks.forEach((w, i) => grid.append(el("span", { class: "wk", title: label(w) }, (weeks.length - 1 - i) % 4 === 0 ? L.weekLabel(w) : "")));
     for (const [pillar, cells] of Object.entries(rows)) {
       grid.append(el("span", { class: "lbl", title: c.pillars[pillar] || pillar }, pillar));
       weeks.forEach((w, i) => {
         const cell = (cells || [])[i];
         if (!cell || !cell.count) { grid.append(el("span", { class: "hm-empty", "aria-hidden": "true" })); return; }
         const [k, glyph] = cell.net > 0.05 ? ["pos", "+"] : cell.net < -0.05 ? ["neg", "−"] : ["mid", "·"];
-        const title = pillar + " · week of " + L.weekStart(w) + " · net " + signed(cell.net) + " · " + plural(cell.count, "passage");
+        const title = pillar + " · " + label(w) + " · net " + signed(cell.net, 2) + " · " + plural(cell.count, "passage");
         const node = el("button", { type: "button", class: "hm-cell " + k, title, "aria-label": title,
                                     onclick: () => showWeek(c, pillar, w, title) }, glyph);
         node.style.opacity = String(0.35 + 0.65 * Math.min(1, cell.count / max));
@@ -1250,7 +1256,7 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
     }
     return [el("div", { class: "hm-scroll" }, grid), el("div", { class: "legend" },
       el("span", {}, el("i", { style: "background:var(--neg)" }), "− negative"), el("span", {}, el("i", { style: "background:var(--mid)" }), "· mixed"),
-      el("span", {}, el("i", { style: "background:var(--pos)" }), "+ positive"), el("span", {}, "darker = more passages; net is stance × materiality"))];
+      el("span", {}, el("i", { style: "background:var(--pos)" }), "+ positive"), el("span", {}, "net: materiality-weighted stance, −1 to +1; darker = more passages"))];
   }
   function showWeek(c, pillar, week, title) {
     const start = L.weekStart(week), end = L.shiftDate(start, 7);

@@ -18,8 +18,9 @@ from typing import Any
 
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
-from ruamel.yaml.error import YAMLError
+from ruamel.yaml.error import CommentMark, YAMLError
 from ruamel.yaml.scalarstring import DoubleQuotedScalarString
+from ruamel.yaml.tokens import CommentToken
 
 from .thesis import MAX_FACTS_PER_PILLAR, ThesisError, load_thesis
 
@@ -27,6 +28,7 @@ FACT_ID = re.compile(r"^([a-z][a-z0-9_]*)\.(\d+)$")
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # A block-opening key line, such as "known_facts:" or "  inventory:   # comment".
 _OPENS_BLOCK = re.compile(r"^[^\s#-][^#]*:\s*(#.*)?$")
+_DOCUMENT_START = re.compile(r"^---(\s|$)")
 
 
 def add_fact(
@@ -75,18 +77,20 @@ def add_fact(
         else:
             target = _pillar_list(facts, pillar)
             _check_room(target, pillar)
-            del facts[old_pillar][old_index]
-            target.append(new)
-            index = len(target) - 1
+            _delete(facts, old_pillar, old_index)
+            index = _append(target, new)
     else:
         target = _pillar_list(facts, pillar)
         _check_room(target, pillar)
-        target.append(new)
-        index = len(target) - 1
+        index = _append(target, new)
 
     buffer = io.StringIO()
     yaml.dump(data, buffer)
-    _replace_validated(path, buffer.getvalue())
+    edited = buffer.getvalue()
+    preamble = _preamble(original)
+    if preamble and not edited.startswith(preamble):
+        edited = preamble + edited  # ruamel drops comments above an explicit "---"
+    _replace_validated(path, edited)
     return f"{pillar}.{index}"
 
 
@@ -106,7 +110,19 @@ def _round_trip(text: str) -> YAML:
     yaml.width = 1_000_000  # never wrap long facts or flow mappings
     mapping, sequence, offset = _guess_indent(text)
     yaml.indent(mapping=mapping, sequence=sequence, offset=offset)
+    yaml.explicit_start = _preamble(text) is not None
     return yaml
+
+
+def _preamble(text: str) -> str | None:
+    """The comment and blank lines above an explicit "---" document start; None when there is none."""
+    lines = text.splitlines(keepends=True)
+    for index, line in enumerate(lines):
+        if _DOCUMENT_START.match(line):
+            return "".join(lines[:index])
+        if line.strip() and not line.lstrip().startswith("#"):
+            return None
+    return None
 
 
 def _guess_indent(text: str) -> tuple[int, int, int]:
@@ -177,6 +193,64 @@ def _check_room(items: CommentedSeq, pillar: str) -> None:
             f"{pillar} already has {MAX_FACTS_PER_PILLAR} known facts, the most a pillar can hold; "
             f"replace one instead (--replace {pillar}.<index>)"
         )
+
+
+# ruamel attaches the full-line comments and blank lines that follow a list item to that item, after
+# its end-of-line comment. Those lines introduce whatever comes next, so when items are appended or
+# deleted they move along to stay in front of it.
+
+
+def _take_trailing(items: CommentedSeq, index: int) -> str:
+    """Detach the full-line comments after item `index`, keeping its end-of-line comment."""
+    slot = items.ca.items.get(index)
+    token = slot[0] if slot else None
+    if token is None:
+        return ""
+    eol, _, tail = token.value.partition("\n")
+    if not tail.strip():
+        return ""
+    if eol.strip():
+        token.value = eol + "\n"
+    else:
+        slot[0] = None
+    return tail
+
+
+def _put_trailing(items: CommentedSeq, index: int, tail: str) -> None:
+    slot = items.ca.items.setdefault(index, [None, None, None, None])
+    token = slot[0]
+    if token is None:
+        slot[0] = CommentToken("\n" + tail, CommentMark(0))
+    else:
+        token.value = token.value.rstrip("\n") + "\n" + tail
+
+
+def _append(items: CommentedSeq, node: Any) -> int:
+    tail = _take_trailing(items, len(items) - 1) if items else ""
+    items.append(node)
+    if tail:
+        _put_trailing(items, len(items) - 1, tail)
+    return len(items) - 1
+
+
+def _delete(facts: CommentedMap, pillar: str, index: int) -> None:
+    items = facts[pillar]
+    tail = _take_trailing(items, index)
+    del items[index]
+    if not items:
+        items.fa.set_flow_style()  # an empty list is written "[]"
+    if not tail:
+        return
+    if index > 0:
+        _put_trailing(items, index - 1, tail)
+    elif items:
+        if items.ca.comment is None:
+            items.ca.comment = [None, []]
+        elif items.ca.comment[1] is None:
+            items.ca.comment[1] = []
+        items.ca.comment[1].append(CommentToken(tail, CommentMark(0)))
+    else:
+        facts.ca.items.setdefault(pillar, [None, None, None, None])[2] = CommentToken("\n" + tail, CommentMark(0))
 
 
 def _fact_node(text: str, *, as_of: str | None, source: int | None) -> Any:
