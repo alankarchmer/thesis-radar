@@ -60,6 +60,7 @@ max_cost_per_run: 2.0          # dollars; judge stops before sending more unless
 rejudge_window_days: 120       # after a thesis edit, re-judge only documents this recent
 edgar_forms: [10-K, 10-K/A, 10-Q, 10-Q/A, 8-K, 20-F, 40-F, 6-K]
 peer_forms: [8-K, 6-K]         # peers: exhibit 99 (earnings releases) only
+# 8-K/6-K exhibits are picked by their declared type (EX-99*), not their file name.
 serve_port: 8765
 ```
 
@@ -137,6 +138,8 @@ terminal.
   their last judgment (marked stale) until `radar judge --all`. Until a passage is
   re-judged, the dashboard shows its previous judgment, marked stale.
 - A request Jev rejects as invalid is not retried every run; `--retry-failed` sends it again.
+- Risk-factor language about what could happen, and standard accounting-policy text, counts as
+  boilerplate: it is never evidence for or against an assumption, and never a contradiction.
 
 ## Trust the feed only after calibrating it
 

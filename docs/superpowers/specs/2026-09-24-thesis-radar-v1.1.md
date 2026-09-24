@@ -137,6 +137,7 @@ contradictions:
   window_days: 120
   contradicts: {min: 0.7}
   materiality: {min: 1.0}
+  boilerplate: {max: 0.5}         # looser than What's new: a missed contradiction costs more
 maybe:
   new_info: {between: [0.4, 0.6]}
 open_questions:
@@ -158,6 +159,7 @@ supports      = assumptions with P(supports) >= contradicts.min (and not contrad
 answers_q     = open questions with P >= open_questions.min
 recent(d)     = passage date (doc date, else ingested date) >= today - d days
 contra_raw    = contradicts nonempty and materiality >= contradictions.materiality.min
+                and boilerplate <= contradictions.boilerplate.max
 in_contradictions = contra_raw and recent(contradictions.window_days) and triage != acknowledged
 eligible      = on_pillar and boilerplate <= max and materiality >= min and not contra_raw
                 and recent(whats_new.window_days) and triage not in {dismissed, absorbed}
@@ -209,7 +211,7 @@ Payload {
 Policy (flat) {
   metadata_min_probability, whats_new_window_days, pillar_probability_min, boilerplate_max,
   new_info_min, materiality_min, contradictions_window_days, contradicts_min,
-  contradiction_materiality_min, maybe_new_info_low, maybe_new_info_high,
+  contradiction_materiality_min, contradiction_boilerplate_max, maybe_new_info_low, maybe_new_info_high,
   open_questions_min, divergence_window_days, divergence_min_gap, divergence_min_passages,
   ledger_min_probability
 }
@@ -335,3 +337,29 @@ a spot-check `y`/`n` gives `whats_new=1/0` with origin `spotcheck`.
   can never block it) and answers every error as JSON.
 - **Thesis edits** keep the file's indentation, comments, and quoting; fact text is written
   double-quoted and `as_of` as a date.
+
+## 10. Fixes from the first live run (ported from `feat/thesis-radar`)
+
+The first live run on Polaris, Deere, and peer filings (on the earlier `feat/thesis-radar`
+implementation, 2026-09-21/22) found three problems that this code shared; they are ported here.
+
+- **8-K and 6-K exhibits are chosen by declared type.** Each filing's `-index-headers.html` lists
+  every document's `<TYPE>`; HTML documents typed `EX-99*` are fetched. File names are unreliable:
+  Polaris files its earnings release as `pii-q22026earningsrelease.htm`, which the old `ex99`
+  name match missed.
+- **EDGAR downloads retry.** Timeouts, connection errors, 429, and 5xx are retried up to three
+  times with backoff (a single read timeout on a Deere exhibit used to abort the ticker). A ticker
+  that still fails is reported and its fetch state is not advanced, so the next fetch retries it.
+- **Hypothetical risk disclosures are boilerplate, not evidence.** Commodity, tariff, and PFAS risk
+  factors were pinned as high-materiality contradictions. The boilerplate question now covers
+  risk-factor and market-risk disclosures that describe what could happen (even when they name the
+  company's own products or markets) and standard accounting-policy text; assumption questions
+  exclude such disclosures as evidence; and contradictions require `boilerplate <=
+  contradictions.boilerplate.max` (default 0.5). `RUBRIC_VERSION` is `2026-09-24.2`; passages from
+  the last `rejudge_window_days` are re-judged on the next run, and `radar judge --all` re-judges
+  the rest.
+
+The live run also tuned repeat detection on the earlier implementation (hide a passage when 90% of
+its five-word runs appeared before; 80% hid bullets with new figures). This code instead hides only
+exact repeats and shows near duplicates with a diff while passing the earlier version to Jev, so a
+changed figure is judged rather than hidden; the two approaches were not merged.

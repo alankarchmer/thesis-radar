@@ -157,3 +157,18 @@ def test_shared_cases_match_the_dashboard_logic():
         policy = policy_from_flat(case["policy"])
         got = classify_passage(case["passage"], policy, date.fromisoformat(case["today"])).as_payload()
         assert got == case["expected"], case["name"]
+
+
+def test_boilerplate_is_not_pinned_as_a_contradiction():
+    assert not run(contradicts=0.9, boilerplate=0.8).in_contradictions
+    assert not run(contradicts=0.9, boilerplate=0.8).flagged
+    assert run(contradicts=0.9, boilerplate=0.5).in_contradictions
+    assert run(contradicts=0.9, boilerplate=0.4).in_contradictions
+
+
+def test_contradiction_boilerplate_limit_is_configurable(tmp_path):
+    path = tmp_path / "policy.yaml"
+    path.write_text("contradictions:\n  boilerplate: {max: 0.2}\n", encoding="utf-8")
+    policy = load_policy(path)
+    assert policy.contradiction_boilerplate_max == 0.2
+    assert "  boilerplate: {max: 0.2}" in policy_yaml(policy).split("contradictions:")[1]

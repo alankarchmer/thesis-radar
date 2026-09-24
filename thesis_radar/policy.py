@@ -32,6 +32,7 @@ class Policy:
     contradictions_window_days: int = 120
     contradicts_min: float = 0.7
     contradiction_materiality_min: float = 1.0
+    contradiction_boilerplate_max: float = 0.5
     maybe_new_info_low: float = 0.4
     maybe_new_info_high: float = 0.6
     open_questions_min: float = 0.6
@@ -54,6 +55,7 @@ _SETTINGS: dict[tuple[str, ...], str] = {
     ("contradictions", "window_days"): "contradictions_window_days",
     ("contradictions", "contradicts", "min"): "contradicts_min",
     ("contradictions", "materiality", "min"): "contradiction_materiality_min",
+    ("contradictions", "boilerplate", "max"): "contradiction_boilerplate_max",
     ("open_questions", "min"): "open_questions_min",
     ("divergence", "window_days"): "divergence_window_days",
     ("divergence", "min_gap"): "divergence_min_gap",
@@ -66,6 +68,7 @@ _INTEGER_FIELDS = frozenset(
 )
 _PROBABILITY_FIELDS = frozenset(
     {"metadata_min_probability", "pillar_probability_min", "boilerplate_max", "new_info_min", "contradicts_min",
+     "contradiction_boilerplate_max",
      "maybe_new_info_low", "maybe_new_info_high", "open_questions_min", "ledger_min_probability"}
 )
 
@@ -136,6 +139,7 @@ def policy_yaml(policy: Policy) -> str:
         f"  window_days: {p.contradictions_window_days}\n"
         f"  contradicts: {{min: {p.contradicts_min:g}}}\n"
         f"  materiality: {{min: {p.contradiction_materiality_min:g}}}\n"
+        f"  boilerplate: {{max: {p.contradiction_boilerplate_max:g}}}\n"
         "maybe:\n"
         f"  new_info: {{between: [{p.maybe_new_info_low:g}, {p.maybe_new_info_high:g}]}}\n"
         "open_questions:\n"
@@ -278,16 +282,23 @@ def classify(
     )
     materiality = float(p.get("materiality") or 0.0)
     new_info = float(p.get("new_info") or 0.0)
-    contra_raw = bool(contradicts) and materiality >= policy.contradiction_materiality_min
+    boilerplate = p.get("boilerplate")
+    boilerplate_p = float(1.0 if boilerplate is None else boilerplate)
+    # Boilerplate, including risk disclosures about what could happen, is never a contradiction. The limit is
+    # looser than What's new's on purpose: a missed contradiction costs more than an extra read.
+    contra_raw = (
+        bool(contradicts)
+        and materiality >= policy.contradiction_materiality_min
+        and boilerplate_p <= policy.contradiction_boilerplate_max
+    )
     in_contradictions = (
         contra_raw and recent(day, policy.contradictions_window_days, today) and triage_status != "acknowledged"
     )
-    boilerplate = p.get("boilerplate")
     on_pillar = (
         p.get("pillar") not in (None, OFF_THESIS) and float(p.get("pillar_p") or 0.0) >= policy.pillar_probability_min
     )
     substantive = (
-        on_pillar and float(1.0 if boilerplate is None else boilerplate) <= policy.boilerplate_max
+        on_pillar and boilerplate_p <= policy.boilerplate_max
         and materiality >= policy.materiality_min
     )
     eligible = (
