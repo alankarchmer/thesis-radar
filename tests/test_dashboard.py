@@ -136,16 +136,20 @@ def test_stale_answers_are_shown_after_a_thesis_edit(app):
 
 def test_unsorted_documents_come_with_a_tag_command(app):
     [item] = build(app)["unsorted"]
-    assert item["reason"] == "no matching company"
+    assert item["reason"] == "no matching company" and item["link"].startswith("file://")
     # Known metadata is filled in; unknown parts are placeholders.
     assert item["command"] == f"radar tag {item['id']} --ticker TICKER --source own_note --date 2026-09-20"
 
 
-def test_spot_checks_are_unflagged_and_embedded(app):
+def test_spot_checks_are_unflagged_embedded_and_not_repeated(app):
     company = build(app)["companies"][0]
     embedded = {p["id"]: p for p in company["passages"]}
+    assert company["spot_checks"]
     for pid in company["spot_checks"]:
         assert pid in embedded and not embedded[pid]["classified"]["flagged"]
+    answered = company["spot_checks"][0]
+    app.store.save_label(answered, "whats_new", False, ticker="ACME", origin="spotcheck")
+    assert answered not in build(app)["companies"][0]["spot_checks"]
 
 
 def test_documents_report_completeness(app):

@@ -60,6 +60,7 @@ def unsorted_payload(app: App) -> list[dict[str, Any]]:
             "id": d["id"],
             "title": d["title"],
             "path": d["path"],
+            "link": link_for(app, d["path"], None),
             "reason": d["status_reason"],
             "ticker": d["ticker"],
             "source_type": d["source_type"],
@@ -176,7 +177,8 @@ def company_payload(app: App, thesis: Thesis, plan: JudgePlan, *, previous_view:
     recent_docs = {doc_id for doc_id, d in documents.items() if d["ingested_at"][:10] >= recent_cutoff}
 
     built = [builder.build(row, contexts.get(row["passage_id"])) for row in rows]
-    spot_checks = _spot_checks(built, policy.whats_new_window_days, ticker, app)
+    answered = {row["passage_id"] for row in store.labels(ticker) if row["origin"] == "spotcheck"}
+    spot_checks = _spot_checks([p for p in built if p["id"] not in answered], policy.whats_new_window_days, ticker, app)
     spot_set = set(spot_checks)
     passages = [p for p in built if p["document_id"] in recent_docs or p["id"] in spot_set or _worth_embedding(p)]
     embedded_ids = {p["id"] for p in passages}

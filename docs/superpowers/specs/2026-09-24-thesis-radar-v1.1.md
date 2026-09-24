@@ -313,3 +313,25 @@ a spot-check `y`/`n` gives `whats_new=1/0` with origin `spotcheck`.
 | `radar quote IDS...` | Markdown quotes with citations |
 | `radar label` / `radar calibrate` | As in v1, with weights, keys, triage, and spot checks |
 | `radar mcp` | Read-only MCP server over stdio |
+
+## 9. Decisions made during implementation
+
+- **Near duplicates** use a word-sequence match ratio (difflib) of at least 0.7 after a word-set
+  Jaccard prefilter of 0.3, rather than shingle Jaccard: short passages repeated with updated
+  numbers are then still recognized.
+- **Contradiction cards**: only `acknowledged` removes a contradiction, so `d`, `x`, and `a` on a
+  contradiction card send `acknowledged` with their usual labels; `c` and `f` add
+  `contradicts__<id>` = 1 or 0 for every flagged assumption. A passage contradicting several
+  assumptions is listed once, under the first in thesis order.
+- **Spot checks** fill positions 10, 20, ... only when a feed item follows; passages that already
+  have a spot-check label are not offered again.
+- **Ledger**: a result only settles a promise about the same company (a peer's result never
+  settles the host's guidance). When several results decide, the latest decides.
+- **Redlines**: the item limit applies per form family; a family with two filings and no
+  differences is still listed, empty.
+- **Static action queue** is kept in `localStorage` per `generated_at`; queues left by earlier
+  dashboards are offered for copying instead of being dropped.
+- **Serve** closes each connection after its response (one thread, so an idle browser connection
+  can never block it) and answers every error as JSON.
+- **Thesis edits** keep the file's indentation, comments, and quoting; fact text is written
+  double-quoted and `as_of` as a date.
