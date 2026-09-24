@@ -266,7 +266,7 @@ const RadarLogic = (() => {
   const DEFAULT_POLICY = {
     metadata_min_probability: 0.6, whats_new_window_days: 30, pillar_probability_min: 0.5, boilerplate_max: 0.3,
     new_info_min: 0.6, materiality_min: 1.5, contradictions_window_days: 120, contradicts_min: 0.7,
-    contradiction_materiality_min: 1.0, maybe_new_info_low: 0.4, maybe_new_info_high: 0.6, open_questions_min: 0.6,
+    contradiction_materiality_min: 1.0, contradiction_boilerplate_max: 0.5, maybe_new_info_low: 0.4, maybe_new_info_high: 0.6, open_questions_min: 0.6,
     divergence_window_days: 120, divergence_min_gap: 1.0, divergence_min_passages: 3, ledger_min_probability: 0.6,
   };
   const isNum = (v) => typeof v === "number" && Number.isFinite(v);
@@ -325,7 +325,8 @@ const RadarLogic = (() => {
     const ev = evidence(p, policy);
     const mat = num(p.materiality, 0), bp = num(p.boilerplate, 1), ni = num(p.new_info, 0);
     const onPillar = !!p.pillar && p.pillar !== "off_thesis" && num(p.pillar_p, 0) >= policy.pillar_probability_min;
-    const contraRaw = ev.contradicts.length > 0 && mat >= policy.contradiction_materiality_min;
+    const bpContra = num(policy.contradiction_boilerplate_max, DEFAULT_POLICY.contradiction_boilerplate_max);
+    const contraRaw = ev.contradicts.length > 0 && mat >= policy.contradiction_materiality_min && bp <= bpContra;
     const recentContra = recent(passage, policy.contradictions_window_days, today);
     const recentNew = recent(passage, policy.whats_new_window_days, today);
     const base = onPillar && bp <= policy.boilerplate_max && mat >= policy.materiality_min;
@@ -334,7 +335,7 @@ const RadarLogic = (() => {
     const inMaybe = eligible && !inNew && policy.maybe_new_info_low <= ni && ni < policy.maybe_new_info_high;
     const inContra = contraRaw && recentContra && status !== "acknowledged";
     const flagged = contraRaw || (base && ni >= policy.maybe_new_info_low);
-    return { p, status, ev, mat, bp, ni, onPillar, contraRaw, recentContra, recentNew, inNew, inMaybe, inContra, flagged };
+    return { p, status, ev, mat, bp, bpContra, ni, onPillar, contraRaw, recentContra, recentNew, inNew, inMaybe, inContra, flagged };
   }
   function classify(passage, policy, today) {
     if (!passage || !passage.p) {
@@ -377,9 +378,11 @@ const RadarLogic = (() => {
     else out.push(c.flagged ? "Flagged, but not in a feed right now." : "Not flagged at the current thresholds.");
     for (const a of c.ev.contradicts) tick(true, `contradicts ${a}: P ${f2(asm[a].contradicts)} ≥ ${f2(policy.contradicts_min)}`);
     if (c.ev.contradicts.length) {
-      const ok = c.contraRaw;
-      tick(ok, `materiality ${f1(c.mat)} ${ok ? "≥" : "<"} ${f1(policy.contradiction_materiality_min)} (contradiction minimum)`);
-      if (ok) {
+      const matOk = c.mat >= policy.contradiction_materiality_min;
+      tick(matOk, `materiality ${f1(c.mat)} ${matOk ? "≥" : "<"} ${f1(policy.contradiction_materiality_min)} (contradiction minimum)`);
+      const bpOk = c.bp <= c.bpContra;
+      tick(bpOk, `boilerplate P ${f2(c.bp)} ${bpOk ? "≤" : ">"} ${f2(c.bpContra)} (a risk disclosure about what could happen is not a contradiction)`);
+      if (c.contraRaw) {
         tick(c.recentContra, `dated ${date}, ${c.recentContra ? "inside" : "outside"} the ${policy.contradictions_window_days}-day contradiction window`);
         if (c.status === "acknowledged") tick(false, "you acknowledged this contradiction");
         out.push("Contradictions are never repeated in What's new or Maybe.");
@@ -439,6 +442,7 @@ const RadarLogic = (() => {
       `  window_days: ${int(pol.contradictions_window_days)}`,
       `  contradicts: {min: ${fl(pol.contradicts_min)}}`,
       `  materiality: {min: ${fl(pol.contradiction_materiality_min)}}`,
+      `  boilerplate: {max: ${fl(pol.contradiction_boilerplate_max)}}`,
       "maybe:",
       `  new_info: {between: [${fl(pol.maybe_new_info_low)}, ${fl(pol.maybe_new_info_high)}]}`,
       "open_questions:",
@@ -506,6 +510,7 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
     ["maybe_new_info_high", "Maybe band: new info <", 0, 1, 0.01],
     ["contradicts_min", "Contradicts / supports ≥", 0, 1, 0.01],
     ["contradiction_materiality_min", "Contradiction materiality ≥", 0, 3, 0.05],
+    ["contradiction_boilerplate_max", "Contradiction boilerplate ≤", 0, 1, 0.01],
     ["contradictions_window_days", "Contradictions window (days)", 0, 730, 1],
     ["open_questions_min", "Open question ≥", 0, 1, 0.01],
   ];

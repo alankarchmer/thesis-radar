@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import html
 import json
 import re
 import time
+import urllib.error
 import urllib.request
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
@@ -18,10 +20,14 @@ from .store import Store
 TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 FILING_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/{name}"
-INDEX_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/index.json"
+INDEX_HEADERS_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/{accession}-index-headers.html"
 FIRST_FETCH_DAYS = 365
 MIN_INTERVAL_SECONDS = 0.11
 EXHIBIT_FORMS = frozenset({"8-K", "8-K/A", "6-K"})
+# Transient failures (a read timeout, a dropped connection, 429, 5xx) are retried with backoff.
+ATTEMPTS = 3
+RETRY_BACKOFF_SECONDS = 2.0
+RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
 
 HttpGet = Callable[[str], bytes]
 
@@ -39,18 +45,25 @@ def make_http_get(
     last = [float("-inf")]
 
     def get(url: str) -> bytes:
-        wait = last[0] + MIN_INTERVAL_SECONDS - clock()
-        if wait > 0:
-            sleep(wait)
-        last[0] = clock()
-        request = urllib.request.Request(
-            url, headers={"User-Agent": f"thesis-radar {email}", "Accept-Encoding": "identity"}
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=60) as response:
-                return response.read()
-        except OSError as exc:
-            raise EdgarError(f"GET {url} failed: {exc}") from exc
+        for attempt in range(1, ATTEMPTS + 1):
+            wait = last[0] + MIN_INTERVAL_SECONDS - clock()
+            if wait > 0:
+                sleep(wait)
+            last[0] = clock()
+            request = urllib.request.Request(
+                url, headers={"User-Agent": f"thesis-radar {email}", "Accept-Encoding": "identity"}
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=60) as response:
+                    return response.read()
+            except urllib.error.HTTPError as exc:
+                if exc.code not in RETRY_STATUSES or attempt == ATTEMPTS:
+                    raise EdgarError(f"GET {url} failed: {exc}") from exc
+            except OSError as exc:  # timeouts and connection failures are usually momentary
+                if attempt == ATTEMPTS:
+                    raise EdgarError(f"GET {url} failed after {ATTEMPTS} attempts: {exc}") from exc
+            sleep(RETRY_BACKOFF_SECONDS * attempt)
+        raise AssertionError("unreachable")
 
     return get
 
@@ -82,9 +95,23 @@ def new_filings(
     return picked
 
 
-def is_exhibit_99(name: str) -> bool:
-    compact = re.sub(r"[^a-z0-9]", "", name.lower())
-    return ("ex99" in compact or "exhibit99" in compact) and name.lower().endswith((".htm", ".html"))
+_DOCUMENT = re.compile(r"<DOCUMENT>(.*?)</DOCUMENT>", re.S | re.I)
+_TYPE = re.compile(r"<TYPE>([^\s<]+)", re.I)
+_FILENAME = re.compile(r"<FILENAME>([^\s<]+)", re.I)
+
+
+def exhibit_99_names(index_headers: str) -> list[str]:
+    """HTML files filed as exhibit 99 (where earnings releases live), by their declared type, not their name.
+
+    File names are unreliable: Polaris files its release as `pii-q22026earningsrelease.htm`.
+    The filing's `-index-headers.html` declares every document's `<TYPE>`.
+    """
+    names = []
+    for block in _DOCUMENT.findall(html.unescape(index_headers)):
+        kind, name = _TYPE.search(block), _FILENAME.search(block)
+        if kind and name and kind.group(1).upper().startswith("EX-99") and name.group(1).lower().endswith((".htm", ".html")):
+            names.append(name.group(1))
+    return names
 
 
 @dataclass
@@ -123,7 +150,8 @@ def fetch_all(
             _fetch_ticker(ws, store, ticker, cik, http_get, today=today, forms=ticker_forms,
                           exhibits_only=exhibits_only, report=report)
         except (EdgarError, ValueError, KeyError) as exc:
-            report.messages.append(f"{ticker}: {exc}")
+            # The ticker's fetch state is not advanced, so the next fetch retries it; stored files deduplicate.
+            report.messages.append(f"{ticker}: {exc}; will retry at the next fetch")
     return report
 
 
@@ -147,11 +175,8 @@ def _fetch_ticker(
         folder = accession.replace("-", "")
         names = [] if exhibits_only else [primary]
         if form.upper() in EXHIBIT_FORMS:
-            index = json.loads(http_get(INDEX_URL.format(cik=cik, folder=folder)))
-            names += [
-                item["name"] for item in index["directory"]["item"]
-                if is_exhibit_99(item["name"]) and item["name"] != primary
-            ]
+            headers = http_get(INDEX_HEADERS_URL.format(cik=cik, folder=folder, accession=accession))
+            names += [name for name in exhibit_99_names(headers.decode("utf-8", errors="replace")) if name != primary]
         for name in names:
             content = http_get(FILING_URL.format(cik=cik, folder=folder, name=name))
             outcome = store_filing(

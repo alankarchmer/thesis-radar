@@ -219,6 +219,7 @@ contradictions:
   window_days: 120
   contradicts: {min: 0.7}
   materiality: {min: 1.0}
+  boilerplate: {max: 0.5}
 maybe:
   new_info: {between: [0.4, 0.6]}
 open_questions:
