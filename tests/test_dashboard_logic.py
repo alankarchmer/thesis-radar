@@ -69,7 +69,9 @@ def test_template_has_exactly_one_marker_inside_the_json_data_block():
     assert f'<script id="radar-data" type="application/json">{MARKER}</script>' in template
 
 
-@pytest.mark.parametrize("needle", ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "http://", "https://"])
+@pytest.mark.parametrize(
+    "needle", ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "http://", "https://"]
+)
 def test_template_avoids_unsafe_apis_and_network(needle):
     assert needle not in _template()
 
@@ -156,7 +158,16 @@ def test_recent_and_acknowledged_helpers(tmp_path):
               L.recent(base, 4.9, "2026-09-24")];
     """
     assert run_logic(tmp_path, body, None) == [
-        True, False, "2026-09-20", True, "2026-09-14", "2026-09-14", "2021-01-04", "W09", True]
+        True,
+        False,
+        "2026-09-20",
+        True,
+        "2026-09-14",
+        "2026-09-14",
+        "2021-01-04",
+        "W09",
+        True,
+    ]
 
 
 @needs_node
@@ -179,9 +190,12 @@ def test_why_shown_names_each_rule(tmp_path):
 def test_shell_quote_round_trips_single_quotes(tmp_path):
     texts = ["it's", "'", "a 'quoted' $HOME `x` \\ \"double\"", "", "line\nbreak"]
     actions = [{"op": "fact", "ticker": "ACME", "pillar": "pricing", "text": "Dealers' incentives 'up' $1,450"}]
-    quoted, command = run_logic(tmp_path, "return [input.texts.map(L.shellQuote), L.applyCommand(input.actions)];",
-                                {"texts": texts, "actions": actions})
-    for text, q in zip(texts, quoted):
+    quoted, command = run_logic(
+        tmp_path,
+        "return [input.texts.map(L.shellQuote), L.applyCommand(input.actions)];",
+        {"texts": texts, "actions": actions},
+    )
+    for text, q in zip(texts, quoted, strict=True):
         assert shlex.split(q) == [text]
     argv = shlex.split(command)
     assert argv[:2] == ["radar", "apply"] and json.loads(argv[2]) == actions
@@ -217,9 +231,15 @@ ledger:
   min_probability: 0.6
 """
     body = "return [L.policyYaml(L.DEFAULT_POLICY), L.policyYaml(Object.assign({}, L.DEFAULT_POLICY, input))];"
-    defaults, changed = run_logic(tmp_path, body, {"new_info_min": 0.55, "whats_new_window_days": 45, "materiality_min": 2})
+    defaults, changed = run_logic(
+        tmp_path, body, {"new_info_min": 0.55, "whats_new_window_days": 45, "materiality_min": 2}
+    )
     assert defaults == expected
-    assert "  new_info: {min: 0.55}" in changed and "  window_days: 45" in changed and "  materiality: {min: 2.0}" in changed
+    assert (
+        "  new_info: {min: 0.55}" in changed
+        and "  window_days: 45" in changed
+        and "  materiality: {min: 2.0}" in changed
+    )
 
 
 @needs_node
@@ -238,11 +258,24 @@ def test_interleave_puts_spot_checks_at_every_tenth_position(tmp_path):
 @needs_node
 def test_markdown_quotes_are_verbatim_with_citations(tmp_path):
     passages = [
-        {"text": "Retail was softer.\nWe asked dealers to hold orders.", "speaker": "Jane Doe - CEO",
-         "title": "Q3 call", "source_type": "earnings_transcript", "date": "2026-09-15", "page": 2,
-         "link": "file:///r/call.pdf#page=2"},
-        {"text": "Lot had 60+ sleds.", "speaker": None, "title": "Dealer visit", "source_type": "own_note",
-         "date": "2026-09-22", "page": None, "link": "javascript:alert(1)"},
+        {
+            "text": "Retail was softer.\nWe asked dealers to hold orders.",
+            "speaker": "Jane Doe - CEO",
+            "title": "Q3 call",
+            "source_type": "earnings_transcript",
+            "date": "2026-09-15",
+            "page": 2,
+            "link": "file:///r/call.pdf#page=2",
+        },
+        {
+            "text": "Lot had 60+ sleds.",
+            "speaker": None,
+            "title": "Dealer visit",
+            "source_type": "own_note",
+            "date": "2026-09-22",
+            "page": None,
+            "link": "javascript:alert(1)",
+        },
     ]
     text = run_logic(tmp_path, "return L.markdownQuotes(input);", passages)
     assert text == (

@@ -45,9 +45,16 @@ def render(payload) -> str:
 
 
 def _chromium_executable() -> str | None:
-    roots = [os.environ.get("PLAYWRIGHT_BROWSERS_PATH"), "/opt/pw-browsers", str(Path.home() / ".cache" / "ms-playwright")]
-    patterns = ["chromium-*/chrome-linux/chrome", "chromium-*/chrome-linux64/chrome",
-                "chromium_headless_shell-*/chrome-linux/headless_shell"]
+    roots = [
+        os.environ.get("PLAYWRIGHT_BROWSERS_PATH"),
+        "/opt/pw-browsers",
+        str(Path.home() / ".cache" / "ms-playwright"),
+    ]
+    patterns = [
+        "chromium-*/chrome-linux/chrome",
+        "chromium-*/chrome-linux64/chrome",
+        "chromium_headless_shell-*/chrome-linux/headless_shell",
+    ]
     for root in filter(None, roots):
         for pattern in patterns:
             hits = sorted(glob.glob(os.path.join(root, pattern)), reverse=True)
@@ -87,7 +94,9 @@ def open_page(browser, tmp_path):
             page.add_init_script(init_script)
         html = render(payload)
         if payload.get("mode") == "serve":
-            page.route(SERVE_URL, lambda route: route.fulfill(status=200, content_type="text/html; charset=utf-8", body=html))
+            page.route(
+                SERVE_URL, lambda route: route.fulfill(status=200, content_type="text/html; charset=utf-8", body=html)
+            )
             for pattern, handler in (serve_routes or {}).items():
                 page.route(pattern, handler)
             page.goto(SERVE_URL)
@@ -198,7 +207,7 @@ def test_overview_heatmap_sparklines_and_flagged_divergence(open_page):
     assert re.search(r"· 2026-W\d\d \(week of 2026-\d\d-\d\d\) · net [+−]?\d\.\d\d · \d+ passages?$", title), title
     labels = [t for t in acme.locator(".hm .wk").all_text_contents() if t]
     weeks = company("ACME")["heatmap"]["weeks"]
-    assert labels == ["W" + w[-2:] for w in weeks[(len(weeks) - 1) % 4::4]] and labels[-1] == "W39"
+    assert labels == ["W" + w[-2:] for w in weeks[(len(weeks) - 1) % 4 :: 4]] and labels[-1] == "W39"
     assert acme.locator("svg.spark").count() == len(company("ACME")["assumptions"])
     assert acme.locator("svg.spark polyline").count() == len(company("ACME")["assumptions"])
     [d] = [d for d in company("ACME")["divergence"] if d["flagged"]]
@@ -243,7 +252,9 @@ def test_whats_new_count_matches_the_classification(open_page):
     assert page.locator('nav#tabs [data-tab="ACME"] .badge').text_content() == str(expected)
     goto_tab(page, "ACME")
     assert whats_new_count(page) == expected
-    ids = page.locator('.feed[data-feed="new"] > .card:not(.spot)').evaluate_all("ns => ns.map(n => Number(n.dataset.id))")
+    ids = page.locator('.feed[data-feed="new"] > .card:not(.spot)').evaluate_all(
+        "ns => ns.map(n => Number(n.dataset.id))"
+    )
     assert ids == [p["id"] for p in feed_order(c)]
 
 
@@ -258,8 +269,16 @@ def test_spot_check_takes_position_ten_and_records_a_label(open_page):
     assert all("spot" not in (cards.nth(i).get_attribute("class")) for i in range(9))
     tenth.click()
     page.keyboard.press("y")
-    assert queued(page) == [{"op": "label", "ticker": "ACME", "passage_id": 1073, "question": "whats_new", "value": 1,
-                             "origin": "spotcheck"}]
+    assert queued(page) == [
+        {
+            "op": "label",
+            "ticker": "ACME",
+            "passage_id": 1073,
+            "question": "whats_new",
+            "value": 1,
+            "origin": "spotcheck",
+        }
+    ]
     assert int(new_cards(page).nth(9).get_attribute("data-id")) == company("ACME")["spot_checks"][1]
 
 
@@ -297,13 +316,30 @@ def test_static_queue_survives_a_reload(open_page):
     goto_tab(page, "ACME")
     assert len(queued(page)) == 3
     assert page.locator(f'.card[data-section="new"][data-id="{pid}"]').count() == 0
-    page.click("#actionbar >> text=Clear")
+    page.click('#actionbar >> text="Clear"')
     assert page.locator("#actionbar").is_hidden()
 
 
+def test_queue_left_by_an_earlier_dashboard_is_offered(open_page):
+    old = [{"op": "triage", "ticker": "ACME", "passage_id": 1053, "status": "dismissed"}]
+    script = f"localStorage.setItem('thesis-radar:queue:2026-09-20T08:00:00Z', {json.dumps(json.dumps(old))!s});"
+    page = open_page(init_script=script).page
+    row = page.locator("#actionbar .older")
+    assert "1 action from the dashboard generated 2026-09-20 08:00 UTC was never cleared" in row.text_content()
+    argv = shlex.split(row.locator("code").text_content())
+    assert json.loads(argv[2]) == old
+    goto_tab(page, "ACME")
+    assert page.locator('.card[data-section="new"][data-id="1053"]').count() == 1
+    row.locator('text="Discard"').click()
+    assert page.locator("#actionbar").is_hidden()
+    assert page.evaluate("localStorage.length") == 0
+
+
 def test_storage_that_throws_does_not_break_the_queue(open_page):
-    tab = open_page(init_script="Object.defineProperty(window, 'localStorage', "
-                                "{configurable: true, get() { throw new Error('storage disabled'); }});")
+    tab = open_page(
+        init_script="Object.defineProperty(window, 'localStorage', "
+        "{configurable: true, get() { throw new Error('storage disabled'); }});"
+    )
     page = tab.page
     goto_tab(page, "ACME")
     focus_first(page, "new")
@@ -319,8 +355,14 @@ def test_star_contradiction_and_absorb_actions(open_page):
     page.keyboard.press("c")
     assert queued(page)[-2:] == [
         {"op": "triage", "ticker": "ACME", "passage_id": pid, "status": "acknowledged"},
-        {"op": "label", "ticker": "ACME", "passage_id": pid, "question": "contradicts__inv_normalizes", "value": 1,
-         "origin": "triage"},
+        {
+            "op": "label",
+            "ticker": "ACME",
+            "passage_id": pid,
+            "question": "contradicts__inv_normalizes",
+            "value": 1,
+            "origin": "triage",
+        },
     ]
     assert "Acknowledged (2)" in page.locator("#contradictions").text_content()
     page.locator('.card[data-section="new"][data-id="1044"]').click()
@@ -344,8 +386,14 @@ def test_star_contradiction_and_absorb_actions(open_page):
         {"op": "label", "ticker": "ACME", "passage_id": 1044, "question": "new_info", "value": 1, "origin": "triage"},
         {"op": "label", "ticker": "ACME", "passage_id": 1044, "question": "material", "value": 1, "origin": "triage"},
         {"op": "label", "ticker": "ACME", "passage_id": 1044, "question": "whats_new", "value": 1, "origin": "triage"},
-        {"op": "fact", "ticker": "ACME", "pillar": "margins", "text": "Gross margin 20.4% in Q3, up 60 bps sequentially.",
-         "source": 1044, "replace": "margins.0"},
+        {
+            "op": "fact",
+            "ticker": "ACME",
+            "pillar": "margins",
+            "text": "Gross margin 20.4% in Q3, up 60 bps sequentially.",
+            "source": 1044,
+            "replace": "margins.0",
+        },
     ]
     assert page.locator('.card[data-section="new"][data-id="1044"]').count() == 0
     facts = open_fold(page, "facts|ACME")
@@ -359,9 +407,9 @@ def test_mark_all_shown_as_read_asks_first_and_sends_no_labels(open_page):
     page.select_option('select[aria-label="Filter by source"]', "sell_side")
     shown = page.locator('.feed[data-feed="new"] > .card:not(.spot)').count()
     assert 0 < shown < whats_new_count(page)
-    page.click("text=Mark all shown as read")
+    page.click('text="Mark all shown as read"')
     assert page.locator("#actionbar").is_hidden()
-    page.click(f"text=Dismiss {shown}")
+    page.click(f'button >> text="Dismiss {shown}"')
     actions = queued(page)
     assert len(actions) == shown and all(a["op"] == "triage" and a["status"] == "dismissed" for a in actions)
     page.keyboard.press("u")
@@ -375,17 +423,24 @@ def test_threshold_slider_updates_live_counts(open_page):
     before = whats_new_count(page)
     after = before + sum(p["classified"]["in_maybe"] for p in c["passages"])
     page.click("#btn-thresholds")
-    page.eval_on_selector('input[data-policy="new_info_min"]',
-                          "n => { n.value = '0.4'; n.dispatchEvent(new Event('input', {bubbles: true})); }")
+    page.eval_on_selector(
+        'input[data-policy="new_info_min"]',
+        "n => { n.value = '0.4'; n.dispatchEvent(new Event('input', {bubbles: true})); }",
+    )
     page.wait_for_function(f"document.querySelector('[data-count=\"whats_new\"]').textContent === '{after}'")
-    assert page.locator('#th-counts [data-ticker="ACME"] [data-live="whats_new"]').text_content() == f"What's new {before} → {after}"
+    assert (
+        page.locator('#th-counts [data-ticker="ACME"] [data-live="whats_new"]').text_content()
+        == f"What's new {before} → {after}"
+    )
     assert page.locator('nav#tabs [data-tab="ACME"] .badge').text_content() == str(after)
-    page.click("text=Reset to saved")
+    page.click('text="Reset to saved"')
     assert whats_new_count(page) == before
-    page.eval_on_selector('input[data-policy="whats_new_window_days"]',
-                          "n => { n.value = '1'; n.dispatchEvent(new Event('input', {bubbles: true})); }")
+    page.eval_on_selector(
+        'input[data-policy="whats_new_window_days"]',
+        "n => { n.value = '1'; n.dispatchEvent(new Event('input', {bubbles: true})); }",
+    )
     page.wait_for_function("document.querySelector('[data-count=\"whats_new\"]').textContent === '0'")
-    page.click("text=Reset to defaults")
+    page.click('text="Reset to defaults"')
     assert whats_new_count(page) == before
 
 
@@ -416,8 +471,12 @@ def test_search_finds_passages_and_highlights_matches(open_page):
     page = open_page().page
     page.fill("#search", "volt-x")
     page.press("#search", "Enter")
-    expected = sum(1 for c in SAMPLE["companies"] for p in c["passages"]
-                   if "volt-x" in ((p["speaker"] or "") + " " + p["text"]).lower())
+    expected = sum(
+        1
+        for c in SAMPLE["companies"]
+        for p in c["passages"]
+        if "volt-x" in ((p["speaker"] or "") + " " + p["text"]).lower()
+    )
     results = page.locator('#app .card[data-section="search"]')
     results.first.wait_for()
     assert results.count() == expected > 0
@@ -443,20 +502,25 @@ def test_passage_text_is_never_interpreted_as_markup(open_page):
 
 
 def test_predictions_resolve_and_quotes_copy(open_page):
-    page = open_page(init_script="window.__copied = []; Object.defineProperty(navigator, 'clipboard', {configurable: true, "
-                                 "value: {writeText: (t) => { window.__copied.push(t); return Promise.resolve(); }}});").page
+    page = open_page(
+        init_script="window.__copied = []; Object.defineProperty(navigator, 'clipboard', {configurable: true, "
+        "value: {writeText: (t) => { window.__copied.push(t); return Promise.resolve(); }}});"
+    ).page
     goto_tab(page, "ACME")
     open_fold(page, "predictions|ACME")
     page.click('[data-prediction="inv_normal_by_q1"] >> button[aria-label="Resolve yes"]')
     assert queued(page) == [{"op": "resolve", "ticker": "ACME", "prediction_id": "inv_normal_by_q1", "outcome": True}]
-    assert "Brier 0.117 over 3 resolved" in page.locator('[data-fold="predictions|ACME"]').text_content()
+    assert "Brier 0.137 over 3 resolved" in page.locator('[data-fold="predictions|ACME"]').text_content()
     first, second = feed_order(company("ACME"))[:2]
     for p in (first, second):
-        page.locator(f'.card[data-section="new"][data-id="{p["id"]}"] input[aria-label="Select for quote export"]').check()
-    page.click("text=Copy as Markdown quotes")
+        page.locator(
+            f'.card[data-section="new"][data-id="{p["id"]}"] input[aria-label="Select for quote export"]'
+        ).check()
+    page.click('text="Copy as Markdown quotes"')
     page.wait_for_function("window.__copied.length === 1")
     text = page.evaluate("window.__copied[0]")
-    assert text.startswith("> " + first["text"]) and ("> " + second["text"]) in text
+    quote = lambda p: "> " + (p["speaker"] + ": " if p["speaker"] else "") + p["text"]  # noqa: E731
+    assert text.startswith(quote(first) + "\n\n— ") and ("\n\n" + quote(second) + "\n\n— ") in text
     assert f"— {first['title']}, own note, {first['date']}, p. {first['page']}" in text
 
 
@@ -514,19 +578,36 @@ def test_serve_mode_posts_actions_with_the_token(open_page):
     assert request.method == "POST"
     assert request.headers["x-radar-token"] == "tok-123"
     assert request.headers["content-type"].startswith("application/json")
-    assert request.post_data_json == {"actions": [
-        {"op": "triage", "ticker": "ACME", "passage_id": pid, "status": "dismissed"},
-        {"op": "label", "ticker": "ACME", "passage_id": pid, "question": "new_info", "value": 0, "origin": "triage"},
-        {"op": "label", "ticker": "ACME", "passage_id": pid, "question": "whats_new", "value": 0, "origin": "triage"},
-    ]}
+    assert request.post_data_json == {
+        "actions": [
+            {"op": "triage", "ticker": "ACME", "passage_id": pid, "status": "dismissed"},
+            {
+                "op": "label",
+                "ticker": "ACME",
+                "passage_id": pid,
+                "question": "new_info",
+                "value": 0,
+                "origin": "triage",
+            },
+            {
+                "op": "label",
+                "ticker": "ACME",
+                "passage_id": pid,
+                "question": "whats_new",
+                "value": 0,
+                "origin": "triage",
+            },
+        ]
+    }
     with page.expect_request("**/api/actions"):
         page.keyboard.press("u")
-    assert requests[-1].post_data_json == {"actions": [
-        {"op": "triage", "ticker": "ACME", "passage_id": pid, "status": None, "starred": False}]}
+    assert requests[-1].post_data_json == {
+        "actions": [{"op": "triage", "ticker": "ACME", "passage_id": pid, "status": None, "starred": False}]
+    }
     assert page.locator(f'.card[data-section="new"][data-id="{pid}"]').count() == 1
     page.click("#btn-thresholds")
     with page.expect_request("**/api/actions"):
-        page.click("#thresholds >> text=Save")
+        page.click('#thresholds >> text="Save"')
     [action] = requests[-1].post_data_json["actions"]
     assert action["op"] == "policy" and action["values"]["new_info_min"] == 0.6
 
@@ -548,7 +629,7 @@ def test_serve_mode_failure_keeps_actions_queued(open_page):
     assert "3 unsaved actions" in page.locator("#actionbar").text_content()
     assert page.locator(f'.card[data-section="new"][data-id="{pid}"]').count() == 0
     state["fail"] = False
-    page.click("#actionbar >> text=Retry")
+    page.click('#actionbar >> text="Retry"')
     page.wait_for_selector("#actionbar", state="hidden")
 
 
@@ -565,13 +646,28 @@ def test_serve_mode_search_and_full_document(open_page):
     def document(route):
         seen["document"] = route.request
         doc = next(d for d in acme["documents"] if d["id"] == 103)
-        extra = dict(by_id[1031], id=9999, seq=99, text="An unjudged passage from the full filing.", p=None,
-                     status="unjudged", classified=None)
-        body = {"document": dict(doc, complete=True), "passages": [by_id[i] for i in (1031, 1033, 1034, 1035)] + [extra]}
+        extra = dict(
+            by_id[1031],
+            id=9999,
+            seq=99,
+            text="An unjudged passage from the full filing.",
+            p=None,
+            status="unjudged",
+            classified=None,
+        )
+        body = {
+            "document": dict(doc, complete=True),
+            "passages": [by_id[i] for i in (1031, 1033, 1034, 1035)] + [extra],
+        }
         route.fulfill(status=200, content_type="application/json", body=json.dumps(body))
 
-    page = open_page(serve_payload(), serve_routes={re.compile(r".*/api/search\?.*"): search,
-                                                    re.compile(r".*/api/document/103\?ticker=ACME$"): document}).page
+    page = open_page(
+        serve_payload(),
+        serve_routes={
+            re.compile(r".*/api/search\?.*"): search,
+            re.compile(r".*/api/document/103\?ticker=ACME$"): document,
+        },
+    ).page
     goto_tab(page, "ACME")
     page.fill("#search", "normalize")
     page.press("#search", "Enter")

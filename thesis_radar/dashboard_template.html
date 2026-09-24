@@ -60,7 +60,14 @@ nav#tabs { display: flex; gap: 4px; overflow-x: auto; min-width: 0; flex: 1 1 au
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn[aria-pressed="true"], .btn[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .sub { max-width: 1120px; margin: 0 auto; padding: 0 16px 8px; color: var(--muted); font-size: 12px; display: flex; gap: 4px 12px; flex-wrap: wrap; }
-@media (max-width: 640px) { .tools { flex: 1 1 100%; } #search { flex: 1; width: auto; } }
+@media (max-width: 640px) {
+  .bar { padding: 8px 16px 6px; }
+  .brand { font-size: 14px; }
+  nav#tabs { flex: 1 1 0; }
+  .tools { flex: 1 1 100%; }
+  #search { flex: 1; width: auto; }
+  .sub span:not(:first-child) { display: none; }
+}
 
 /* thresholds panel, banner */
 #thresholds { max-width: 1120px; margin: 12px auto 0; padding: 0 16px; }
@@ -76,6 +83,7 @@ nav#tabs { display: flex; gap: 4px; overflow-x: auto; min-width: 0; flex: 1 1 au
 .banner { margin-top: 12px; border: 1px solid var(--warn); background: var(--warn-soft); color: var(--ink); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; }
 .banner div + div { margin-top: 2px; }
 .banner b { color: var(--warn); }
+.banner code { white-space: nowrap; }
 
 /* layout */
 main { max-width: 1120px; margin: 0 auto; padding: 8px 16px 48px; }
@@ -155,6 +163,7 @@ form.absorb select { border: 1px solid var(--line); border-radius: 6px; padding:
 .stat.neg b { color: var(--neg); }
 .ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px 22px; }
 .ov-grid > div { min-width: 0; }
+.ov-grid > .wide { grid-column: 1 / -1; }
 .ov-grid h3 { margin-top: 4px; }
 .hm-scroll { overflow-x: auto; padding-bottom: 4px; }
 .hm { display: grid; gap: 3px; align-items: center; font-size: 11px; width: max-content; }
@@ -477,7 +486,8 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
   const TODAY = DATA.today || new Date().toISOString().slice(0, 10);
   const TOKEN = DATA.mode === "serve" && DATA.serve && DATA.serve.token ? String(DATA.serve.token) : null;
   const SVG_NS = document.getElementById("svg-ns").namespaceURI;
-  const QUEUE_KEY = "thesis-radar:queue:" + (DATA.generated_at || "");
+  const QUEUE_PREFIX = "thesis-radar:queue:";
+  const QUEUE_KEY = QUEUE_PREFIX + (DATA.generated_at || "");
   const DEFAULTS = Object.assign({}, L.DEFAULT_POLICY, DATA.policy_defaults || {});
   const APP = document.getElementById("app");
   const NAV = document.getElementById("tabs");
@@ -517,7 +527,7 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
   const S = {
     tab: "overview", policy: Object.assign({}, DEFAULTS, DATA.policy || {}), saved: null,
     queue: [], sending: null, undo: [], selected: new Map(), filters: {}, open: new Map(), focus: null,
-    search: null, spotDone: new Set(), absorb: null, confirm: null, overlay: null, g: false,
+    search: null, spotDone: new Set(), absorb: null, confirm: null, overlay: null, g: false, older: [],
   };
   S.saved = Object.assign({}, S.policy);
   const REFS = new Map();
@@ -632,9 +642,25 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
     if (TOKEN) return;
     let saved = [];
     try { saved = JSON.parse(window.localStorage.getItem(QUEUE_KEY) || "[]"); } catch (err) { saved = []; }
-    if (!Array.isArray(saved)) return;
-    for (const action of saved) replay(action);
-    S.queue = saved;
+    if (Array.isArray(saved)) {
+      for (const action of saved) replay(action);
+      S.queue = saved;
+    }
+    // Queues left by earlier dashboards (another generated_at) that were never cleared.
+    try {
+      const store = window.localStorage;
+      for (let i = 0; i < store.length; i++) {
+        const key = store.key(i);
+        if (!key || !key.startsWith(QUEUE_PREFIX) || key === QUEUE_KEY) continue;
+        const actions = JSON.parse(store.getItem(key) || "[]");
+        if (Array.isArray(actions) && actions.length) S.older.push({ key, generated: key.slice(QUEUE_PREFIX.length), actions });
+      }
+    } catch (err) { S.older = []; }
+  }
+  function discardOlder(entry) {
+    try { window.localStorage.removeItem(entry.key); } catch (err) { /* ignore */ }
+    S.older = S.older.filter((x) => x !== entry);
+    renderActionBar();
   }
   function replay(action) {
     const c = company(action && action.ticker);
@@ -704,16 +730,18 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
     const index = focusIndex();
     group.revert();
     const unsent = group.actions.every((a) => S.queue.includes(a) && !(S.sending && S.sending.includes(a)));
+    let note = "";
     if (unsent) {
       S.queue = S.queue.filter((a) => !group.actions.includes(a));
       persist();
     } else {
       dispatch(group.inverse());
+      if (group.actions.some((a) => a.op === "label" || a.op === "fact")) note = " (labels and facts already sent stay recorded)";
     }
     if (group.focusKey) S.focus = group.focusKey;
     render();
     refocus(index);
-    toast("Undid: " + group.name);
+    toast("Undid: " + group.name + note);
   }
   const label = (c, p, question, value, origin) =>
     ({ op: "label", ticker: c.ticker, passage_id: p.id, question, value, origin: origin || "triage" });
@@ -786,7 +814,8 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
     pr.outcome = outcome;
     if (outcome === null) {
       pr.resolved_at = null;
-      pr.status = pr._openStatus || ((pr.by || "") < TODAY ? "overdue" : "open");
+      const by = String(pr.by || "");
+      pr.status = pr._openStatus || (by < TODAY ? "overdue" : by <= L.shiftDate(TODAY, 14) ? "due" : "open");
     } else {
       pr.status = "resolved";
       pr.resolved_at = new Date().toISOString().slice(0, 19) + "Z";
@@ -1222,7 +1251,7 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
         el("div", { class: "stats" }, stat(f.contra.length, "contradictions", f.contra.length ? "neg" : ""), stat(f.fresh.length, "what's new"),
           stat(f.maybe.length, "maybe"), stat(arrived, "arrived since last view")),
         el("div", { class: "ov-grid" },
-          el("div", {}, el("h3", {}, "Evidence by pillar and week"), heatmap(c)),
+          el("div", { class: "wide" }, el("h3", {}, "Evidence by pillar and week"), heatmap(c)),
           el("div", {}, el("h3", {}, "Assumptions: evidence balance"), assumptionRows(c)),
           el("div", { class: "divergence" }, el("h3", {}, "Company voice vs outside voices"), divergenceRows(c)),
           el("div", {}, el("h3", {}, "Guidance credibility"), credibility(c)),
@@ -1501,9 +1530,14 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
 
   // ================================================================ thresholds
   const roundTo = (v, step) => { const d = String(step).includes(".") ? String(step).split(".")[1].length : 0; return Number(Number(v).toFixed(d)); };
+  function sliderText(key) {
+    const row = SLIDERS.find((r) => r[0] === key);
+    const value = Number(S.policy[key]);
+    return row && row[4] >= 1 ? String(Math.round(value)) : value.toFixed(2);
+  }
   function buildThresholds() {
     const sliders = SLIDERS.map(([key, text, min, max, step]) => el("label", { class: "slider" }, el("span", {}, text),
-      el("output", { "data-out": key }, String(S.policy[key])),
+      el("output", { "data-out": key }, sliderText(key)),
       el("input", { type: "range", min, max, step, value: S.policy[key], "data-policy": key, "aria-label": text,
                     oninput: (e) => setPolicy(key, roundTo(e.target.value, step)) })));
     TH_PANEL.replaceChildren(el("div", { class: "th" },
@@ -1540,7 +1574,7 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
     for (const input of TH_PANEL.querySelectorAll("input[data-policy]")) {
       const key = input.dataset.policy;
       if (String(input.value) !== String(S.policy[key])) input.value = S.policy[key];
-      TH_PANEL.querySelector('[data-out="' + key + '"]').textContent = String(S.policy[key]);
+      TH_PANEL.querySelector('[data-out="' + key + '"]').textContent = sliderText(key);
     }
     const dirty = Object.keys(L.DEFAULT_POLICY).some((k) => S.policy[k] !== S.saved[k]);
     document.getElementById("th-state").textContent = dirty ? "changed from saved" : "at saved values";
@@ -1588,7 +1622,15 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
       el("span", {}, "press ", el("kbd", {}, "?"), " for keys"));
   }
   function renderActionBar() {
-    const rows = [];
+    const rows = S.older.map((entry) => {
+      const command = L.applyCommand(entry.actions);
+      return el("div", { class: "ab-row older" },
+        el("strong", {}, plural(entry.actions.length, "action") + " from the dashboard generated " + stamp(entry.generated) +
+          (entry.actions.length === 1 ? " was" : " were") + " never cleared"),
+        el("code", { class: "cmd" }, command),
+        el("button", { class: "mini", type: "button", onclick: () => copyText(command, "radar apply command") }, "Copy command"),
+        el("button", { class: "mini", type: "button", onclick: () => discardOlder(entry) }, "Discard"));
+    });
     if (S.queue.length) {
       const command = L.applyCommand(S.queue);
       rows.push(el("div", { class: "ab-row" },
@@ -1618,6 +1660,7 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
     renderTabs();
     const view = S.search ? viewSearch() : S.tab === "overview" ? viewOverview() : S.tab === "unsorted" ? viewUnsorted() : viewCompany(company(S.tab));
     APP.replaceChildren(...[view].flat(Infinity).filter(Boolean));
+    for (const strip of APP.querySelectorAll(".hm-scroll")) strip.scrollLeft = strip.scrollWidth;
     renderActionBar();
     syncThresholds();
     if (S.overlay && S.overlay.kind !== "help") drawOverlay();
@@ -1691,7 +1734,12 @@ if (typeof module !== "undefined") module.exports = RadarLogic;
   });
   OVERLAY.addEventListener("click", (e) => { if (e.target === OVERLAY) closeOverlay(); });
   SEARCH.addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => runSearch(SEARCH.value), 200); });
-  SEARCH.addEventListener("keydown", (e) => { if (e.key === "Enter") { clearTimeout(searchTimer); runSearch(SEARCH.value); } });
+  SEARCH.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    clearTimeout(searchTimer);
+    SEARCH.blur();
+    runSearch(SEARCH.value);
+  });
   document.getElementById("btn-help").addEventListener("click", toggleHelp);
   document.getElementById("btn-thresholds").addEventListener("click", (e) => {
     TH_PANEL.hidden = !TH_PANEL.hidden;

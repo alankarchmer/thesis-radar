@@ -873,7 +873,7 @@
      "id": 1035,
      "document_id": 103,
      "seq": 52,
-     "text": "Our dealers may be unable to obtain floorplan financing on acceptable terms, which could reduce their orders and increase the promotional support we provide.",
+     "text": "Our dealers may be unable to obtain floorplan financing on acceptable terms, which could reduce their orders.",
      "page": 35,
      "speaker": null,
      "title": "ACME Snowmobiles 10-Q Q2 2026",
@@ -946,7 +946,7 @@
       "questions": {}
      },
      "similar": null,
-     "context": "Our dealers may be unable to obtain floorplan financing on acceptable terms, which could reduce their orders and increase the promotional support we provide.",
+     "context": "Our dealers may be unable to obtain floorplan financing on acceptable terms, which could reduce their orders.",
      "triage": {
       "status": null,
       "starred": false
@@ -1203,44 +1203,7 @@
       },
       "questions": {}
      },
-     "similar": {
-      "id": 1034,
-      "similarity": 0.25,
-      "diff": [
-       [
-        "=",
-        "Gross "
-       ],
-       [
-        "-",
-        "profit "
-       ],
-       [
-        "=",
-        "margin was "
-       ],
-       [
-        "-",
-        "19.8%, down 240 "
-       ],
-       [
-        "+",
-        "20.4%, an improvement of 60 "
-       ],
-       [
-        "=",
-        "basis "
-       ],
-       [
-        "-",
-        "points, driven by higher promotional spending and unfavorable product mix."
-       ],
-       [
-        "+",
-        "points from the second quarter."
-       ]
-      ]
-     },
+     "similar": null,
      "context": "Retail sales of snowmobiles in North America declined 6%, while off-road vehicle retail was flat.",
      "triage": {
       "status": null,
@@ -1904,43 +1867,47 @@
      },
      "similar": {
       "id": 1091,
-      "similarity": 0.17,
+      "similarity": 0.889,
       "diff": [
        [
         "=",
-        "Our "
+        "Our channel check of "
        ],
        [
         "-",
-        "dealer survey suggests "
+        "38 "
        ],
        [
         "+",
-        "channel check of 42 snowmobile dealers found aged "
+        "42 "
        ],
        [
         "=",
-        "inventory "
+        "snowmobile dealers found aged inventory rising for a "
        ],
        [
         "-",
-        "will remain elevated through the 2027 season; 60% of respondents plan "
+        "second "
        ],
        [
         "+",
-        "rising for a third straight month, with 71% planning "
+        "third "
        ],
        [
         "=",
-        "to cut "
+        "straight month, with "
        ],
        [
         "-",
-        "orders."
+        "55% "
        ],
        [
         "+",
-        "ACME orders for the fourth quarter."
+        "71% "
+       ],
+       [
+        "=",
+        "planning to cut ACME orders for the fourth quarter."
        ]
       ]
      },
@@ -2601,7 +2568,7 @@
      "id": 1091,
      "document_id": 109,
      "seq": 4,
-     "text": "Our dealer survey suggests inventory will remain elevated through the 2027 season; 60% of respondents plan to cut orders.",
+     "text": "Our channel check of 38 snowmobile dealers found aged inventory rising for a second straight month, with 55% planning to cut ACME orders for the fourth quarter.",
      "page": 3,
      "speaker": null,
      "title": "Frost Capital: initiating on ACME at Underperform",
@@ -3392,7 +3359,7 @@
       {
        "id": 1035,
        "old_id": 1021,
-       "similarity": 0.61,
+       "similarity": 0.828,
        "diff": [
         [
          "=",
@@ -3404,14 +3371,14 @@
         ],
         [
          "+",
-         "terms, which could reduce their orders and increase the promotional support we provide."
+         "terms, which could reduce their orders."
         ]
        ]
       },
       {
        "id": 1033,
        "old_id": 1025,
-       "similarity": 0.91,
+       "similarity": 0.909,
        "diff": [
         [
          "=",
@@ -3954,7 +3921,7 @@
      "id": 2032,
      "document_id": 203,
      "seq": 40,
-     "text": "We may not be able to maintain our dealer network, and dealers may carry competing products.",
+     "text": "We may not be able to maintain or grow our dealer network.",
      "page": 22,
      "speaker": null,
      "title": "Brrr Sleds 10-Q Q1 2026",
@@ -4247,19 +4214,19 @@
       {
        "id": 2032,
        "old_id": 2041,
-       "similarity": 0.69,
+       "similarity": 0.909,
        "diff": [
         [
          "=",
-         "We may not be able to maintain our dealer "
-        ],
-        [
-         "-",
-         "network."
+         "We may not be able to maintain "
         ],
         [
          "+",
-         "network, and dealers may carry competing products."
+         "or grow "
+        ],
+        [
+         "=",
+         "our dealer network."
         ]
        ]
       }
